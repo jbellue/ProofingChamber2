@@ -1,50 +1,73 @@
 #include "Menu.h"
+#include "icons.h"
 
 // Menu definitions
 Menu::MenuItem Menu::mainMenu[] = {
-    {MENU_PROOF_NOW, "Proof now", nullptr, &Menu::proofNowAction},
-    {MENU_COOL_NOW, "Cool now", coolMenu, nullptr},
-    {MENU_SETTINGS, "Settings", settingsMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr} // End of menu
+    {MENU_PROOF_NOW, "Mettre en pousse", iconProof,    nullptr,      &Menu::proofNowAction},
+    {MENU_COOL_NOW,  "Mettre en froid",  iconCool,     coolMenu,     nullptr},
+    {MENU_SETTINGS,  "Réglages",         iconSettings, settingsMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::coolMenu[] = {
-    {MENU_PROOF_IN, "Proof in...", nullptr, &Menu::proofInAction},
-    {MENU_PROOF_AT, "Proof at...", nullptr, &Menu::proofAtAction},
-    {MENU_BACK, "Back", mainMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr} // End of menu
+    {MENU_PROOF_IN, "Pousser dans...", nullptr,  nullptr,  &Menu::proofInAction},
+    {MENU_PROOF_AT, "Pousser à...",    nullptr,  nullptr,  &Menu::proofAtAction},
+    {MENU_BACK,     "Retour",          iconBack, mainMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::settingsMenu[] = {
-    {MENU_HOT, "Hot", hotMenu, nullptr},
-    {MENU_COLD, "Cold", coldMenu, nullptr},
-    {MENU_CLOCK, "Clock", nullptr, &Menu::clockAction},
-    {MENU_BACK, "Back", mainMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr} // End of menu
+    {MENU_HOT,   "Chaud",  nullptr,  hotMenu,  nullptr},
+    {MENU_COLD,  "Froid",  nullptr,  coldMenu, nullptr},
+    {MENU_CLOCK, "Heure",  nullptr,  nullptr,  &Menu::clockAction},
+    {MENU_BACK,  "Retour", iconBack, mainMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::hotMenu[] = {
-    {MENU_TARGET_TEMP, "Target Temperature", nullptr, &Menu::adjustHotTargetTemp},
-    {MENU_LOWER_LIMIT, "Lower limit", nullptr, &Menu::adjustHotLowerLimit},
-    {MENU_HIGHER_LIMIT, "Higher limit", nullptr, &Menu::adjustHotHigherLimit},
-    {MENU_BACK, "Back", settingsMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr} // End of menu
+    {MENU_TARGET_TEMP,  "Température visée", nullptr,  nullptr,      &Menu::adjustHotTargetTemp},
+    {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustHotLowerLimit},
+    {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustHotHigherLimit},
+    {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::coldMenu[] = {
-    {MENU_TARGET_TEMP, "Target Temperature", nullptr, &Menu::adjustColdTargetTemp},
-    {MENU_LOWER_LIMIT, "Lower limit", nullptr, &Menu::adjustColdLowerLimit},
-    {MENU_HIGHER_LIMIT, "Higher limit", nullptr, &Menu::adjustColdHigherLimit},
-    {MENU_BACK, "Back", settingsMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr} // End of menu
+    {MENU_TARGET_TEMP,  "Température visée", nullptr,  nullptr,      &Menu::adjustColdTargetTemp},
+    {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustColdLowerLimit},
+    {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustColdHigherLimit},
+    {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 // Constructor
 Menu::Menu(Storage& storage, ESP32Encoder& encoder, int encoderSWPin)
     : _storage(storage), _encoder(encoder),
         _encoderSWPin(encoderSWPin), _currentMenu(mainMenu), _menuIndex(0), _oldPosition(-999),
-        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _display(U8G2_R0, U8X8_PIN_NONE) {
+        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0) {
+    _display = U8G2_SSD1309_128X64_NONAME0_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
+    // _display.setI2CAddress(0x3C << 1); // Set I2C address of the display
     pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
+    Serial.begin(115200); // Initialize serial communication for debugging
+    Serial.println("Initializing display...");
+    initializeDisplay(); // Initialize the display
+    Serial.println("Display initialized.");
+}
+
+// Method to initialize the display
+void Menu::initializeDisplay() {
+    Serial.println("Calling _display.begin()...");
+    if (!_display.begin()) {
+        Serial.println("Display initialization failed!");
+        while (1); // Halt execution if display initialization fails
+    }
+    Serial.println("Display begin called.");
+    _display.clearBuffer();
+    _display.setFont(u8g2_font_t0_11_tr);
+    _display.drawStr(0, 10, "Display Initialized");
+    _display.sendBuffer();
+    Serial.println("Display buffer sent.");
+    delay(1000);
 }
 
 // Initialize the menu
@@ -201,10 +224,14 @@ void Menu::drawMenu(MenuItem* menu, int index) {
     _display.setBitmapMode(1);
     _display.setFont(u8g2_font_t0_11_tr);
     for (int i = 0; menu[i].name != nullptr; i++) {
-        _display.drawUTF8(3, i * 13 + 13, menu[i].name);
+        const uint8_t yPos = i * 13 + 13;
+        _display.drawUTF8(18, yPos, menu[i].name);
+        if (menu[i].icon != nullptr) {
+            _display.drawXBMP(2, yPos - 2, 8, 8, menu[i].icon);
+        }
         if (i == index) {
             _display.setDrawColor(2);
-            _display.drawRBox(0, i * 13 + 13, 118, 13, 1);
+            _display.drawRBox(0, yPos, 118, 13, 1);
         }
     }
     _display.sendBuffer();

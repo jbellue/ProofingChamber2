@@ -28,6 +28,7 @@ public:
     struct MenuItem {
         MenuItemID id;         // Unique identifier for the menu item
         const char* name;      // Name of the menu item (stored in PROGMEM)
+        const uint8_t* icon;   // Icon for the menu item (nullptr if no icon)
         MenuItem* subMenu;     // Pointer to submenu (nullptr if no submenu)
         void (Menu::*action)();// Pointer to member function for action
     };
@@ -35,6 +36,7 @@ public:
     Menu(Storage& storage, ESP32Encoder& encoder, int encoderSWPin);
     void begin();
     void update();
+    void initializeDisplay();
 
 private:
     U8G2_SSD1309_128X64_NONAME0_F_HW_I2C _display;
