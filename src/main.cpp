@@ -17,7 +17,7 @@ void setup() {
     Serial.begin(115200);
 
     // Attach the encoder to GPIO pins
-    encoder.attachSingleEdge(ENCODER_CLK, ENCODER_DT); // Use single-edge mode for better performance
+    encoder.attachFullQuad(ENCODER_CLK, ENCODER_DT); // Use single-edge mode for better performance
 
     // Set the starting count (optional)
     encoder.setCount(0);

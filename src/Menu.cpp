@@ -58,7 +58,7 @@ void Menu::begin() {
 // Update the menu
 void Menu::update() {
     // Handle encoder rotation
-    int64_t newPosition = _encoder.getCount();
+    int64_t newPosition = _encoder.getCount() / 4;
     if (newPosition != _oldPosition) {
         if (newPosition > _oldPosition) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
@@ -157,7 +157,7 @@ void Menu::adjustColdHigherLimit() {
 }
 
 void Menu::adjustValue(const char* title, const char* path) {
-    int64_t newPosition = _encoder.getCount();
+    int64_t newPosition = _encoder.getCount() / 4;
     int64_t oldPosition = newPosition;
 
     // Load the initial value from storage
@@ -175,7 +175,7 @@ void Menu::adjustValue(const char* title, const char* path) {
         _display.sendBuffer();
 
         // Handle encoder rotation
-        newPosition = _encoder.getCount();
+        newPosition = _encoder.getCount() / 4;
         if (newPosition != oldPosition) {
             if (newPosition > oldPosition) {
                 value++; // Increment value
