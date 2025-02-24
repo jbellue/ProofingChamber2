@@ -40,10 +40,10 @@ Menu::MenuItem Menu::coldMenu[] = {
 };
 
 // Constructor
-Menu::Menu(Display& display, Storage& storage, ESP32Encoder& encoder, int encoderSWPin)
-    : _display(display), _storage(storage), _encoder(encoder),
+Menu::Menu(Storage& storage, ESP32Encoder& encoder, int encoderSWPin)
+    : _storage(storage), _encoder(encoder),
         _encoderSWPin(encoderSWPin), _currentMenu(mainMenu), _menuIndex(0), _oldPosition(-999),
-        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0) {
+        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _display(U8G2_R0, U8X8_PIN_NONE) {
     pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
 }
 
@@ -104,7 +104,7 @@ void Menu::proofNowAction() {
     _display.clear();
     _display.setCursor(0, 0);
     _display.println("Proofing now...");
-    _display.update();
+    _display.sendBuffer();
     delay(1000);
 }
 
@@ -112,7 +112,7 @@ void Menu::proofInAction() {
     _display.clear();
     _display.setCursor(0, 0);
     _display.println("Proof in...");
-    _display.update();
+    _display.sendBuffer();
     delay(1000);
 }
 
@@ -120,7 +120,7 @@ void Menu::proofAtAction() {
     _display.clear();
     _display.setCursor(0, 0);
     _display.println("Proof at...");
-    _display.update();
+    _display.sendBuffer();
     delay(1000);
 }
 
@@ -128,7 +128,7 @@ void Menu::clockAction() {
     _display.clear();
     _display.setCursor(0, 0);
     _display.println("Clock settings...");
-    _display.update();
+    _display.sendBuffer();
     delay(1000);
 }
 
@@ -172,7 +172,7 @@ void Menu::adjustValue(const char* title, const char* path) {
         _display.setCursor(0, 10);
         _display.print("Value: ");
         _display.println(value);
-        _display.update();
+        _display.sendBuffer();
 
         // Handle encoder rotation
         newPosition = _encoder.getCount();
@@ -196,15 +196,18 @@ void Menu::adjustValue(const char* title, const char* path) {
 
 // Helper functions
 void Menu::drawMenu(MenuItem* menu, int index) {
-    _display.clear();
+    _display.clearBuffer();
+    _display.setFontMode(1);
+    _display.setBitmapMode(1);
+    _display.setFont(u8g2_font_t0_11_tr);
     for (int i = 0; menu[i].name != nullptr; i++) {
+        _display.drawUTF8(3, i * 13 + 13, menu[i].name);
         if (i == index) {
-            _display.drawRect(0, i * 10 + 1, 128, 11);
+            _display.setDrawColor(2);
+            _display.drawRBox(0, i * 13 + 13, 118, 13, 1);
         }
-        _display.setCursor(5, i * 10 + 2);
-        _display.println(menu[i].name);
     }
-    _display.update();
+    _display.sendBuffer();
     Serial.println("Menu drawn");
 }
 

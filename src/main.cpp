@@ -1,5 +1,4 @@
 #include "Menu.h"
-#include "Display.h"
 #include "Storage.h"
 #include <ESP32Encoder.h>
 
@@ -10,16 +9,12 @@
 ESP32Encoder encoder;
 
 // Global objects
-Display display;
 Storage storage;
-Menu menu(display, storage, encoder, ENCODER_SW);
+Menu menu(storage, encoder, ENCODER_SW);
 
 void setup() {
     // Initialize serial communication
     Serial.begin(115200);
-
-    // Initialize display
-    display.begin();
 
     // Attach the encoder to GPIO pins
     encoder.attachSingleEdge(ENCODER_CLK, ENCODER_DT); // Use single-edge mode for better performance

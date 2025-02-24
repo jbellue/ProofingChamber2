@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <ESP32Encoder.h>
-#include "Display.h"
+#include <U8g2lib.h>
 #include "Storage.h"
 
 class Menu {
@@ -32,12 +32,12 @@ public:
         void (Menu::*action)();// Pointer to member function for action
     };
 
-    Menu(Display& display, Storage& storage, ESP32Encoder& encoder, int encoderSWPin);
+    Menu(Storage& storage, ESP32Encoder& encoder, int encoderSWPin);
     void begin();
     void update();
 
 private:
-    Display& _display;
+    U8G2_SSD1309_128X64_NONAME0_F_HW_I2C _display;
     Storage& _storage;
     ESP32Encoder& _encoder;
     uint8_t _encoderSWPin;
