@@ -224,14 +224,14 @@ void Menu::drawMenu(MenuItem* menu, int index) {
     _display.setBitmapMode(1);
     _display.setFont(u8g2_font_t0_11_tr);
     for (int i = 0; menu[i].name != nullptr; i++) {
-        const uint8_t yPos = i * 13 + 13;
-        _display.drawUTF8(18, yPos, menu[i].name);
+        const uint8_t yPos = (i + 1) * 16 - 3;
+        _display.drawUTF8(16, yPos, menu[i].name);
         if (menu[i].icon != nullptr) {
-            _display.drawXBMP(2, yPos - 2, 8, 8, menu[i].icon);
+            _display.drawXBMP(3, yPos - 9, 10, 10, menu[i].icon);
         }
         if (i == index) {
             _display.setDrawColor(2);
-            _display.drawRBox(0, yPos, 118, 13, 1);
+            _display.drawRBox(0, yPos - 12, 128, 15, 1);
         }
     }
     _display.sendBuffer();
