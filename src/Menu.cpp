@@ -1,6 +1,10 @@
 #include "Menu.h"
 #include "icons.h"
 
+#define ENCODER_CLK 2
+#define ENCODER_DT  3
+#define ENCODER_SW  4
+
 // Menu definitions
 Menu::MenuItem Menu::mainMenu[] = {
     {MENU_PROOF_NOW, "Mettre en pousse", iconProof,    nullptr,      &Menu::proofNowAction},
@@ -41,17 +45,20 @@ Menu::MenuItem Menu::coldMenu[] = {
 };
 
 // Constructor
-Menu::Menu(Storage& storage, ESP32Encoder& encoder, int encoderSWPin)
-    : _storage(storage), _encoder(encoder),
-        _encoderSWPin(encoderSWPin), _currentMenu(mainMenu), _menuIndex(0), _oldPosition(-999),
-        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0) {
-    _display = U8G2_SSD1309_128X64_NONAME0_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
+Menu::Menu() :
+    _storage(),
+    _encoder(ENCODER_CLK, ENCODER_DT, RotaryEncoder::LatchMode::FOUR3),
+    _encoderSWPin(ENCODER_SW),
+    _currentMenu(mainMenu),
+    _menuIndex(0),
+    _oldPosition(-999),
+    _lastButtonState(HIGH),
+    _buttonState(HIGH),
+    _lastDebounceTime(0),
+    _display(U8G2_R0, U8X8_PIN_NONE)
+{
     // _display.setI2CAddress(0x3C << 1); // Set I2C address of the display
     pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
-    Serial.begin(115200); // Initialize serial communication for debugging
-    Serial.println("Initializing display...");
-    initializeDisplay(); // Initialize the display
-    Serial.println("Display initialized.");
 }
 
 // Method to initialize the display
@@ -68,20 +75,23 @@ void Menu::initializeDisplay() {
     _display.sendBuffer();
     Serial.println("Display buffer sent.");
     delay(1000);
+    Serial.println("Display initialized.");
 }
 
 // Initialize the menu
 void Menu::begin() {
+    initializeDisplay(); // Initialize the display
     _currentMenu = mainMenu;
     _menuIndex = 0;
     drawMenu(_currentMenu, _menuIndex);
-    Serial.println("Menu initialized");
+    Serial.println("Menu Began");
 }
 
 // Update the menu
 void Menu::update() {
+    _encoder.tick(); // Update the encoder state
     // Handle encoder rotation
-    int64_t newPosition = _encoder.getCount() / 4;
+    int64_t newPosition = _encoder.getPosition();
     if (newPosition != _oldPosition) {
         if (newPosition > _oldPosition) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
@@ -180,7 +190,7 @@ void Menu::adjustColdHigherLimit() {
 }
 
 void Menu::adjustValue(const char* title, const char* path) {
-    int64_t newPosition = _encoder.getCount() / 4;
+    int64_t newPosition = _encoder.getPosition();
     int64_t oldPosition = newPosition;
 
     // Load the initial value from storage
@@ -198,7 +208,7 @@ void Menu::adjustValue(const char* title, const char* path) {
         _display.sendBuffer();
 
         // Handle encoder rotation
-        newPosition = _encoder.getCount() / 4;
+        newPosition = _encoder.getPosition();
         if (newPosition != oldPosition) {
             if (newPosition > oldPosition) {
                 value++; // Increment value
