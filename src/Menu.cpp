@@ -9,13 +9,13 @@
 Menu::MenuItem Menu::mainMenu[] = {
     {MENU_PROOF_NOW, "Mettre en pousse", iconProof,    nullptr,      &Menu::proofNowAction},
     {MENU_COOL_NOW,  "Mettre en froid",  iconCool,     coolMenu,     nullptr},
-    {MENU_SETTINGS,  "Réglages",         iconSettings, settingsMenu, nullptr},
+    {MENU_SETTINGS,  "R\xC3\xA9glages",         iconSettings, settingsMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::coolMenu[] = {
     {MENU_PROOF_IN, "Pousser dans...", nullptr,  nullptr,  &Menu::proofInAction},
-    {MENU_PROOF_AT, "Pousser à...",    nullptr,  nullptr,  &Menu::proofAtAction},
+    {MENU_PROOF_AT, "Pousser \xC3\xA0...",    nullptr,  nullptr,  &Menu::proofAtAction},
     {MENU_BACK,     "Retour",          iconBack, mainMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
@@ -29,7 +29,7 @@ Menu::MenuItem Menu::settingsMenu[] = {
 };
 
 Menu::MenuItem Menu::hotMenu[] = {
-    {MENU_TARGET_TEMP,  "Température visée", nullptr,  nullptr,      &Menu::adjustHotTargetTemp},
+    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", nullptr,  nullptr,      &Menu::adjustHotTargetTemp},
     {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustHotLowerLimit},
     {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustHotHigherLimit},
     {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
@@ -37,7 +37,7 @@ Menu::MenuItem Menu::hotMenu[] = {
 };
 
 Menu::MenuItem Menu::coldMenu[] = {
-    {MENU_TARGET_TEMP,  "Température visée", nullptr,  nullptr,      &Menu::adjustColdTargetTemp},
+    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", nullptr,  nullptr,      &Menu::adjustColdTargetTemp},
     {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustColdLowerLimit},
     {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustColdHigherLimit},
     {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
@@ -70,7 +70,7 @@ void Menu::initializeDisplay() {
     }
     Serial.println("Display begin called.");
     _display.clearBuffer();
-    _display.setFont(u8g2_font_t0_11_tr);
+    _display.setFont(u8g2_font_t0_11_tf);
     _display.drawStr(0, 10, "Display Initialized");
     _display.sendBuffer();
     Serial.println("Display buffer sent.");
@@ -232,7 +232,7 @@ void Menu::drawMenu(MenuItem* menu, int index) {
     _display.clearBuffer();
     _display.setFontMode(1);
     _display.setBitmapMode(1);
-    _display.setFont(u8g2_font_t0_11_tr);
+    _display.setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
     for (int i = 0; menu[i].name != nullptr; i++) {
         const uint8_t yPos = (i + 1) * 16 - 3;
         _display.drawUTF8(16, yPos, menu[i].name);
