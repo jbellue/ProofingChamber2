@@ -9,38 +9,38 @@
 Menu::MenuItem Menu::mainMenu[] = {
     {MENU_PROOF_NOW, "Mettre en pousse", iconProof,    nullptr,      &Menu::proofNowAction},
     {MENU_COOL_NOW,  "Mettre en froid",  iconCool,     coolMenu,     nullptr},
-    {MENU_SETTINGS,  "R\xC3\xA9glages",         iconSettings, settingsMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
+    {MENU_SETTINGS,  "R\xC3\xA9glages",  iconSettings, settingsMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr,            nullptr,      nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::coolMenu[] = {
-    {MENU_PROOF_IN, "Pousser dans...", nullptr,  nullptr,  &Menu::proofInAction},
-    {MENU_PROOF_AT, "Pousser \xC3\xA0...",    nullptr,  nullptr,  &Menu::proofAtAction},
-    {MENU_BACK,     "Retour",          iconBack, mainMenu, nullptr},
-    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
+    {MENU_PROOF_IN, "Pousser dans...",     iconHourglass, nullptr,  &Menu::proofInAction},
+    {MENU_PROOF_AT, "Pousser \xC3\xA0...", iconClock,     nullptr,  &Menu::proofAtAction},
+    {MENU_BACK,     "Retour",              iconBack,      mainMenu, nullptr},
+    {MENU_LAST_ITEM, nullptr,              nullptr,       nullptr,  nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::settingsMenu[] = {
-    {MENU_HOT,   "Chaud",  nullptr,  hotMenu,  nullptr},
-    {MENU_COLD,  "Froid",  nullptr,  coldMenu, nullptr},
-    {MENU_CLOCK, "Heure",  nullptr,  nullptr,  &Menu::clockAction},
-    {MENU_BACK,  "Retour", iconBack, mainMenu, nullptr},
+    {MENU_HOT,   "Chaud",  iconHotSettings,  hotMenu,  nullptr},
+    {MENU_COLD,  "Froid",  iconColdSettings, coldMenu, nullptr},
+    {MENU_CLOCK, "Heure",  iconClock,        nullptr,  &Menu::clockAction},
+    {MENU_BACK,  "Retour", iconBack,         mainMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::hotMenu[] = {
-    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", nullptr,  nullptr,      &Menu::adjustHotTargetTemp},
-    {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustHotLowerLimit},
-    {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustHotHigherLimit},
-    {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
+    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      &Menu::adjustHotTargetTemp},
+    {MENU_LOWER_LIMIT,  "Limite basse",                       iconColdSettings, nullptr,      &Menu::adjustHotLowerLimit},
+    {MENU_HIGHER_LIMIT, "Limite haute",                       iconHotSettings,  nullptr,      &Menu::adjustHotHigherLimit},
+    {MENU_BACK,         "Retour",                             iconBack,         settingsMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
 Menu::MenuItem Menu::coldMenu[] = {
-    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", nullptr,  nullptr,      &Menu::adjustColdTargetTemp},
-    {MENU_LOWER_LIMIT,  "Limite basse",      nullptr,  nullptr,      &Menu::adjustColdLowerLimit},
-    {MENU_HIGHER_LIMIT, "Limite haute",      nullptr,  nullptr,      &Menu::adjustColdHigherLimit},
-    {MENU_BACK,         "Retour",            iconBack, settingsMenu, nullptr},
+    {MENU_TARGET_TEMP,  "Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      &Menu::adjustColdTargetTemp},
+    {MENU_LOWER_LIMIT,  "Limite basse",                       iconColdSettings, nullptr,      &Menu::adjustColdLowerLimit},
+    {MENU_HIGHER_LIMIT, "Limite haute",                       iconHotSettings,  nullptr,      &Menu::adjustColdHigherLimit},
+    {MENU_BACK,         "Retour",                             iconBack,         settingsMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
