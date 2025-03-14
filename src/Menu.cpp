@@ -51,7 +51,7 @@ Menu::Menu() :
     _encoderSWPin(ENCODER_SW),
     _currentMenu(mainMenu),
     _menuIndex(0),
-    _oldPosition(-999),
+    _oldPosition(0),
     _lastButtonState(HIGH),
     _buttonState(HIGH),
     _lastDebounceTime(0),
