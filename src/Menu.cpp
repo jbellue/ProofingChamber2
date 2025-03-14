@@ -196,16 +196,19 @@ void Menu::adjustValue(const char* title, const char* path) {
     // Load the initial value from storage
     int value = _storage.readIntFromFile(path, 0);
     Serial.println(value);
+    bool shouldUpdate = true;
 
     while (true) {
-        // Display the current value
-        _display.clear();
-        _display.setCursor(0, 0);
-        _display.println(title);
-        _display.setCursor(0, 10);
-        _display.print("Value: ");
-        _display.println(value);
-        _display.sendBuffer();
+        if (shouldUpdate) {
+            // Display the current value
+            _display.clear();
+            _display.drawStr(0, 0, title);
+            _display.setCursor(0, 10);
+            _display.print("Value: ");
+            _display.println(value);
+            _display.sendBuffer();
+            shouldUpdate = false;
+        }
 
         // Handle encoder rotation
         newPosition = _encoder.getPosition();
@@ -216,6 +219,7 @@ void Menu::adjustValue(const char* title, const char* path) {
                 value--; // Decrement value
             }
             oldPosition = newPosition;
+            shouldUpdate = true;
         }
 
         // Handle encoder button press to confirm and save
