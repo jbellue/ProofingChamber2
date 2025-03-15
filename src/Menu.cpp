@@ -14,8 +14,8 @@ Menu::MenuItem Menu::mainMenu[] = {
 };
 
 Menu::MenuItem Menu::coolMenu[] = {
-    {MENU_PROOF_IN, "Pousser dans...",     iconHourglass, nullptr,  &Menu::proofInAction},
     {MENU_PROOF_AT, "Pousser \xC3\xA0...", iconClock,     nullptr,  &Menu::proofAtAction},
+    {MENU_PROOF_IN, "Pousser dans...",     iconHourglass, nullptr,  &Menu::proofInAction},
     {MENU_BACK,     "Retour",              iconBack,      mainMenu, nullptr},
     {MENU_LAST_ITEM, nullptr,              nullptr,       nullptr,  nullptr} // End of menu
 };
@@ -135,32 +135,22 @@ bool Menu::isButtonPressed() {
 // Menu actions
 void Menu::proofNowAction() {
     _display.clear();
-    _display.setCursor(0, 0);
-    _display.println("Proofing now...");
+    _display.drawUTF8(10, 20, "Proofing now...");
     _display.sendBuffer();
     delay(1000);
 }
 
 void Menu::proofInAction() {
-    _display.clear();
-    _display.setCursor(0, 0);
-    _display.println("Proof in...");
-    _display.sendBuffer();
-    delay(1000);
+    setTime("Pousser dans...");
 }
 
 void Menu::proofAtAction() {
-    _display.clear();
-    _display.setCursor(0, 0);
-    _display.println("Proof at...");
-    _display.sendBuffer();
-    delay(1000);
+    setTime("Pousser \xC3\xA0...");
 }
 
 void Menu::clockAction() {
     _display.clear();
-    _display.setCursor(0, 0);
-    _display.println("Clock settings...");
+    _display.drawUTF8(10, 20, "Clock Settings...");
     _display.sendBuffer();
     delay(1000);
 }
@@ -224,6 +214,99 @@ void Menu::adjustValue(const char* title, const char* path) {
 void Menu::updateAdjustValueDisplay(const char* title, int value) {
     _display.clear();
 
+    uint8_t currentY = drawTitle(title);
+
+    _display.setFont(u8g2_font_ncenB18_tn);
+    char buffer[4] = {'\0'};
+    sprintf(buffer, "%d", value);
+    const uint8_t degreeSymbolWidth = 8;
+    const uint8_t valueWidth = _display.getStrWidth(buffer);
+    const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
+    const uint8_t valueY = currentY + 2;
+    _display.drawStr(valueX, valueY, buffer);
+
+    // Draw the custom degree symbol just after the value
+    const uint8_t symbolX = valueX + valueWidth;
+    const uint8_t symbolY = valueY - _display.getAscent();
+    _display.drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
+
+    _display.sendBuffer();
+}
+
+
+void Menu::setTime(const char* title) {
+    int64_t encoderPosition = _encoder.getPosition();
+
+    int hours = 0;
+    int minutes = 0;
+    bool shouldUpdate = true;
+    bool adjustingHours = true; // Start by adjusting hours
+
+    while (true) {
+        _encoder.tick(); // Update the encoder state
+        if (shouldUpdate) {
+            updateAdjustTimeDisplay(title, hours, minutes, adjustingHours);
+            shouldUpdate = false;
+        }
+
+        // Handle encoder rotation
+        const int64_t newEncoderPosition = _encoder.getPosition();
+        if (newEncoderPosition != encoderPosition) {
+            if (adjustingHours) {
+                hours += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust hours
+                if (hours < 0) hours = 23; // Wrap around (0-23)
+                if (hours > 23) hours = 0;
+            } else {
+                minutes += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust minutes
+                if (minutes < 0) minutes = 59; // Wrap around (0-59)
+                if (minutes > 59) minutes = 0;
+            }
+            encoderPosition = newEncoderPosition;
+            shouldUpdate = true;
+        }
+
+        // Handle encoder button press to switch between hours and minutes, or confirm and save
+        if (isButtonPressed()) {
+            if (adjustingHours) {
+                adjustingHours = false; // Switch to adjusting minutes
+            } else {
+                Serial.println("Set time: " + String(hours) + ":" + String(minutes));
+                break; // Exit the adjustment loop
+            }
+            shouldUpdate = true;
+        }
+    }
+}
+
+void Menu::updateAdjustTimeDisplay(const char* title, int hours, int minutes, bool adjustingHours) {
+    _display.clear();
+
+    uint8_t currentY = drawTitle(title);
+
+    // Display the time (HH:MM)
+    _display.setFont(u8g2_font_ncenB18_tn);
+    char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
+    sprintf(timeBuffer, "%02d:%02d", hours, minutes); // Format the time as HH:MM
+    const uint8_t timeWidth = _display.getStrWidth("00:00"); // Measure the width of a default time string
+    const uint8_t timeX = (_display.getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
+    const uint8_t timeY = currentY + 2;
+
+    // Draw the time string
+    _display.drawStr(timeX, timeY, timeBuffer);
+
+    // Highlight the currently adjusted value (hours or minutes)
+    if (adjustingHours) {
+        // Highlight hours (first two characters)
+        _display.drawHLine(timeX, timeY + 2, _display.getStrWidth("00"));
+    } else {
+        // Highlight minutes (last two characters)
+        _display.drawHLine(timeX + _display.getStrWidth("00:"), timeY + 2, _display.getStrWidth("00"));
+    }
+
+    _display.sendBuffer();
+}
+
+uint8_t Menu::drawTitle(const char* title, const uint8_t startY) {
     _display.setFont(u8g2_font_t0_11_tf);
     const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
@@ -234,7 +317,7 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
     titleCopy[sizeof(titleCopy) - 1] = '\0'; // Ensure null termination
 
     char* line = strtok(titleCopy, "\n"); // Split the title into lines
-    uint8_t currentY = 10; // Initial Y position for drawing
+    uint8_t currentY = startY; // Initial Y position for drawing
 
     while (line != nullptr) {
         // Draw the current line centered on the display
@@ -244,23 +327,9 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
         // Get the next line
         line = strtok(nullptr, "\n");
     }
-
-    _display.setFont(u8g2_font_ncenB18_tn);
-    char buffer[4] = {'\0'};
-    sprintf(buffer, "%d", value);
-    const uint8_t degreeSymbolWidth = 8;
-    const uint8_t valueWidth = _display.getStrWidth(buffer);
-    const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
-    const uint8_t valueY = currentY + lineHeight;
-    _display.drawStr(valueX, valueY, buffer);
-
-    // Draw the custom degree symbol just after the value
-    const uint8_t symbolX = valueX + valueWidth;
-    const uint8_t symbolY = valueY - _display.getAscent();
-    _display.drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
-
-    _display.sendBuffer();
+    return currentY + lineHeight;
 }
+
 
 // Helper functions
 void Menu::drawMenu(MenuItem* menu, int index) {

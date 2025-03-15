@@ -68,6 +68,9 @@ private:
     void clockAction();
     void adjustValue(const char* title, const char* path);
     void updateAdjustValueDisplay(const char * title, int value);
+    void setTime(const char * title);
+    void updateAdjustTimeDisplay(const char * title, int hours, int minutes, bool adjustingHours);
+    uint8_t drawTitle(const char * title, const uint8_t startY = 10);
     void adjustHotTargetTemp();
     void adjustHotLowerLimit();
     void adjustHotHigherLimit();
