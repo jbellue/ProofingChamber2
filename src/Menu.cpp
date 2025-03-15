@@ -209,6 +209,7 @@ void Menu::adjustValue(const char* title, const char* path) {
             break; // Exit the adjustment loop
         }
     }
+    _oldPosition = encoderPosition;
 }
 
 void Menu::updateAdjustValueDisplay(const char* title, int value) {
@@ -276,6 +277,7 @@ void Menu::setTime(const char* title) {
             shouldUpdate = true;
         }
     }
+    _oldPosition = encoderPosition;
 }
 
 void Menu::updateAdjustTimeDisplay(const char* title, int hours, int minutes, bool adjustingHours) {
