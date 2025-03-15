@@ -166,27 +166,27 @@ void Menu::clockAction() {
 }
 
 void Menu::adjustHotTargetTemp() {
-    adjustValue("Target Temp", "/hot/target_temp.txt");
+    adjustValue("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
 }
 
 void Menu::adjustHotLowerLimit() {
-    adjustValue("Lower Limit", "/hot/lower_limit.txt");
+    adjustValue("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void Menu::adjustHotHigherLimit() {
-    adjustValue("Higher Limit", "/hot/higher_limit.txt");
+    adjustValue("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void Menu::adjustColdTargetTemp() {
-    adjustValue("Target Temp", "/cold/target_temp.txt");
+    adjustValue("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void Menu::adjustColdLowerLimit() {
-    adjustValue("Lower Limit", "/cold/lower_limit.txt");
+    adjustValue("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void Menu::adjustColdHigherLimit() {
-    adjustValue("Higher Limit", "/cold/higher_limit.txt");
+    adjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void Menu::adjustValue(const char* title, const char* path) {
@@ -225,17 +225,33 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
     _display.clear();
 
     _display.setFont(u8g2_font_t0_11_tf);
-    const uint8_t titleY = 20; // Initial Y position for the title
-    const uint8_t titleWidth = _display.getStrWidth(title); // Measure the width of the title
-    _display.drawUTF8((_display.getDisplayWidth() - titleWidth) / 2, titleY, title); // Print the title centered
-    _display.setFont(u8g2_font_ncenB18_tn);
+    const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
+    const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
 
+    // Split the title into lines based on EOL or CR
+    char titleCopy[100]; // Copy the title to a mutable buffer
+    strncpy(titleCopy, title, sizeof(titleCopy));
+    titleCopy[sizeof(titleCopy) - 1] = '\0'; // Ensure null termination
+
+    char* line = strtok(titleCopy, "\n"); // Split the title into lines
+    uint8_t currentY = 10; // Initial Y position for drawing
+
+    while (line != nullptr) {
+        // Draw the current line centered on the display
+        _display.drawUTF8((displayWidth - _display.getStrWidth(line)) / 2, currentY, line);
+        currentY += lineHeight; // Move Y position down
+
+        // Get the next line
+        line = strtok(nullptr, "\n");
+    }
+
+    _display.setFont(u8g2_font_ncenB18_tn);
     char buffer[4] = {'\0'};
     sprintf(buffer, "%d", value);
     const uint8_t degreeSymbolWidth = 8;
-    const uint8_t valueWidth = _display.getStrWidth(buffer);                  // Measure the width of the value
+    const uint8_t valueWidth = _display.getStrWidth(buffer);
     const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
-    const uint8_t valueY = titleY + 30;
+    const uint8_t valueY = currentY + lineHeight;
     _display.drawStr(valueX, valueY, buffer);
 
     // Draw the custom degree symbol just after the value
