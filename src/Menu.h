@@ -67,6 +67,7 @@ private:
     void proofAtAction();
     void clockAction();
     void adjustValue(const char* title, const char* path);
+    void updateAdjustValueDisplay(const char * title, int value);
     void adjustHotTargetTemp();
     void adjustHotLowerLimit();
     void adjustHotHigherLimit();

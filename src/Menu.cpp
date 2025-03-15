@@ -190,8 +190,7 @@ void Menu::adjustColdHigherLimit() {
 }
 
 void Menu::adjustValue(const char* title, const char* path) {
-    int64_t newPosition = _encoder.getPosition();
-    int64_t oldPosition = newPosition;
+    int64_t encoderPosition = _encoder.getPosition();
 
     // Load the initial value from storage
     int value = _storage.readIntFromFile(path, 0);
@@ -199,26 +198,17 @@ void Menu::adjustValue(const char* title, const char* path) {
     bool shouldUpdate = true;
 
     while (true) {
+        _encoder.tick(); // Update the encoder state
         if (shouldUpdate) {
-            // Display the current value
-            _display.clear();
-            _display.drawStr(0, 0, title);
-            _display.setCursor(0, 10);
-            _display.print("Value: ");
-            _display.println(value);
-            _display.sendBuffer();
+            updateAdjustValueDisplay(title, value);
             shouldUpdate = false;
         }
 
         // Handle encoder rotation
-        newPosition = _encoder.getPosition();
-        if (newPosition != oldPosition) {
-            if (newPosition > oldPosition) {
-                value++; // Increment value
-            } else {
-                value--; // Decrement value
-            }
-            oldPosition = newPosition;
+        const int64_t newEncoderPosition = _encoder.getPosition();
+        if (newEncoderPosition != encoderPosition) {
+            value += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust value based on encoder direction
+            encoderPosition = newEncoderPosition;
             shouldUpdate = true;
         }
 
@@ -229,6 +219,31 @@ void Menu::adjustValue(const char* title, const char* path) {
             break; // Exit the adjustment loop
         }
     }
+}
+
+void Menu::updateAdjustValueDisplay(const char* title, int value) {
+    _display.clear();
+
+    _display.setFont(u8g2_font_t0_11_tf);
+    const uint8_t titleY = 20; // Initial Y position for the title
+    const uint8_t titleWidth = _display.getStrWidth(title); // Measure the width of the title
+    _display.drawUTF8((_display.getDisplayWidth() - titleWidth) / 2, titleY, title); // Print the title centered
+    _display.setFont(u8g2_font_ncenB18_tn);
+
+    char buffer[4] = {'\0'};
+    sprintf(buffer, "%d", value);
+    const uint8_t degreeSymbolWidth = 8;
+    const uint8_t valueWidth = _display.getStrWidth(buffer);                  // Measure the width of the value
+    const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
+    const uint8_t valueY = titleY + 30;
+    _display.drawStr(valueX, valueY, buffer);
+
+    // Draw the custom degree symbol just after the value
+    const uint8_t symbolX = valueX + valueWidth;
+    const uint8_t symbolY = valueY - _display.getAscent();
+    _display.drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
+
+    _display.sendBuffer();
 }
 
 // Helper functions

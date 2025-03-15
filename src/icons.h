@@ -37,4 +37,16 @@ const uint8_t iconColdSettings[] = {
 const uint8_t iconTarget[] = {
     0x38, 0x00, 0x7c, 0x00, 0xfe, 0x00, 0xee, 0x00, 0xfe, 0x00, 0x7c, 0x00, 0x7c, 0x00, 0x38, 0x00, 0x38, 0x00, 0x10, 0x00
 };
+
+// Define the degree symbol as a custom character
+const uint8_t degreeSymbol[] U8X8_PROGMEM = {
+    0b00111100,
+    0b01100110,
+    0b11000011,
+    0b11000011,
+    0b11000011,
+    0b01100110,
+    0b00111100,
+    0b00000000
+};
 #endif // ICONS_H
