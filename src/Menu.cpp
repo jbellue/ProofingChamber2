@@ -50,14 +50,9 @@ Menu::Menu() :
     _encoder(ENCODER_CLK, ENCODER_DT, RotaryEncoder::LatchMode::FOUR3),
     _encoderSWPin(ENCODER_SW),
     _currentMenu(mainMenu),
-    _menuIndex(0),
-    _oldPosition(0),
-    _lastButtonState(HIGH),
-    _buttonState(HIGH),
-    _lastDebounceTime(0),
-    _display(U8G2_R0, U8X8_PIN_NONE)
+    _display(U8G2_R0, U8X8_PIN_NONE),
+    _currentState(STATE_IDLE)
 {
-    // _display.setI2CAddress(0x3C << 1); // Set I2C address of the display
     pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
 }
 
@@ -131,7 +126,7 @@ void Menu::startAdjustValue(const char* title, const char* path) {
     _oldPosition = _encoderPosition; // Reset encoder position
 
     // Update the display immediately
-    updateAdjustValueDisplay(_currentTitle, _currentValue);
+    updateAdjustValueDisplay();
 }
 
 void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t startM) {
@@ -143,7 +138,7 @@ void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t s
     _oldPosition = _encoderPosition; // Reset encoder position
 
     // Update the display immediately
-    updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+    updateAdjustTimeDisplay();
 }
 
 void Menu::handleAdjustValue() {
@@ -152,7 +147,7 @@ void Menu::handleAdjustValue() {
     if (newPosition != _oldPosition) {
         _currentValue += (newPosition > _oldPosition) ? 1 : -1;
         _oldPosition = newPosition;
-        updateAdjustValueDisplay(_currentTitle, _currentValue);
+        updateAdjustValueDisplay();
     }
 
     // Handle encoder button press to confirm and save
@@ -177,7 +172,7 @@ void Menu::handleAdjustTime() {
             if (_currentMinutes > 59) _currentMinutes = 0;
         }
         _oldPosition = newPosition;
-        updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+        updateAdjustTimeDisplay();
     }
 
     // Handle encoder button press to switch between hours and minutes, or confirm and save
@@ -185,7 +180,7 @@ void Menu::handleAdjustTime() {
         if (_adjustingHours) {
             _adjustingHours = false; // Switch to adjusting minutes
             // Update the display immediately to reflect the change
-            updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+            updateAdjustTimeDisplay();
         } else {
             Serial.println("Set time: " + String(_currentHours) + ":" + String(_currentMinutes));
             _currentState = STATE_IDLE; // Return to idle state
@@ -268,14 +263,14 @@ void Menu::adjustColdHigherLimit() {
     startAdjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
-void Menu::updateAdjustValueDisplay(const char* title, int value) {
+void Menu::updateAdjustValueDisplay() {
     _display.clear();
 
-    uint8_t currentY = drawTitle(title);
+    uint8_t currentY = drawTitle();
 
     _display.setFont(u8g2_font_ncenB18_tn);
     char buffer[4] = {'\0'};
-    sprintf(buffer, "%d", value);
+    sprintf(buffer, "%d", _currentValue);
     const uint8_t degreeSymbolWidth = 8;
     const uint8_t valueWidth = _display.getStrWidth(buffer);
     const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
@@ -290,15 +285,15 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
     _display.sendBuffer();
 }
 
-void Menu::updateAdjustTimeDisplay(const char* title, const uint8_t hours, const uint8_t minutes, bool adjustingHours) {
+void Menu::updateAdjustTimeDisplay() {
     _display.clear();
 
-    uint8_t currentY = drawTitle(title);
+    uint8_t currentY = drawTitle();
 
     // Display the time (HH:MM)
     _display.setFont(u8g2_font_ncenB18_tn);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
-    sprintf(timeBuffer, "%02d:%02d", hours, minutes); // Format the time as HH:MM
+    sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
     const uint8_t timeWidth = _display.getStrWidth("00:00"); // Measure the width of a default time string
     const uint8_t timeX = (_display.getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
     const uint8_t timeY = currentY + 2;
@@ -307,7 +302,7 @@ void Menu::updateAdjustTimeDisplay(const char* title, const uint8_t hours, const
     _display.drawStr(timeX, timeY, timeBuffer);
 
     // Highlight the currently adjusted value (hours or minutes)
-    if (adjustingHours) {
+    if (_adjustingHours) {
         // Highlight hours (first two characters)
         _display.drawHLine(timeX, timeY + 2, _display.getStrWidth("00"));
     } else {
@@ -318,14 +313,14 @@ void Menu::updateAdjustTimeDisplay(const char* title, const uint8_t hours, const
     _display.sendBuffer();
 }
 
-uint8_t Menu::drawTitle(const char* title, const uint8_t startY) {
+uint8_t Menu::drawTitle(const uint8_t startY) {
     _display.setFont(u8g2_font_t0_11_tf);
     const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
 
     // Split the title into lines based on EOL or CR
     char titleCopy[100]; // Copy the title to a mutable buffer
-    strncpy(titleCopy, title, sizeof(titleCopy));
+    strncpy(titleCopy, _currentTitle, sizeof(titleCopy));
     titleCopy[sizeof(titleCopy) - 1] = '\0'; // Ensure null termination
 
     char* line = strtok(titleCopy, "\n"); // Split the title into lines

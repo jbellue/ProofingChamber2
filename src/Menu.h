@@ -50,10 +50,10 @@ private:
     uint8_t _encoderSWPin;
 
     MenuItem* _currentMenu;
-    uint8_t _menuIndex;
-    int64_t _oldPosition;
-    int _lastButtonState;
-    int _buttonState;
+    uint8_t _menuIndex = 0;
+    int64_t _oldPosition = 0;
+    int _lastButtonState = HIGH;
+    int _buttonState = HIGH;
     unsigned long _lastDebounceTime = 0;
 
     int64_t _encoderPosition = 0; // Store the latest encoder position
@@ -84,9 +84,9 @@ private:
     void proofInAction();
     void proofAtAction();
     void clockAction();
-    void updateAdjustValueDisplay(const char * title, int value);
-    void updateAdjustTimeDisplay(const char * title, const uint8_t hours, const uint8_t minutes, bool adjustingHours);
-    uint8_t drawTitle(const char * title, const uint8_t startY = 10);
+    void updateAdjustValueDisplay();
+    void updateAdjustTimeDisplay();
+    uint8_t drawTitle(const uint8_t startY = 10);
     void adjustHotTargetTemp();
     void adjustHotLowerLimit();
     void adjustHotHigherLimit();
