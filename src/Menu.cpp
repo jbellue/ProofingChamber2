@@ -145,7 +145,16 @@ void Menu::proofInAction() {
 }
 
 void Menu::proofAtAction() {
-    setTime("Pousser \xC3\xA0...");
+    struct tm timeinfo;
+    int hour, minute;
+    if (!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to obtain time, defaulting to 0:00");
+        hour = 0;
+        minute = 0;
+    }
+    hour = timeinfo.tm_hour;
+    minute = timeinfo.tm_min;
+    setTime("Pousser \xC3\xA0...", hour, minute);
 }
 
 void Menu::clockAction() {
@@ -235,11 +244,11 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
 }
 
 
-void Menu::setTime(const char* title) {
+void Menu::setTime(const char* title, const uint8_t startH, const uint8_t startM) {
     int64_t encoderPosition = _encoder.getPosition();
 
-    int hours = 0;
-    int minutes = 0;
+    uint8_t hours = startH;
+    uint8_t minutes = startM;
     bool shouldUpdate = true;
     bool adjustingHours = true; // Start by adjusting hours
 
@@ -280,7 +289,7 @@ void Menu::setTime(const char* title) {
     _oldPosition = encoderPosition;
 }
 
-void Menu::updateAdjustTimeDisplay(const char* title, int hours, int minutes, bool adjustingHours) {
+void Menu::updateAdjustTimeDisplay(const char* title, const uint8_t hours, const uint8_t minutes, bool adjustingHours) {
     _display.clear();
 
     uint8_t currentY = drawTitle(title);
