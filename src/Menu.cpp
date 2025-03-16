@@ -1,3 +1,4 @@
+#include <WifiManager.h>
 #include "Menu.h"
 #include "icons.h"
 
@@ -21,10 +22,17 @@ Menu::MenuItem Menu::coolMenu[] = {
 };
 
 Menu::MenuItem Menu::settingsMenu[] = {
-    {MENU_HOT,   "Chaud",  iconHotSettings,  hotMenu,  nullptr},
-    {MENU_COLD,  "Froid",  iconColdSettings, coldMenu, nullptr},
-    {MENU_CLOCK, "Heure",  iconClock,        nullptr,  &Menu::clockAction},
-    {MENU_BACK,  "Retour", iconBack,         mainMenu, nullptr},
+    {MENU_HOT,           "Chaud",          iconHotSettings,  hotMenu,          nullptr},
+    {MENU_COLD,          "Froid",          iconColdSettings, coldMenu,         nullptr},
+    {MENU_MORE_SETTINGS, "Avanc\xC3\xA9s", iconSettings,     moreSettingsMenu, nullptr},
+    {MENU_BACK,          "Retour",         iconBack,         mainMenu,         nullptr},
+    {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
+};
+
+Menu::MenuItem Menu::moreSettingsMenu[] = {
+    {MENU_RESET_WIFI, "Reset du WiFi",  iconWiFi,  nullptr,      &Menu::resetWiFiAndReboot},
+    {MENU_TIMEZONE,   "Fuseau horaire", iconClock, nullptr,      nullptr},
+    {MENU_BACK,       "Retour",         iconBack,  settingsMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
 
@@ -45,12 +53,12 @@ Menu::MenuItem Menu::coldMenu[] = {
 };
 
 // Constructor
-Menu::Menu() :
+Menu::Menu(U8G2_SH1106_128X64_NONAME_F_HW_I2C* display) :
     _storage(),
     _encoder(ENCODER_CLK, ENCODER_DT, RotaryEncoder::LatchMode::FOUR3),
     _encoderSWPin(ENCODER_SW),
     _currentMenu(mainMenu),
-    _display(U8G2_R0, U8X8_PIN_NONE),
+    _display(display),
     _currentState(STATE_IDLE)
 {
     pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
@@ -58,18 +66,8 @@ Menu::Menu() :
 
 // Method to initialize the display
 void Menu::initializeDisplay() {
-    Serial.println("Calling _display.begin()...");
-    if (!_display.begin()) {
-        Serial.println("Display initialization failed!");
-        while (1); // Halt execution if display initialization fails
-    }
-    Serial.println("Display begin called.");
-    _display.clearBuffer();
-    _display.setFont(u8g2_font_t0_11_tf);
-    _display.drawStr(0, 10, "Display Initialized");
-    _display.sendBuffer();
-    Serial.println("Display buffer sent.");
-    delay(1000);
+    _display->clearBuffer();
+    _display->setFont(u8g2_font_t0_11_tf);
     Serial.println("Display initialized.");
 }
 
@@ -212,9 +210,9 @@ bool Menu::isButtonPressed() {
 
 // Menu actions
 void Menu::proofNowAction() {
-    _display.clear();
-    _display.drawUTF8(10, 20, "Proofing now...");
-    _display.sendBuffer();
+    _display->clear();
+    _display->drawUTF8(10, 20, "Proofing now...");
+    _display->sendBuffer();
     delay(1000);
 }
 
@@ -233,9 +231,9 @@ void Menu::proofAtAction() {
 }
 
 void Menu::clockAction() {
-    _display.clear();
-    _display.drawUTF8(10, 20, "Clock Settings...");
-    _display.sendBuffer();
+    _display->clear();
+    _display->drawUTF8(10, 20, "Clock Settings...");
+    _display->sendBuffer();
     delay(1000);
 }
 
@@ -263,60 +261,79 @@ void Menu::adjustColdHigherLimit() {
     startAdjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
+void Menu::resetWiFiAndReboot() {
+    // Reset Wi-Fi credentials
+    WiFiManager wifiManager;
+    wifiManager.resetSettings();
+
+    // Notify the user
+    _display->clearBuffer();
+    _display->setFont(u8g2_font_t0_11_tf);
+    _currentTitle = "Reset du Wi-Fi\n" "et red\xC3\xA9marrage";
+    drawTitle(20);
+    _display->sendBuffer();
+
+    // Delay to allow the message to be displayed
+    delay(2000);
+
+    // Reboot the device
+    ESP.restart();
+}
+
 void Menu::updateAdjustValueDisplay() {
-    _display.clear();
+    _display->clear();
 
     uint8_t currentY = drawTitle();
 
-    _display.setFont(u8g2_font_ncenB18_tn);
+    _display->setFont(u8g2_font_ncenB18_tn);
     char buffer[4] = {'\0'};
     sprintf(buffer, "%d", _currentValue);
     const uint8_t degreeSymbolWidth = 8;
-    const uint8_t valueWidth = _display.getStrWidth(buffer);
-    const uint8_t valueX = (_display.getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
+    const uint8_t valueWidth = _display->getStrWidth(buffer);
+    const uint8_t valueX = (_display->getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
     const uint8_t valueY = currentY + 2;
-    _display.drawStr(valueX, valueY, buffer);
+    _display->drawStr(valueX, valueY, buffer);
 
     // Draw the custom degree symbol just after the value
     const uint8_t symbolX = valueX + valueWidth;
-    const uint8_t symbolY = valueY - _display.getAscent();
-    _display.drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
+    const uint8_t symbolY = valueY - _display->getAscent();
+    _display->drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
 
-    _display.sendBuffer();
+    _display->sendBuffer();
 }
 
 void Menu::updateAdjustTimeDisplay() {
-    _display.clear();
+    _display->clear();
 
     uint8_t currentY = drawTitle();
 
     // Display the time (HH:MM)
-    _display.setFont(u8g2_font_ncenB18_tn);
+    _display->setFont(u8g2_font_ncenB18_tn);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
     sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
-    const uint8_t timeWidth = _display.getStrWidth("00:00"); // Measure the width of a default time string
-    const uint8_t timeX = (_display.getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
+    const uint8_t timeWidth = _display->getStrWidth("00:00"); // Measure the width of a default time string
+    const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
     const uint8_t timeY = currentY + 2;
 
     // Draw the time string
-    _display.drawStr(timeX, timeY, timeBuffer);
+    _display->drawStr(timeX, timeY, timeBuffer);
 
     // Highlight the currently adjusted value (hours or minutes)
     if (_adjustingHours) {
         // Highlight hours (first two characters)
-        _display.drawHLine(timeX, timeY + 2, _display.getStrWidth("00"));
+        _display->drawHLine(timeX, timeY + 2, _display->getStrWidth("00"));
     } else {
         // Highlight minutes (last two characters)
-        _display.drawHLine(timeX + _display.getStrWidth("00:"), timeY + 2, _display.getStrWidth("00"));
+        _display->drawHLine(timeX + _display->getStrWidth("00:"), timeY + 2, _display->getStrWidth("00"));
     }
 
-    _display.sendBuffer();
+    _display->sendBuffer();
 }
 
 uint8_t Menu::drawTitle(const uint8_t startY) {
-    _display.setFont(u8g2_font_t0_11_tf);
-    const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
-    const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
+    _display->setFont(u8g2_font_t0_11_tf);
+    const uint8_t lineHeight = _display->getAscent() - _display->getDescent() + 2; // Line height (font height + spacing)
+    const uint8_t displayWidth = _display->getDisplayWidth(); // Get the display width
 
     // Split the title into lines based on EOL or CR
     char titleCopy[100]; // Copy the title to a mutable buffer
@@ -328,7 +345,7 @@ uint8_t Menu::drawTitle(const uint8_t startY) {
 
     while (line != nullptr) {
         // Draw the current line centered on the display
-        _display.drawUTF8((displayWidth - _display.getStrWidth(line)) / 2, currentY, line);
+        _display->drawUTF8((displayWidth - _display->getStrWidth(line)) / 2, currentY, line);
         currentY += lineHeight; // Move Y position down
 
         // Get the next line
@@ -340,22 +357,22 @@ uint8_t Menu::drawTitle(const uint8_t startY) {
 
 // Helper functions
 void Menu::drawMenu(MenuItem* menu, int index) {
-    _display.clearBuffer();
-    _display.setFontMode(1);
-    _display.setBitmapMode(1);
-    _display.setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
+    _display->clearBuffer();
+    _display->setFontMode(1);
+    _display->setBitmapMode(1);
+    _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
     for (int i = 0; menu[i].name != nullptr; i++) {
         const uint8_t yPos = (i + 1) * 16 - 3;
-        _display.drawUTF8(16, yPos, menu[i].name);
+        _display->drawUTF8(16, yPos, menu[i].name);
         if (menu[i].icon != nullptr) {
-            _display.drawXBMP(3, yPos - 9, 10, 10, menu[i].icon);
+            _display->drawXBMP(3, yPos - 9, 10, 10, menu[i].icon);
         }
         if (i == index) {
-            _display.setDrawColor(2);
-            _display.drawRBox(0, yPos - 12, 128, 15, 1);
+            _display->setDrawColor(2);
+            _display->drawRBox(0, yPos - 12, 128, 15, 1);
         }
     }
-    _display.sendBuffer();
+    _display->sendBuffer();
     Serial.println("Menu drawn");
 }
 

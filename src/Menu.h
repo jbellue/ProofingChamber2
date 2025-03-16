@@ -13,11 +13,13 @@ public:
         MENU_PROOF_NOW,
         MENU_COOL_NOW,
         MENU_SETTINGS,
+        MENU_MORE_SETTINGS,
+        MENU_RESET_WIFI,
+        MENU_TIMEZONE,
         MENU_PROOF_IN,
         MENU_PROOF_AT,
         MENU_HOT,
         MENU_COLD,
-        MENU_CLOCK,
         MENU_BACK,
         MENU_TARGET_TEMP,
         MENU_LOWER_LIMIT,
@@ -38,13 +40,13 @@ public:
         void (Menu::*action)();// Pointer to member function for action
     };
 
-    Menu();
+    Menu(U8G2_SH1106_128X64_NONAME_F_HW_I2C* display);
     void begin();
     void update();
 
 private:
     MenuState _currentState;
-    U8G2_SH1106_128X64_NONAME_F_HW_I2C _display;
+    U8G2_SH1106_128X64_NONAME_F_HW_I2C* _display;
     Storage _storage;
     RotaryEncoder _encoder;
     uint8_t _encoderSWPin;
@@ -76,6 +78,7 @@ private:
     static MenuItem mainMenu[];
     static MenuItem coolMenu[];
     static MenuItem settingsMenu[];
+    static MenuItem moreSettingsMenu[];
     static MenuItem hotMenu[];
     static MenuItem coldMenu[];
 
@@ -93,6 +96,7 @@ private:
     void adjustColdTargetTemp();
     void adjustColdLowerLimit();
     void adjustColdHigherLimit();
+    void resetWiFiAndReboot();
 
 
     // State handlers
