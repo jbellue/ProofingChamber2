@@ -89,9 +89,24 @@ void Menu::begin() {
 
 // Update the menu
 void Menu::update() {
-    _encoder.tick(); // Update the encoder state
+    readInputs();
+
+    switch(_currentState) {
+        case STATE_IDLE:
+            handleMenuNavigation();
+            break;
+        case STATE_ADJUST_VALUE:
+            handleAdjustValue();
+            break;
+        case STATE_ADJUST_TIME:
+            handleAdjustTime();
+            break;
+    }
+}
+
+void Menu::handleMenuNavigation() {
     // Handle encoder rotation
-    int64_t newPosition = _encoder.getPosition();
+    int64_t newPosition = _encoderPosition;
     if (newPosition != _oldPosition) {
         if (newPosition > _oldPosition) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
@@ -100,14 +115,82 @@ void Menu::update() {
         }
         _oldPosition = newPosition;
         drawMenu(_currentMenu, _menuIndex);
-        Serial.print("Menu index: ");
-        Serial.println(_menuIndex);
     }
 
-    // Handle encoder button press with improved debounce
-    if (isButtonPressed()) {
-        Serial.println("Button pressed");
+    // Handle encoder button press
+    if (_buttonPressed) {
         handleMenuSelection();
+    }
+}
+
+void Menu::startAdjustValue(const char* title, const char* path) {
+    _currentState = STATE_ADJUST_VALUE;
+    _currentTitle = title;
+    _currentPath = path;
+    _currentValue = _storage.readIntFromFile(path, 0); // Load initial value
+    _oldPosition = _encoderPosition; // Reset encoder position
+
+    // Update the display immediately
+    updateAdjustValueDisplay(_currentTitle, _currentValue);
+}
+
+void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t startM) {
+    _currentState = STATE_ADJUST_TIME;
+    _currentTitle = title;
+    _currentHours = startH;
+    _currentMinutes = startM;
+    _adjustingHours = true;
+    _oldPosition = _encoderPosition; // Reset encoder position
+
+    // Update the display immediately
+    updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+}
+
+void Menu::handleAdjustValue() {
+    // Handle encoder rotation
+    int64_t newPosition = _encoderPosition;
+    if (newPosition != _oldPosition) {
+        _currentValue += (newPosition > _oldPosition) ? 1 : -1;
+        _oldPosition = newPosition;
+        updateAdjustValueDisplay(_currentTitle, _currentValue);
+    }
+
+    // Handle encoder button press to confirm and save
+    if (_buttonPressed) {
+        _storage.writeIntToFile(_currentPath, _currentValue);
+        _currentState = STATE_IDLE; // Return to idle state
+        drawMenu(_currentMenu, _menuIndex); // Redraw the menu
+    }
+}
+
+void Menu::handleAdjustTime() {
+    // Handle encoder rotation
+    int64_t newPosition = _encoderPosition;
+    if (newPosition != _oldPosition) {
+        if (_adjustingHours) {
+            _currentHours += (newPosition > _oldPosition) ? 1 : -1;
+            if (_currentHours < 0) _currentHours = 23;
+            if (_currentHours > 23) _currentHours = 0;
+        } else {
+            _currentMinutes += (newPosition > _oldPosition) ? 1 : -1;
+            if (_currentMinutes < 0) _currentMinutes = 59;
+            if (_currentMinutes > 59) _currentMinutes = 0;
+        }
+        _oldPosition = newPosition;
+        updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+    }
+
+    // Handle encoder button press to switch between hours and minutes, or confirm and save
+    if (_buttonPressed) {
+        if (_adjustingHours) {
+            _adjustingHours = false; // Switch to adjusting minutes
+            // Update the display immediately to reflect the change
+            updateAdjustTimeDisplay(_currentTitle, _currentHours, _currentMinutes, _adjustingHours);
+        } else {
+            Serial.println("Set time: " + String(_currentHours) + ":" + String(_currentMinutes));
+            _currentState = STATE_IDLE; // Return to idle state
+            drawMenu(_currentMenu, _menuIndex); // Redraw the menu
+        }
     }
 }
 
@@ -141,7 +224,7 @@ void Menu::proofNowAction() {
 }
 
 void Menu::proofInAction() {
-    setTime("Pousser dans...");
+    startSetTime("Pousser dans...");
 }
 
 void Menu::proofAtAction() {
@@ -149,12 +232,9 @@ void Menu::proofAtAction() {
     int hour, minute;
     if (!getLocalTime(&timeinfo)) {
         Serial.println("Failed to obtain time, defaulting to 0:00");
-        hour = 0;
-        minute = 0;
+        startSetTime("Pousser \xC3\xA0...");
     }
-    hour = timeinfo.tm_hour;
-    minute = timeinfo.tm_min;
-    setTime("Pousser \xC3\xA0...", hour, minute);
+    startSetTime("Pousser \xC3\xA0...", timeinfo.tm_hour, timeinfo.tm_min);
 }
 
 void Menu::clockAction() {
@@ -165,60 +245,27 @@ void Menu::clockAction() {
 }
 
 void Menu::adjustHotTargetTemp() {
-    adjustValue("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
+    startAdjustValue("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
 }
 
 void Menu::adjustHotLowerLimit() {
-    adjustValue("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
+    startAdjustValue("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void Menu::adjustHotHigherLimit() {
-    adjustValue("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
+    startAdjustValue("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void Menu::adjustColdTargetTemp() {
-    adjustValue("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
+    startAdjustValue("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void Menu::adjustColdLowerLimit() {
-    adjustValue("Limite basse\n" "de froid", "/cold/lower_limit.txt");
+    startAdjustValue("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void Menu::adjustColdHigherLimit() {
-    adjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
-}
-
-void Menu::adjustValue(const char* title, const char* path) {
-    int64_t encoderPosition = _encoder.getPosition();
-
-    // Load the initial value from storage
-    int value = _storage.readIntFromFile(path, 0);
-    Serial.println(value);
-    bool shouldUpdate = true;
-
-    while (true) {
-        _encoder.tick(); // Update the encoder state
-        if (shouldUpdate) {
-            updateAdjustValueDisplay(title, value);
-            shouldUpdate = false;
-        }
-
-        // Handle encoder rotation
-        const int64_t newEncoderPosition = _encoder.getPosition();
-        if (newEncoderPosition != encoderPosition) {
-            value += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust value based on encoder direction
-            encoderPosition = newEncoderPosition;
-            shouldUpdate = true;
-        }
-
-        // Handle encoder button press to confirm and save
-        if (isButtonPressed()) {
-            // Save the new value to storage
-            _storage.writeIntToFile(path, value);
-            break; // Exit the adjustment loop
-        }
-    }
-    _oldPosition = encoderPosition;
+    startAdjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void Menu::updateAdjustValueDisplay(const char* title, int value) {
@@ -241,52 +288,6 @@ void Menu::updateAdjustValueDisplay(const char* title, int value) {
     _display.drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
 
     _display.sendBuffer();
-}
-
-
-void Menu::setTime(const char* title, const uint8_t startH, const uint8_t startM) {
-    int64_t encoderPosition = _encoder.getPosition();
-
-    uint8_t hours = startH;
-    uint8_t minutes = startM;
-    bool shouldUpdate = true;
-    bool adjustingHours = true; // Start by adjusting hours
-
-    while (true) {
-        _encoder.tick(); // Update the encoder state
-        if (shouldUpdate) {
-            updateAdjustTimeDisplay(title, hours, minutes, adjustingHours);
-            shouldUpdate = false;
-        }
-
-        // Handle encoder rotation
-        const int64_t newEncoderPosition = _encoder.getPosition();
-        if (newEncoderPosition != encoderPosition) {
-            if (adjustingHours) {
-                hours += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust hours
-                if (hours < 0) hours = 23; // Wrap around (0-23)
-                if (hours > 23) hours = 0;
-            } else {
-                minutes += (newEncoderPosition > encoderPosition) ? 1 : -1; // Adjust minutes
-                if (minutes < 0) minutes = 59; // Wrap around (0-59)
-                if (minutes > 59) minutes = 0;
-            }
-            encoderPosition = newEncoderPosition;
-            shouldUpdate = true;
-        }
-
-        // Handle encoder button press to switch between hours and minutes, or confirm and save
-        if (isButtonPressed()) {
-            if (adjustingHours) {
-                adjustingHours = false; // Switch to adjusting minutes
-            } else {
-                Serial.println("Set time: " + String(hours) + ":" + String(minutes));
-                break; // Exit the adjustment loop
-            }
-            shouldUpdate = true;
-        }
-    }
-    _oldPosition = encoderPosition;
 }
 
 void Menu::updateAdjustTimeDisplay(const char* title, const uint8_t hours, const uint8_t minutes, bool adjustingHours) {
@@ -378,12 +379,23 @@ void Menu::handleMenuSelection() {
         Serial.println("Submenu selected");
     } else if (selectedItem->action != nullptr) {
         (this->*(selectedItem->action))();
-        drawMenu(_currentMenu, _menuIndex);
+
+        if (_currentState == STATE_IDLE) {
+            // Only redraw the menu if we're still in the idle state
+            drawMenu(_currentMenu, _menuIndex);
+        }
         Serial.println("Action executed");
     } else if (selectedItem->id == MENU_BACK) {
+        // Navigate back to the main menu
         _currentMenu = mainMenu;
         _menuIndex = 0;
         drawMenu(_currentMenu, _menuIndex);
         Serial.println("Back to main menu");
     }
+}
+
+void Menu::readInputs() {
+    _encoder.tick(); // Update the encoder state
+    _encoderPosition = _encoder.getPosition(); // Store the latest encoder position
+    _buttonPressed = isButtonPressed(); // Store the latest button state
 }
