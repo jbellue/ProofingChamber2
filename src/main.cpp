@@ -16,15 +16,16 @@ void setup() {
     display.begin();
     display.clearBuffer();
     display.setFont(u8g2_font_t0_11_tf);
-    display.drawStr(0, 10, "Connecting to Wi-Fi...");
+    display.drawStr(0, 10, "Initialization...");
+    display.drawStr(0, 20, "Connecting to Wi-Fi...");
     display.sendBuffer();
 
     WiFiManager wifiManager;
     wifiManager.autoConnect();
-    display.drawStr(0, 20, "done.");
-    display.drawStr(0, 30, "Connecting to NTP server...");
+    display.drawStr(0, 30, "done.");
+    display.drawStr(0, 40, "Connecting to NTP...");
     display.sendBuffer();
-    display.setCursor(0, 40);
+    display.setCursor(0, 50);
 
     // Configure NTP
     const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)
