@@ -31,7 +31,7 @@ Menu::MenuItem Menu::settingsMenu[] = {
 
 Menu::MenuItem Menu::moreSettingsMenu[] = {
     {MENU_RESET_WIFI, "Reset du WiFi",  iconWiFi,  nullptr,      &Menu::resetWiFiAndReboot},
-    {MENU_TIMEZONE,   "Fuseau horaire", iconClock, nullptr,      nullptr},
+    {MENU_TIMEZONE,   "Fuseau horaire", iconClock, nullptr,      &Menu::adjustTimezone},
     {MENU_BACK,       "Retour",         iconBack,  settingsMenu, nullptr},
     {MENU_LAST_ITEM, nullptr, nullptr, nullptr, nullptr} // End of menu
 };
@@ -260,6 +260,12 @@ void Menu::adjustColdLowerLimit() {
 void Menu::adjustColdHigherLimit() {
     startAdjustValue("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
+
+void Menu::adjustTimezone() {
+    _display->clear();
+    _display->drawUTF8(10, 20, "Adjusting the timezone...");
+    _display->sendBuffer();
+    delay(1000);}
 
 void Menu::resetWiFiAndReboot() {
     // Reset Wi-Fi credentials

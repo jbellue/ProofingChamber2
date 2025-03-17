@@ -97,6 +97,7 @@ private:
     void adjustColdLowerLimit();
     void adjustColdHigherLimit();
     void resetWiFiAndReboot();
+    void adjustTimezone();
 
 
     // State handlers
