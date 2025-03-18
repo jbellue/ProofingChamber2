@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <RotaryEncoder.h>
-#include <U8g2lib.h>
+#include "DisplayManager.h"
 #include "Storage.h"
 
 class Menu {
@@ -40,13 +40,13 @@ public:
         void (Menu::*action)();// Pointer to member function for action
     };
 
-    Menu(U8G2_SH1106_128X64_NONAME_F_HW_I2C* display);
+    Menu(DisplayManager* displayManager);
     void begin();
     void update();
 
 private:
     MenuState _currentState;
-    U8G2_SH1106_128X64_NONAME_F_HW_I2C* _display;
+    DisplayManager* _displayManager;
     Storage _storage;
     RotaryEncoder _encoder;
     uint8_t _encoderSWPin;
