@@ -2,10 +2,6 @@
 #include "Menu.h"
 #include "icons.h"
 
-#define ENCODER_CLK 2
-#define ENCODER_DT  3
-#define ENCODER_SW  4
-
 // Menu definitions
 Menu::MenuItem Menu::mainMenu[] = {
     {MENU_PROOF_NOW, "Mettre en pousse", iconProof,    nullptr,      &Menu::proofNowAction},
@@ -53,26 +49,17 @@ Menu::MenuItem Menu::coldMenu[] = {
 };
 
 // Constructor
-Menu::Menu(DisplayManager* displayManager) :
-    _storage(),
-    _encoder(ENCODER_CLK, ENCODER_DT, RotaryEncoder::LatchMode::FOUR3),
-    _encoderSWPin(ENCODER_SW),
-    _currentMenu(mainMenu),
+Menu::Menu(DisplayManager* displayManager, InputManager* inputManager) :
     _displayManager(displayManager),
+    _inputManager(inputManager),
+    _currentMenu(mainMenu),
     _currentState(STATE_IDLE)
-{
-    pinMode(_encoderSWPin, INPUT_PULLUP); // Initialize the encoder switch pin
-}
-
-// Method to initialize the display
-void Menu::initializeDisplay() {
-    _displayManager->initialize();
-    Serial.println("Display initialized.");
-}
+{}
 
 // Initialize the menu
 void Menu::begin() {
-    initializeDisplay(); // Initialize the display
+    _displayManager->initialize();
+    _inputManager->begin();
     _currentMenu = mainMenu;
     _menuIndex = 0;
     drawMenu(_currentMenu, _menuIndex);
@@ -81,7 +68,7 @@ void Menu::begin() {
 
 // Update the menu
 void Menu::update() {
-    readInputs();
+    _inputManager->update();
 
     switch(_currentState) {
         case STATE_IDLE:
@@ -98,7 +85,7 @@ void Menu::update() {
 
 void Menu::handleMenuNavigation() {
     // Handle encoder rotation
-    int64_t newPosition = _encoderPosition;
+    int64_t newPosition = _inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         if (newPosition > _oldPosition) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
@@ -110,7 +97,7 @@ void Menu::handleMenuNavigation() {
     }
 
     // Handle encoder button press
-    if (_buttonPressed) {
+    if (_inputManager->isButtonPressed()) {
         handleMenuSelection();
     }
 }
@@ -120,7 +107,7 @@ void Menu::startAdjustValue(const char* title, const char* path) {
     _currentTitle = title;
     _currentPath = path;
     _currentValue = _storage.readIntFromFile(path, 0); // Load initial value
-    _oldPosition = _encoderPosition; // Reset encoder position
+    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
 
     // Update the display immediately
     updateAdjustValueDisplay();
@@ -132,7 +119,7 @@ void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t s
     _currentHours = startH;
     _currentMinutes = startM;
     _adjustingHours = true;
-    _oldPosition = _encoderPosition; // Reset encoder position
+    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
 
     // Update the display immediately
     updateAdjustTimeDisplay();
@@ -140,7 +127,7 @@ void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t s
 
 void Menu::handleAdjustValue() {
     // Handle encoder rotation
-    int64_t newPosition = _encoderPosition;
+    int64_t newPosition = _inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         _currentValue += (newPosition > _oldPosition) ? 1 : -1;
         _oldPosition = newPosition;
@@ -148,7 +135,7 @@ void Menu::handleAdjustValue() {
     }
 
     // Handle encoder button press to confirm and save
-    if (_buttonPressed) {
+    if (_inputManager->isButtonPressed()) {
         _storage.writeIntToFile(_currentPath, _currentValue);
         _currentState = STATE_IDLE; // Return to idle state
         drawMenu(_currentMenu, _menuIndex); // Redraw the menu
@@ -157,7 +144,7 @@ void Menu::handleAdjustValue() {
 
 void Menu::handleAdjustTime() {
     // Handle encoder rotation
-    int64_t newPosition = _encoderPosition;
+    int64_t newPosition = _inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         if (_adjustingHours) {
             _currentHours += (newPosition > _oldPosition) ? 1 : -1;
@@ -173,7 +160,7 @@ void Menu::handleAdjustTime() {
     }
 
     // Handle encoder button press to switch between hours and minutes, or confirm and save
-    if (_buttonPressed) {
+    if (_inputManager->isButtonPressed()) {
         if (_adjustingHours) {
             _adjustingHours = false; // Switch to adjusting minutes
             // Update the display immediately to reflect the change
@@ -184,27 +171,6 @@ void Menu::handleAdjustTime() {
             drawMenu(_currentMenu, _menuIndex); // Redraw the menu
         }
     }
-}
-
-// Method to handle button press with debounce
-bool Menu::isButtonPressed() {
-    int reading = digitalRead(_encoderSWPin);
-
-    if (reading != _lastButtonState) {
-        _lastDebounceTime = millis();
-    }
-
-    if ((millis() - _lastDebounceTime) > 50) {
-        if(reading != _buttonState) {
-            _buttonState = reading;
-            if (_buttonState == LOW) {
-                return true;
-            }
-        }
-    }
-
-    _lastButtonState = reading;
-    return false;
 }
 
 // Menu actions
@@ -409,10 +375,4 @@ void Menu::handleMenuSelection() {
         drawMenu(_currentMenu, _menuIndex);
         Serial.println("Back to main menu");
     }
-}
-
-void Menu::readInputs() {
-    _encoder.tick(); // Update the encoder state
-    _encoderPosition = _encoder.getPosition(); // Store the latest encoder position
-    _buttonPressed = isButtonPressed(); // Store the latest button state
 }

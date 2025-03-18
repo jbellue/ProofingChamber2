@@ -2,9 +2,9 @@
 #define MENU_H
 
 #include <Arduino.h>
-#include <RotaryEncoder.h>
 #include "DisplayManager.h"
 #include "Storage.h"
+#include "InputManager.h"
 
 class Menu {
 public:
@@ -40,7 +40,7 @@ public:
         void (Menu::*action)();// Pointer to member function for action
     };
 
-    Menu(DisplayManager* displayManager);
+    Menu(DisplayManager* displayManager, InputManager* inputManager);
     void begin();
     void update();
 
@@ -48,18 +48,12 @@ private:
     MenuState _currentState;
     DisplayManager* _displayManager;
     Storage _storage;
-    RotaryEncoder _encoder;
     uint8_t _encoderSWPin;
+    InputManager* _inputManager;
 
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
     int64_t _oldPosition = 0;
-    int _lastButtonState = HIGH;
-    int _buttonState = HIGH;
-    unsigned long _lastDebounceTime = 0;
-
-    int64_t _encoderPosition = 0; // Store the latest encoder position
-    bool _buttonPressed = false;  // Store the latest button state
 
     // State variables
     const char* _currentTitle = nullptr;
@@ -68,11 +62,6 @@ private:
     uint8_t _currentHours = 0;
     uint8_t _currentMinutes = 0;
     bool _adjustingHours = true;
-
-    void initializeDisplay();
-
-    // Method to handle button press with debounce
-    bool isButtonPressed();
 
     // Menu items
     static MenuItem mainMenu[];
@@ -104,7 +93,6 @@ private:
     void handleMenuNavigation();
     void handleAdjustValue();
     void handleAdjustTime();
-    void readInputs();
 
     void startAdjustValue(const char * title, const char * path);
     void startSetTime(const char * title, const uint8_t startH = 0, const uint8_t startM = 0);
