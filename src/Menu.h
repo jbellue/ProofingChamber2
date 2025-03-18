@@ -2,30 +2,12 @@
 #define MENU_H
 
 #include <Arduino.h>
-#include "DisplayManager.h"
+#include <U8g2lib.h>
 #include "Storage.h"
 #include "InputManager.h"
 
 class Menu {
 public:
-    // Enum for menu item IDs
-    enum MenuItemID {
-        MENU_PROOF_NOW,
-        MENU_COOL_NOW,
-        MENU_SETTINGS,
-        MENU_MORE_SETTINGS,
-        MENU_RESET_WIFI,
-        MENU_TIMEZONE,
-        MENU_PROOF_IN,
-        MENU_PROOF_AT,
-        MENU_HOT,
-        MENU_COLD,
-        MENU_BACK,
-        MENU_TARGET_TEMP,
-        MENU_LOWER_LIMIT,
-        MENU_HIGHER_LIMIT,
-        MENU_LAST_ITEM
-    };
     enum MenuState {
         STATE_IDLE,
         STATE_ADJUST_VALUE,
@@ -33,23 +15,27 @@ public:
     };
 
     struct MenuItem {
-        MenuItemID id;         // Unique identifier for the menu item
         const char* name;      // Name of the menu item (stored in PROGMEM)
         const uint8_t* icon;   // Icon for the menu item (nullptr if no icon)
         MenuItem* subMenu;     // Pointer to submenu (nullptr if no submenu)
-        void (Menu::*action)();// Pointer to member function for action
+        void (*action)();      // Pointer to function for action
     };
 
-    Menu(DisplayManager* displayManager, InputManager* inputManager);
-    void begin();
+    Menu(U8G2_SH1106_128X64_NONAME_F_HW_I2C* display, InputManager* inputManager);
+    void begin(MenuItem* mainMenu);
     void update();
+    uint8_t drawTitle(const uint8_t startY = 10);
+    void setCurrentTitle(const char* title);
+
+    void startAdjustValue(const char* title, const char* path);
+    void startSetTime(const char* title, const uint8_t startH = 0, const uint8_t startM = 0);
+    U8G2_SH1106_128X64_NONAME_F_HW_I2C* display;
+    InputManager* inputManager;
 
 private:
     MenuState _currentState;
-    DisplayManager* _displayManager;
     Storage _storage;
     uint8_t _encoderSWPin;
-    InputManager* _inputManager;
 
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
@@ -63,42 +49,17 @@ private:
     uint8_t _currentMinutes = 0;
     bool _adjustingHours = true;
 
-    // Menu items
-    static MenuItem mainMenu[];
-    static MenuItem coolMenu[];
-    static MenuItem settingsMenu[];
-    static MenuItem moreSettingsMenu[];
-    static MenuItem hotMenu[];
-    static MenuItem coldMenu[];
-
     // Menu actions
-    void proofNowAction();
-    void proofInAction();
-    void proofAtAction();
-    void clockAction();
     void updateAdjustValueDisplay();
     void updateAdjustTimeDisplay();
-    uint8_t drawTitle(const uint8_t startY = 10);
-    void adjustHotTargetTemp();
-    void adjustHotLowerLimit();
-    void adjustHotHigherLimit();
-    void adjustColdTargetTemp();
-    void adjustColdLowerLimit();
-    void adjustColdHigherLimit();
-    void resetWiFiAndReboot();
-    void adjustTimezone();
-
 
     // State handlers
     void handleMenuNavigation();
     void handleAdjustValue();
     void handleAdjustTime();
 
-    void startAdjustValue(const char * title, const char * path);
-    void startSetTime(const char * title, const uint8_t startH = 0, const uint8_t startM = 0);
-
     // Helper functions
-    void drawMenu(MenuItem* menu, int index);
+    void drawMenu(MenuItem* menu, const uint8_t index);
     uint8_t getMenuSize(MenuItem* menu);
     void handleMenuSelection();
 };

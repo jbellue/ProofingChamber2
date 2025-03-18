@@ -9,7 +9,7 @@ void InputManager::begin() {
 }
 
 void InputManager::update() {
-    _encoder.tick();;
+    _encoder.tick();
 }
 
 int64_t InputManager::getEncoderPosition() {
@@ -17,7 +17,7 @@ int64_t InputManager::getEncoderPosition() {
 }
 
 bool InputManager::isButtonPressed() {
-    int reading = digitalRead(_encoderSWPin);
+    const int reading = digitalRead(_encoderSWPin);
     if (reading != _lastButtonState) {
         _lastDebounceTime = millis();
     }
