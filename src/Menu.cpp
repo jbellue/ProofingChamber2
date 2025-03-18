@@ -1,4 +1,5 @@
 #include <WiFiManager.h>
+#include "DebugUtils.h"
 #include "Menu.h"
 #include "icons.h"
 
@@ -18,7 +19,7 @@ void Menu::begin(MenuItem* mainMenu) {
     _currentMenu = mainMenu;
     _menuIndex = 0;
     drawMenu(_currentMenu, _menuIndex);
-    Serial.println("Menu Began");
+    DEBUG_PRINTLN("Menu Began");
 }
 
 // Update the menu
@@ -122,7 +123,7 @@ void Menu::handleAdjustTime() {
             // Update the display immediately to reflect the change
             updateAdjustTimeDisplay();
         } else {
-            Serial.println("Set time: " + String(_currentHours) + ":" + String(_currentMinutes));
+            DEBUG_PRINTLN("Set time: " + String(_currentHours) + ":" + String(_currentMinutes));
             _currentState = STATE_IDLE; // Return to idle state
             drawMenu(_currentMenu, _menuIndex); // Redraw the menu
         }
@@ -222,7 +223,7 @@ void Menu::drawMenu(MenuItem* menu, const uint8_t index) {
         }
     }
     display->sendBuffer();
-    Serial.println("Menu drawn");
+    DEBUG_PRINTLN("Menu drawn");
 }
 
 uint8_t Menu::getMenuSize(MenuItem* menu) {
@@ -237,7 +238,7 @@ void Menu::handleMenuSelection() {
         _currentMenu = selectedItem->subMenu;
         _menuIndex = 0;
         drawMenu(_currentMenu, _menuIndex);
-        Serial.println("Submenu selected");
+        DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr) {
         selectedItem->action();
 
@@ -245,6 +246,6 @@ void Menu::handleMenuSelection() {
             // Only redraw the menu if we're still in the idle state
             drawMenu(_currentMenu, _menuIndex);
         }
-        Serial.println("Action executed");
+        DEBUG_PRINTLN("Action executed");
     }
 }

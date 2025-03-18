@@ -1,5 +1,6 @@
-#include "MenuActions.h"
 #include <WiFiManager.h>
+#include "MenuActions.h"
+#include "DebugUtils.h"
 
 // Define static members
 Menu* MenuActions::_menu = nullptr;
@@ -19,7 +20,7 @@ void MenuActions::proofAtAction() {
     struct tm timeinfo;
     int hour, minute;
     if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time, defaulting to 0:00");
+        DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
         _menu->startSetTime("Pousser \xC3\xA0...");
     }
     _menu->startSetTime("Pousser \xC3\xA0...", timeinfo.tm_hour, timeinfo.tm_min);

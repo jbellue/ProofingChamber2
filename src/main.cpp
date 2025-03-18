@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <time.h>
 #include <U8g2lib.h>
+#include "DebugUtils.h"
 #include "InputManager.h"
 #include "Menu.h"
 #include "MenuActions.h"
@@ -19,8 +20,10 @@ Menu menu(&display, &inputManager);
 MenuActions menuActions(&menu);
 
 void setup() {
+#if DEBUG
     // Initialize serial communication
     Serial.begin(115200);
+#endif
 
     // Initialize the display
     display.begin();
@@ -40,14 +43,14 @@ void setup() {
     // Configure NTP
     const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)
     configTzTime(timezone, "pool.ntp.org", "time.nist.gov"); // Configure NTP with default servers
-    Serial.print("Waiting for NTP time sync");
+    DEBUG_PRINT("Waiting for NTP time sync");
     while (time(nullptr) < 1000000000) { // Wait until the time is synced
         delay(500);
-        Serial.print(".");
+        DEBUG_PRINT(".");
         display.print(".");
         display.sendBuffer();
     }
-    Serial.println("\nTime synced with NTP");
+    DEBUG_PRINTLN("\nTime synced with NTP");
 
     // Initialize menu
     menu.begin(mainMenu);

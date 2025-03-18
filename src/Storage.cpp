@@ -1,19 +1,21 @@
+#include "DebugUtils.h"
 #include "Storage.h"
 
 Storage::Storage() {
     if (!LittleFS.begin()) {
-        Serial.println("Failed to mount LittleFS");
+        DEBUG_PRINTLN("Failed to mount LittleFS");
         return;
     }
-    Serial.println("LittleFS mounted successfully");
+    DEBUG_PRINTLN("LittleFS mounted successfully");
 }
 
 int Storage::readIntFromFile(const char* path, int defaultValue) {
-    Serial.printf("Reading file: %s\n", path);
+    DEBUG_PRINT("Reading int from file ");
+    DEBUG_PRINTLN(path);
 
     File file = LittleFS.open(path, FILE_READ);
     if (!file) {
-        Serial.println("Failed to open file for reading");
+        DEBUG_PRINTLN("Failed to open file for reading");
         return defaultValue;
     }
 
@@ -23,11 +25,12 @@ int Storage::readIntFromFile(const char* path, int defaultValue) {
 }
 
 float Storage::readFloatFromFile(const char* path, float defaultValue) {
-    Serial.printf("Reading file: %s\n", path);
+    DEBUG_PRINT("Reading float from file ");
+    DEBUG_PRINTLN(path);
 
     File file = LittleFS.open(path, FILE_READ);
     if (!file) {
-        Serial.println("Failed to open file for reading");
+        DEBUG_PRINTLN("Failed to open file for reading");
         return defaultValue;
     }
 
@@ -37,11 +40,12 @@ float Storage::readFloatFromFile(const char* path, float defaultValue) {
 }
 
 String Storage::readStringFromFile(const char* path, const String& defaultValue) {
-    Serial.printf("Reading file: %s\n", path);
+    DEBUG_PRINT("Reading string from file ");
+    DEBUG_PRINTLN(path);
 
     File file = LittleFS.open(path, FILE_READ);
     if (!file) {
-        Serial.println("Failed to open file for reading");
+        DEBUG_PRINTLN("Failed to open file for reading");
         return defaultValue;
     }
 
@@ -63,20 +67,21 @@ bool Storage::writeStringToFile(const char* path, const String& value) {
 }
 
 bool Storage::writeToFile(const char* path, const String& value) {
-    Serial.printf("Writing to file: %s\n", path);
+    DEBUG_PRINT("Writing to file ");
+    DEBUG_PRINTLN(path);
 
     File file = LittleFS.open(path, FILE_WRITE);
     if (!file) {
-        Serial.println("Failed to open file for writing");
+        DEBUG_PRINTLN("Failed to open file for writing");
         return false;
     }
 
     if (file.print(value)) {
-        Serial.println("File written successfully");
+        DEBUG_PRINTLN("File written successfully");
         file.close();
         return true;
     } else {
-        Serial.println("Write failed");
+        DEBUG_PRINTLN("Write failed");
         file.close();
         return false;
     }
