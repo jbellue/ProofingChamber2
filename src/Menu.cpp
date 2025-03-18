@@ -47,6 +47,8 @@ void Menu::startAdjustValue(const char* title, const char* path) {
     _oldPosition = inputManager->getEncoderPosition(); // Reset encoder position
 
     // Update the display immediately
+    display->clear();
+    _valueY = drawTitle();
     updateAdjustValueDisplay();
 }
 
@@ -59,6 +61,8 @@ void Menu::startSetTime(const char* title, const uint8_t startH, const uint8_t s
     _oldPosition = inputManager->getEncoderPosition(); // Reset encoder position
 
     // Update the display immediately
+    display->clear();
+    _valueY = drawTitle();
     updateAdjustTimeDisplay();
 }
 
@@ -131,16 +135,20 @@ void Menu::handleAdjustTime() {
 }
 
 void Menu::updateAdjustValueDisplay() {
-    display->clear();
-    uint8_t currentY = drawTitle();
-
     display->setFont(u8g2_font_ncenB18_tn);
     char buffer[4] = {'\0'};
     sprintf(buffer, "%d", _currentValue);
     const uint8_t degreeSymbolWidth = 8;
     const uint8_t valueWidth = display->getStrWidth(buffer);
     const uint8_t valueX = (display->getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
-    const uint8_t valueY = currentY + 2;
+    const uint8_t valueY = _valueY + 2;
+
+    // Only redraw the value and degree symbol
+    display->setDrawColor(0); // Clear the previous value
+    const uint8_t clearWidth = valueWidth + degreeSymbolWidth + 1; // Add buffer to ensure full clearing
+    const uint8_t clearHeight = display->getAscent() - display->getDescent() + 4; // Add buffer to ensure full clearing
+    display->drawBox(valueX, valueY - display->getAscent(), clearWidth, clearHeight);
+    display->setDrawColor(1); // Draw the new value
     display->drawStr(valueX, valueY, buffer);
 
     // Draw the custom degree symbol just after the value
@@ -152,17 +160,18 @@ void Menu::updateAdjustValueDisplay() {
 }
 
 void Menu::updateAdjustTimeDisplay() {
-    display->clear();
-    uint8_t currentY = drawTitle();
-
     display->setFont(u8g2_font_ncenB18_tn);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
     sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
     const uint8_t timeWidth = display->getStrWidth("00:00"); // Measure the width of a default time string
     const uint8_t timeX = (display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
-    const uint8_t timeY = currentY + 2;
+    const uint8_t timeY = _valueY + 2;
 
-    // Draw the time string
+    // Only redraw the time string
+    display->setDrawColor(0); // Clear the previous time
+    const uint8_t clearHeight = display->getAscent() - display->getDescent() + 6; // Add buffer to ensure full clearing
+    display->drawBox(timeX, timeY - display->getAscent(), timeWidth, clearHeight);
+    display->setDrawColor(1); // Draw the new time
     display->drawStr(timeX, timeY, timeBuffer);
 
     // Highlight the currently adjusted value (hours or minutes)

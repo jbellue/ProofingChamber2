@@ -47,6 +47,7 @@ private:
     int _currentValue = 0;
     uint8_t _currentHours = 0;
     uint8_t _currentMinutes = 0;
+    uint8_t _valueY = 0;
     bool _adjustingHours = true;
 
     // Menu actions
