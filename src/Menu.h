@@ -45,8 +45,9 @@ private:
     const char* _currentTitle = nullptr;
     const char* _currentPath = nullptr;
     int _currentValue = 0;
-    uint8_t _currentHours = 0;
-    uint8_t _currentMinutes = 0;
+    uint8_t _currentDays = 0;
+    int8_t _currentHours = 0;
+    int8_t _currentMinutes = 0;
     uint8_t _valueY = 0;
     bool _adjustingHours = true;
 

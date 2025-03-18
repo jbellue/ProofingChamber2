@@ -109,8 +109,14 @@ void Menu::handleAdjustTime() {
     if (newPosition != _oldPosition) {
         if (_adjustingHours) {
             _currentHours += (newPosition > _oldPosition) ? 1 : -1;
-            if (_currentHours < 0) _currentHours = 23;
-            if (_currentHours > 23) _currentHours = 0;
+            if (_currentHours < 0) {
+                _currentHours = 23;
+                if (_currentDays > 0) _currentDays -= 1;
+            }
+            if (_currentHours > 23) {
+                _currentHours = 0;
+                _currentDays += 1;
+            }
         } else {
             _currentMinutes += (newPosition > _oldPosition) ? 1 : -1;
             if (_currentMinutes < 0) _currentMinutes = 59;
@@ -169,8 +175,9 @@ void Menu::updateAdjustTimeDisplay() {
 
     // Only redraw the time string
     display->setDrawColor(0); // Clear the previous time
+    const uint8_t clearWidth = display->getWidth();
     const uint8_t clearHeight = display->getAscent() - display->getDescent() + 6; // Add buffer to ensure full clearing
-    display->drawBox(timeX, timeY - display->getAscent(), timeWidth, clearHeight);
+    display->drawBox(timeX, timeY - display->getAscent(), clearWidth, clearHeight);
     display->setDrawColor(1); // Draw the new time
     display->drawStr(timeX, timeY, timeBuffer);
 
@@ -181,6 +188,12 @@ void Menu::updateAdjustTimeDisplay() {
     } else {
         // Highlight minutes (last two characters)
         display->drawHLine(timeX + display->getStrWidth("00:"), timeY + 2, display->getStrWidth("00"));
+    }
+
+    if(_currentDays > 0) {
+        display->setFont(u8g2_font_ncenB12_tr);
+        sprintf(timeBuffer, "+%dj", _currentDays); // Format the days as +1j
+        display->drawStr(timeX + timeWidth + 2, timeY - 4, timeBuffer);
     }
 
     display->sendBuffer();
