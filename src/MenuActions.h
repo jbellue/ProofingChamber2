@@ -1,27 +1,30 @@
 #ifndef MENU_ACTIONS_H
 #define MENU_ACTIONS_H
 
-#include "Menu.h"
+#include "ScreensManager.h"
+#include "screens/AdjustValue.h"
+#include "screens/AdjustTime.h"
+#include "screens/ProofingScreen.h"
 
 class MenuActions {
 public:
-    MenuActions(Menu* menu) {
-        _menu = menu;
-    }
-    static void proofNowAction();
-    static void proofInAction();
-    static void proofAtAction();
-    static void clockAction();
-    static void adjustHotTargetTemp();
-    static void adjustHotLowerLimit();
-    static void adjustHotHigherLimit();
-    static void adjustColdTargetTemp();
-    static void adjustColdLowerLimit();
-    static void adjustColdHigherLimit();
-    static void resetWiFiAndReboot();
-    static void adjustTimezone();
+    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen);
+    void proofNowAction();
+    void proofInAction();
+    void proofAtAction();
+    void adjustHotTargetTemp();
+    void adjustHotLowerLimit();
+    void adjustHotHigherLimit();
+    void adjustColdTargetTemp();
+    void adjustColdLowerLimit();
+    void adjustColdHigherLimit();
+    void resetWiFiAndReboot();
+    void adjustTimezone();
+    ScreensManager* _screensManager;
 private:
-    static Menu* _menu;
+    AdjustTime* _adjustTime;
+    AdjustValue* _adjustValue;
+    ProofingScreen* _proofingScreen;
 };
 
 #endif

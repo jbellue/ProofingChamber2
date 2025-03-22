@@ -2,11 +2,16 @@
 #include <WiFi.h>
 #include <time.h>
 #include <U8g2lib.h>
+#include "DisplayManager.h"
 #include "DebugUtils.h"
 #include "InputManager.h"
-#include "Menu.h"
+#include "Screens/Menu.h"
 #include "MenuActions.h"
 #include "MenuItems.h"
+#include "ScreensManager.h"
+#include "screens/AdjustTime.h"
+#include "screens/AdjustValue.h"
+#include "screens/ProofingScreen.h"
 
 #define ENCODER_CLK 2
 #define ENCODER_DT  3
@@ -14,10 +19,15 @@
 
 // Global objects
 U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, U8X8_PIN_NONE);
+DisplayManager displayManager(&display);
 
+ScreensManager screensManager;
 InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW);
-Menu menu(&display, &inputManager);
-MenuActions menuActions(&menu);
+AdjustValue adjustValue(&displayManager, &inputManager);
+AdjustTime adjustTime(&displayManager, &inputManager);
+ProofingScreen proofingScreen(&displayManager, &inputManager);
+MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen);
+Menu menu(&displayManager, &inputManager, &menuActions);
 
 void setup() {
 #if DEBUG
@@ -54,8 +64,10 @@ void setup() {
 
     // Initialize menu
     menu.begin(mainMenu);
+    screensManager.setActiveScreen(&menu);
 }
 
 void loop() {
-    menu.update();
+    inputManager.update();
+    screensManager.update();
 }

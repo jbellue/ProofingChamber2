@@ -1,4 +1,5 @@
 #include "InputManager.h"
+#include "DebugUtils.h"
 #include <Arduino.h>
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin)
@@ -10,6 +11,8 @@ void InputManager::begin() {
 
 void InputManager::update() {
     _encoder.tick();
+    int64_t newPosition = getEncoderPosition();
+    //TODO maybe this should return a direction?
 }
 
 int64_t InputManager::getEncoderPosition() {
