@@ -16,7 +16,7 @@ void MenuActions::proofNowAction() {
     DEBUG_PRINTLN("MenuActions: proofNowAction called");
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_proofingScreen);
-    _proofingScreen->setNextScreen(menu); // TODO go to screen cooling
+    _proofingScreen->setNextScreen(menu);
     _proofingScreen->begin("9:34", 0, true, false);
 }
 
