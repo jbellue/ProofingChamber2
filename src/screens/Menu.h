@@ -19,12 +19,11 @@ public:
     };
 
     Menu(DisplayManager* display, InputManager* inputManager, MenuActions* menuActions);
-    void begin(MenuItem* mainMenu);
-    void beginImpl() override {}; // Empty implementation for the base class
+    void begin();
+    void beginImpl() override;
     bool update(bool forceRedraw = false) override;
 
 private:
-    void beginImpl(MenuItem* mainMenu);
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
     int64_t _oldPosition = 0;
@@ -36,5 +35,5 @@ private:
     // Helper functions
     void drawMenu(MenuItem* menu, const uint8_t index);
     uint8_t getMenuSize(MenuItem* menu);
-    void handleMenuSelection();
+    bool handleMenuSelection();
 };

@@ -14,8 +14,7 @@ void WiFiReset::beginImpl() {
     _onCancelButton = true;
     _oldPosition = _inputManager->getEncoderPosition();
     _display->clear();
-    _display->drawTitle("Effacer tous les\nparam\xC3\xA8tres du WiFi ?");
-    drawScreen();
+    _display->drawTitle("Effacer tous les\nparam\xC3\xA8tres du WiFi ?", 20);
 }
 
 bool WiFiReset::update(bool forceRedraw) {

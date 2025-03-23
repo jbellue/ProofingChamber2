@@ -16,7 +16,7 @@ void ProofingScreen::beginImpl(const char* startTime, int initialTemp, bool isRi
     this->isRising = isRising;
     this->isIconOn = isIconOn;
 
-    drawScreen();
+    display->clear();
 }
 
 bool ProofingScreen::update(bool forceRedraw) {

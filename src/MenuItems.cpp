@@ -15,7 +15,7 @@ Menu::MenuItem coolMenu[] = {
     {"Pousser \xC3\xA0...", iconClock,     nullptr,  std::bind(&MenuActions::proofAtAction, &menuActions)},
     {"Pousser dans...",     iconHourglass, nullptr,  std::bind(&MenuActions::proofInAction, &menuActions)},
     {"Retour",              iconBack,      mainMenu, nullptr},
-    {nullptr,              nullptr,       nullptr,  nullptr} // End of menu
+    {nullptr,               nullptr,       nullptr,  nullptr} // End of menu
 };
 
 Menu::MenuItem settingsMenu[] = {
@@ -23,14 +23,14 @@ Menu::MenuItem settingsMenu[] = {
     {"Froid",          iconColdSettings, coldMenu,         nullptr},
     {"Avanc\xC3\xA9s", iconSettings,     moreSettingsMenu, nullptr},
     {"Retour",         iconBack,         mainMenu,         nullptr},
-    {nullptr, nullptr, nullptr, nullptr} // End of menu
+    {nullptr,          nullptr,          nullptr,          nullptr} // End of menu
 };
 
 Menu::MenuItem moreSettingsMenu[] = {
     {"Reset du WiFi",  iconWiFi,  nullptr,      std::bind(&MenuActions::resetWiFiAndReboot, &menuActions)},
     {"Fuseau horaire", iconClock, nullptr,      std::bind(&MenuActions::adjustTimezone, &menuActions)},
     {"Retour",         iconBack,  settingsMenu, nullptr},
-    {nullptr, nullptr, nullptr, nullptr} // End of menu
+    {nullptr,          nullptr,   nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem hotMenu[] = {
@@ -38,7 +38,7 @@ Menu::MenuItem hotMenu[] = {
     {"Limite basse",                       iconColdSettings, nullptr,      std::bind(&MenuActions::adjustHotLowerLimit, &menuActions)},
     {"Limite haute",                       iconHotSettings,  nullptr,      std::bind(&MenuActions::adjustHotHigherLimit, &menuActions)},
     {"Retour",                             iconBack,         settingsMenu, nullptr},
-    {nullptr, nullptr, nullptr, nullptr} // End of menu
+    {nullptr,                              nullptr,          nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem coldMenu[] = {
@@ -46,5 +46,5 @@ Menu::MenuItem coldMenu[] = {
     {"Limite basse",                       iconColdSettings, nullptr,      std::bind(&MenuActions::adjustColdLowerLimit, &menuActions)},
     {"Limite haute",                       iconHotSettings,  nullptr,      std::bind(&MenuActions::adjustColdHigherLimit, &menuActions)},
     {"Retour",                             iconBack,         settingsMenu, nullptr},
-    {nullptr, nullptr, nullptr, nullptr} // End of menu
+    {nullptr,                              nullptr,          nullptr,      nullptr} // End of menu
 };

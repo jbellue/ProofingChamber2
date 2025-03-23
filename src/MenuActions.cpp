@@ -12,22 +12,25 @@ MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValu
 
 void MenuActions::proofNowAction() {
     DEBUG_PRINTLN("MenuActions: proofNowAction called");
-    _proofingScreen->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_proofingScreen);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_proofingScreen);
+    _proofingScreen->setNextScreen(menu); // TODO go to screen cooling
     _proofingScreen->begin("9:34", 0, true, false);
 }
 
 void MenuActions::proofInAction() {
     DEBUG_PRINTLN("MenuActions: proofInAction called");
-    _adjustTime->setNextScreen(_screensManager->getActiveScreen()); // TODO go to screen cooling
-    _screensManager->setActiveScreen(_adjustTime);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustTime);
+    _adjustTime->setNextScreen(menu); // TODO go to screen cooling
     _adjustTime->begin("Pousser dans...");
 }
 
 void MenuActions::proofAtAction() {
     DEBUG_PRINTLN("MenuActions: proofAtAction called");
-    _adjustTime->setNextScreen(_screensManager->getActiveScreen()); // TODO go to screen cooling
-    _screensManager->setActiveScreen(_adjustTime);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustTime);
+    _adjustTime->setNextScreen(menu); // TODO go to screen cooling
     struct tm timeinfo;
     int hour, minute;
     if (!getLocalTime(&timeinfo)) {
@@ -39,50 +42,61 @@ void MenuActions::proofAtAction() {
 
 void MenuActions::adjustHotTargetTemp() {
     DEBUG_PRINTLN("MenuActions: adjustHotTargetTemp called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue); // Set the active screen first
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
     _adjustValue->begin("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
 }
 
 void MenuActions::adjustHotLowerLimit() {
     DEBUG_PRINTLN("MenuActions: adjustHotLowerLimit called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
     _adjustValue->begin("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void MenuActions::adjustHotHigherLimit() {
     DEBUG_PRINTLN("MenuActions: adjustHotHigherLimit called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
     _adjustValue->begin("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void MenuActions::adjustColdTargetTemp() {
     DEBUG_PRINTLN("MenuActions: adjustColdTargetTemp called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
+    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void MenuActions::adjustColdLowerLimit() {
     DEBUG_PRINTLN("MenuActions: adjustColdLowerLimit called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
+    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void MenuActions::adjustColdHigherLimit() {
     DEBUG_PRINTLN("MenuActions: adjustColdHigherLimit called");
-    _adjustValue->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_adjustValue);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _adjustValue->setNextScreen(menu);
+    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void MenuActions::resetWiFiAndReboot() {
     DEBUG_PRINTLN("MenuActions: proofNowAction called");
-    _wifiReset->setNextScreen(_screensManager->getActiveScreen());
-    _screensManager->setActiveScreen(_wifiReset);
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_adjustValue);
+    _wifiReset->setNextScreen(menu);
+    menu->setNextScreen(_wifiReset);
     _wifiReset->begin();
 }
 

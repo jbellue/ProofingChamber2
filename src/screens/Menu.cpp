@@ -1,6 +1,7 @@
 #include <WiFiManager.h>
 #include "DebugUtils.h"
 #include "Menu.h"
+#include "MenuItems.h"
 #include "screens/ProofingScreen.h"
 #include "icons.h"
 #include "screens/Screen.h"
@@ -10,38 +11,31 @@ Menu::Menu(DisplayManager* display, InputManager* inputManager, MenuActions* men
     _menuActions(menuActions),
     _display(display),
     inputManager(inputManager),
-    _currentMenu(nullptr)
+    _currentMenu(nullptr),
+    _menuIndex(0)
 {}
 
-// Public begin function
-void Menu::begin(MenuItem* mainMenu) {
+void Menu::begin() {
     DEBUG_PRINTLN("Menu::begin called");
-    beginImpl(mainMenu);
+    beginImpl();
 }
 
 // Initialize the menu
-void Menu::beginImpl(MenuItem* mainMenu) {
+void Menu::beginImpl() {
     DEBUG_PRINTLN("Beginning Menu");
-
-    if (mainMenu == nullptr) {
-        DEBUG_PRINTLN("Error: mainMenu is nullptr");
-        return;
+    if (_currentMenu == nullptr) {
+        _currentMenu = mainMenu;
+        _menuIndex = 0;
     }
-
-    _display->clearBuffer();
-    _display->setFont(u8g2_font_t0_11_tf);
-    inputManager->begin();
-    _currentMenu = mainMenu;
-    _menuIndex = 0;
-    drawMenu(_currentMenu, _menuIndex);
-    DEBUG_PRINTLN("Menu Began");
+    _oldPosition = inputManager->getEncoderPosition();
+    _display->clear();
 }
 
 // Update the menu
 bool Menu::update(bool forceRedraw) {
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    int64_t newPosition = inputManager->getEncoderPosition();
+    const int64_t newPosition = inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         if (newPosition > _oldPosition) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
@@ -57,7 +51,7 @@ bool Menu::update(bool forceRedraw) {
 
     // Handle encoder button press
     if (inputManager->isButtonPressed()) {
-        handleMenuSelection();
+        return handleMenuSelection();
     }
     return true;
 }
@@ -90,7 +84,7 @@ uint8_t Menu::getMenuSize(MenuItem* menu) {
     return size;
 }
 
-void Menu::handleMenuSelection() {
+bool Menu::handleMenuSelection() {
     MenuItem* selectedItem = &_currentMenu[_menuIndex];
     if (selectedItem->subMenu != nullptr) {
         _currentMenu = selectedItem->subMenu;
@@ -100,11 +94,7 @@ void Menu::handleMenuSelection() {
     } else if (selectedItem->action != nullptr) {
         selectedItem->action();
         DEBUG_PRINTLN("Action executed");
-
-        // Only redraw the menu if the active screen is still the Menu
-        if (!_menuActions->_screensManager->isScreenActive() || 
-            _menuActions->_screensManager->getActiveScreen() == this) {
-            drawMenu(_currentMenu, _menuIndex);
-        }
+        return false;
     }
+    return true;
 }

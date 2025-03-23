@@ -14,6 +14,7 @@ AdjustTime::AdjustTime(DisplayManager* display, InputManager* inputManager) :
 {}
 
 void AdjustTime::begin(const char* title, const uint8_t startH, const uint8_t startM) {
+    DEBUG_PRINTLN("AdjustTime::begin called");
     beginImpl(title, startH, startM);
 }
 
@@ -28,13 +29,12 @@ void AdjustTime::beginImpl(const char* title, const uint8_t startH, const uint8_
     // Update the display immediately
     display->clear();
     _valueY = display->drawTitle(title);
-    drawScreen();
 }
 
 bool AdjustTime::update(bool forceRedraw) {
     // Handle encoder rotation
     bool redraw = forceRedraw;
-    int64_t newPosition = inputManager->getEncoderPosition();
+    const int64_t newPosition = inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         if (_adjustingHours) {
             _currentHours += (newPosition > _oldPosition) ? 1 : -1;
@@ -54,21 +54,21 @@ bool AdjustTime::update(bool forceRedraw) {
         _oldPosition = newPosition;
         redraw = true;
     }
-    if (redraw) {
-        drawScreen();
-    }
-
     // Handle encoder button press to switch between hours and minutes, or confirm and save
     if (inputManager->isButtonPressed()) {
         if (_adjustingHours) {
             _adjustingHours = false; // Switch to adjusting minutes
-            // Update the display immediately to reflect the change
-            drawScreen();
+            redraw = true;
         } else {
             DEBUG_PRINTLN("AdjustTime: Time set, exiting screen.");
             return false; // Set only when the user confirms
         }
     }
+    if (redraw) {
+        DEBUG_PRINTLN("AdjustTime redrawn");
+        drawScreen();
+    }
+
     return true;
 }
 

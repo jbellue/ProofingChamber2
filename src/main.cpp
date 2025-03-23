@@ -1,6 +1,3 @@
-#include <WifiManager.h>
-#include <WiFi.h>
-#include <time.h>
 #include <U8g2lib.h>
 #include "DisplayManager.h"
 #include "DebugUtils.h"
@@ -11,6 +8,7 @@
 #include "ScreensManager.h"
 #include "screens/AdjustTime.h"
 #include "screens/AdjustValue.h"
+#include "screens/Initialization.h"
 #include "screens/ProofingScreen.h"
 #include "screens/WiFiReset.h"
 
@@ -27,6 +25,7 @@ InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW);
 AdjustValue adjustValue(&displayManager, &inputManager);
 AdjustTime adjustTime(&displayManager, &inputManager);
 ProofingScreen proofingScreen(&displayManager, &inputManager);
+Initialization initialization(&displayManager);
 WiFiReset wifiReset(&displayManager, &inputManager);
 MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &wifiReset);
 Menu menu(&displayManager, &inputManager, &menuActions);
@@ -37,36 +36,11 @@ void setup() {
     Serial.begin(115200);
 #endif
 
-    // Initialize the display
-    display.begin();
-    display.clearBuffer();
-    display.setFont(u8g2_font_t0_11_tf);
-    display.drawStr(0, 10, "Initialization...");
-    display.drawStr(0, 22, "Connecting to WiFi...");
-    display.sendBuffer();
+    displayManager.begin();
+    inputManager.begin();
 
-    WiFiManager wifiManager;
-    wifiManager.autoConnect();
-    display.drawStr(0, 34, "done.");
-    display.drawStr(0, 46, "Connecting to NTP...");
-    display.sendBuffer();
-    display.setCursor(0, 58);
-
-    // Configure NTP
-    const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)
-    configTzTime(timezone, "pool.ntp.org", "time.nist.gov"); // Configure NTP with default servers
-    DEBUG_PRINT("Waiting for NTP time sync");
-    while (time(nullptr) < 1000000000) { // Wait until the time is synced
-        delay(500);
-        DEBUG_PRINT(".");
-        display.print(".");
-        display.sendBuffer();
-    }
-    DEBUG_PRINTLN("\nTime synced with NTP");
-
-    // Initialize menu
-    menu.begin(mainMenu);
-    screensManager.setActiveScreen(&menu);
+    initialization.setNextScreen(&menu);
+    screensManager.setActiveScreen(&initialization);
 }
 
 void loop() {

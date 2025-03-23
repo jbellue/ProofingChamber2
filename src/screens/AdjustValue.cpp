@@ -23,7 +23,6 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
     // Update the display immediately
     display->clear();
     _valueY = display->drawTitle(title);
-    drawScreen();
 }
 
 bool AdjustValue::update(bool forceRedraw) {
