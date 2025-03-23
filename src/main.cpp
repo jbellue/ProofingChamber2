@@ -12,6 +12,7 @@
 #include "screens/AdjustTime.h"
 #include "screens/AdjustValue.h"
 #include "screens/ProofingScreen.h"
+#include "screens/WiFiReset.h"
 
 #define ENCODER_CLK 2
 #define ENCODER_DT  3
@@ -26,7 +27,8 @@ InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW);
 AdjustValue adjustValue(&displayManager, &inputManager);
 AdjustTime adjustTime(&displayManager, &inputManager);
 ProofingScreen proofingScreen(&displayManager, &inputManager);
-MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen);
+WiFiReset wifiReset(&displayManager, &inputManager);
+MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &wifiReset);
 Menu menu(&displayManager, &inputManager, &menuActions);
 
 void setup() {

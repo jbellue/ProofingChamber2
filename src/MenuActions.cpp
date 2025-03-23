@@ -2,11 +2,12 @@
 #include "MenuActions.h"
 #include "DebugUtils.h"
 
-MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen) :
+MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, WiFiReset* wifiReset) :
     _screensManager(screensManager),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
-    _proofingScreen(proofingScreen)
+    _proofingScreen(proofingScreen),
+    _wifiReset(wifiReset)
 {}
 
 void MenuActions::proofNowAction() {
@@ -79,22 +80,10 @@ void MenuActions::adjustColdHigherLimit() {
 }
 
 void MenuActions::resetWiFiAndReboot() {
-    // Reset Wi-Fi credentials
-    // WiFiManager wifiManager;
-    // wifiManager.resetSettings();
-
-    // // Notify the user
-    // _menu->_display->clearBuffer();
-    // _menu->_display->setFont(u8g2_font_t0_11_tf);
-    // _menu->setCurrentTitle("Reset du Wi-Fi\n" "et red\xC3\xA9marrage");
-    // _menu->drawTitle(20);
-    // _menu->_display->sendBuffer();
-
-    // Delay to allow the message to be displayed
-    delay(2000);
-
-    // // Reboot the device
-    // ESP.restart();
+    DEBUG_PRINTLN("MenuActions: proofNowAction called");
+    _wifiReset->setNextScreen(_screensManager->getActiveScreen());
+    _screensManager->setActiveScreen(_wifiReset);
+    _wifiReset->begin();
 }
 
 void MenuActions::adjustTimezone() {
