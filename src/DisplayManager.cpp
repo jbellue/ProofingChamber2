@@ -57,6 +57,10 @@ uint8_t DisplayManager::getDisplayWidth() const {
     return _display->getDisplayWidth();
 }
 
+uint8_t DisplayManager::getDisplayHeight() const {
+    return _display->getDisplayHeight();
+}
+
 void DisplayManager::sendBuffer() {
     _display->sendBuffer();
 }
@@ -85,7 +89,7 @@ void DisplayManager::drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const 
     _display->drawXBMP(x, y, w, h, bitmap);
 }
 
-uint8_t DisplayManager::drawTitle(const char* title) {
+uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     _display->setFont(u8g2_font_t0_11_tf);
     const uint8_t lineHeight = _display->getAscent() - _display->getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display->getDisplayWidth(); // Get the display width
@@ -96,7 +100,7 @@ uint8_t DisplayManager::drawTitle(const char* title) {
     titleCopy[sizeof(titleCopy) - 1] = '\0'; // Ensure null termination
 
     char* line = strtok(titleCopy, "\n"); // Split the title into lines
-    uint8_t currentY = 10; // Initial Y position for drawing
+    uint8_t currentY = y; // Initial Y position for drawing
 
     while (line != nullptr) {
         // Draw the current line centered on the display

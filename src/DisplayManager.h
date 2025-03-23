@@ -16,6 +16,7 @@ public:
     uint8_t getAscent() const;
     uint8_t getDescent() const;
     uint8_t getDisplayWidth() const;
+    uint8_t getDisplayHeight() const;
     uint8_t getWidth() const;
     void sendBuffer();
     void clearBuffer();
@@ -27,7 +28,7 @@ public:
     void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap);
 
 
-    uint8_t drawTitle(const char* title);
+    uint8_t drawTitle(const char* title, const uint8_t y = 10);
 private:
     U8G2* _display;
 };
