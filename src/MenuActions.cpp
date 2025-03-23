@@ -2,12 +2,14 @@
 #include "MenuActions.h"
 #include "DebugUtils.h"
 
-MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, WiFiReset* wifiReset) :
+MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime,
+                        ProofingScreen* proofingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone) :
     _screensManager(screensManager),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
     _proofingScreen(proofingScreen),
-    _wifiReset(wifiReset)
+    _wifiReset(wifiReset),
+    _setTimezone(setTimezone)
 {}
 
 void MenuActions::proofNowAction() {
@@ -69,7 +71,6 @@ void MenuActions::adjustColdTargetTemp() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
-    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
@@ -78,7 +79,6 @@ void MenuActions::adjustColdLowerLimit() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
-    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
@@ -87,22 +87,21 @@ void MenuActions::adjustColdHigherLimit() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
-    menu->setNextScreen(_adjustValue);
     _adjustValue->begin("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void MenuActions::resetWiFiAndReboot() {
-    DEBUG_PRINTLN("MenuActions: proofNowAction called");
+    DEBUG_PRINTLN("MenuActions: resetWiFiAndReboot called");
     Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _wifiReset->setNextScreen(menu);
     menu->setNextScreen(_wifiReset);
+    _wifiReset->setNextScreen(menu);
     _wifiReset->begin();
 }
 
 void MenuActions::adjustTimezone() {
-    // _menu->_display->clear();
-    // _menu->_display->drawUTF8(10, 20, "Adjusting the timezone...");
-    // _menu->_display->sendBuffer();
-    delay(1000);
+    DEBUG_PRINTLN("MenuActions: adjustTimezone called");
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_setTimezone);
+    _setTimezone->setNextScreen(menu);
+    _setTimezone->begin();
 }
