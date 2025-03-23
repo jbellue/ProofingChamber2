@@ -89,6 +89,14 @@ void DisplayManager::drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const 
     _display->drawXBMP(x, y, w, h, bitmap);
 }
 
+void DisplayManager::setCursor(const uint8_t x, const uint8_t y) {
+    _display->setCursor(x, y);
+}
+
+void DisplayManager::print(const char* str) {
+    _display->print(str);
+}
+
 uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     _display->setFont(u8g2_font_t0_11_tf);
     const uint8_t lineHeight = _display->getAscent() - _display->getDescent() + 2; // Line height (font height + spacing)

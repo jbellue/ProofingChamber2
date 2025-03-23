@@ -27,6 +27,8 @@ public:
     void setBitmapMode(uint8_t mode);
     void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap);
 
+    void setCursor(const uint8_t x, const uint8_t y);
+    void print(const char* str);
 
     uint8_t drawTitle(const char* title, const uint8_t y = 10);
 private:
