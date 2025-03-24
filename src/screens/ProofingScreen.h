@@ -9,19 +9,21 @@ class ProofingScreen : public Screen {
 public:
     ProofingScreen(DisplayManager* display, InputManager* inputManager);
     void beginImpl() override {};
-    void begin(const char* startTime, int initialTemp, bool isRising, bool isIconOn);
+    void begin(tm* startTime, int initialTemp, bool isRising, bool isIconOn);
     bool update(bool forceRedraw = false) override;
 
 private:
-    DisplayManager* display;
-    InputManager* inputManager;
-    const char* startTime;
-    int currentTemp;
-    bool isRising;
-    bool isIconOn;
+    DisplayManager* _display;
+    InputManager* _inputManager;
+    time_t _startTime;
+    uint _previousDiffSeconds;
+    int _currentTemp;
+    bool _isRising;
+    bool _isIconOn;
 
     void drawScreen();
-    void beginImpl(const char* startTime, int initialTemp, bool isRising, bool isIconOn);
+    void drawTime();
+    void beginImpl(tm* startTime, int initialTemp, bool isRising, bool isIconOn);
 };
 
 #endif

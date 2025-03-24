@@ -17,7 +17,9 @@ void MenuActions::proofNowAction() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_proofingScreen);
     _proofingScreen->setNextScreen(menu);
-    _proofingScreen->begin("9:34", 0, true, false);
+    struct tm startTime;
+    getLocalTime(&startTime);
+    _proofingScreen->begin(&startTime, 0, true, false);
 }
 
 void MenuActions::proofInAction() {

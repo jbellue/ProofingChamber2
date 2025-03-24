@@ -53,4 +53,27 @@ const uint8_t degreeSymbol[] U8X8_PROGMEM = {
     0b00111100,
     0b00000000
 };
+
+const uint8_t iconRise[] U8X8_PROGMEM = {
+    0b00000001,
+    0b00000010,
+    0b00000100,
+    0b00001000,
+    0b10010000,
+    0b10100000,
+    0b11000000,
+    0b11110000
+};
+
+// Define the degree symbol as a custom character
+const uint8_t iconLower[] U8X8_PROGMEM = {
+    0b11110000,
+    0b11000000,
+    0b10100000,
+    0b10010000,
+    0b00001000,
+    0b00000100,
+    0b00000010,
+    0b00000001
+};
 #endif // ICONS_H
