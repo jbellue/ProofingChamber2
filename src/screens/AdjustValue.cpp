@@ -32,7 +32,6 @@ bool AdjustValue::update(bool forceRedraw) {
     if (newPosition != _oldPosition) {
         _currentValue += (newPosition > _oldPosition) ? 1 : -1;
         _oldPosition = newPosition;
-        DEBUG_PRINTLN("AdjustValue: Encoder rotated, new value: " + String(_currentValue));
         redraw = true;
     }
     if (redraw) {
