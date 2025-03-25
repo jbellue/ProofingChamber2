@@ -12,19 +12,16 @@ AdjustValue(DisplayManager* display, InputManager* inputManager);
     void beginImpl() override {};
     bool update(bool forceRedraw = false) override;
 private:
+    void drawScreen();
+    void beginImpl(const char* title, const char* path);
+
     Storage _storage;
     const char* _title;
     const char* _path;
     uint8_t _valueY;
     int64_t _oldPosition;
     int _currentValue;
-    DisplayManager* display;
-    InputManager* inputManager;
-    const char* startTime;
-    int currentTemp;
-    bool isRising;
-    bool isIconOn;
-
-    void drawScreen();
-    void beginImpl(const char* title, const char* path);
+    DisplayManager* _display;
+    InputManager* _inputManager;
+    const char* _startTime;
 };

@@ -3,8 +3,8 @@
 #include "DebugUtils.h"
 
 AdjustTime::AdjustTime(DisplayManager* display, InputManager* inputManager) :
-    display(display),
-    inputManager(inputManager),
+    _display(display),
+    _inputManager(inputManager),
     _oldPosition(0),
     _currentDays(0),
     _currentHours(0),
@@ -20,21 +20,21 @@ void AdjustTime::begin(const char* title, const uint8_t startH, const uint8_t st
 
 void AdjustTime::beginImpl(const char* title, const uint8_t startH, const uint8_t startM) {
     _title = title;
-    _oldPosition = inputManager->getEncoderPosition(); // Reset encoder position
+    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
     _currentHours = startH;
     _currentMinutes = startM;
     _currentDays = 0;
     _adjustingHours = true;
 
     // Update the display immediately
-    display->clear();
-    _valueY = display->drawTitle(title);
+    _display->clear();
+    _valueY = _display->drawTitle(title);
 }
 
 bool AdjustTime::update(bool forceRedraw) {
     // Handle encoder rotation
     bool redraw = forceRedraw;
-    const int64_t newPosition = inputManager->getEncoderPosition();
+    const int64_t newPosition = _inputManager->getEncoderPosition();
     if (newPosition != _oldPosition) {
         if (_adjustingHours) {
             _currentHours += (newPosition > _oldPosition) ? 1 : -1;
@@ -55,7 +55,7 @@ bool AdjustTime::update(bool forceRedraw) {
         redraw = true;
     }
     // Handle encoder button press to switch between hours and minutes, or confirm and save
-    if (inputManager->isButtonPressed()) {
+    if (_inputManager->isButtonPressed()) {
         if (_adjustingHours) {
             _adjustingHours = false; // Switch to adjusting minutes
             redraw = true;
@@ -73,35 +73,35 @@ bool AdjustTime::update(bool forceRedraw) {
 }
 
 void AdjustTime::drawScreen() {
-    display->setFont(u8g2_font_ncenB18_tn);
+    _display->setFont(u8g2_font_ncenB18_tn);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
     sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
-    const uint8_t timeWidth = display->getStrWidth("00:00"); // Measure the width of a default time string
-    const uint8_t timeX = (display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
+    const uint8_t timeWidth = _display->getStrWidth("00:00"); // Measure the width of a default time string
+    const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
     const uint8_t timeY = _valueY + 2;
 
     // Only redraw the time string
-    display->setDrawColor(0); // Clear the previous time
-    const uint8_t clearWidth = display->getWidth();
-    const uint8_t clearHeight = display->getAscent() - display->getDescent() + 6; // Add buffer to ensure full clearing
-    display->drawBox(timeX, timeY - display->getAscent(), clearWidth, clearHeight);
-    display->setDrawColor(1); // Draw the new time
-    display->drawStr(timeX, timeY, timeBuffer);
+    _display->setDrawColor(0); // Clear the previous time
+    const uint8_t clearWidth = _display->getWidth();
+    const uint8_t clearHeight = _display->getAscent() - _display->getDescent() + 6; // Add buffer to ensure full clearing
+    _display->drawBox(timeX, timeY - _display->getAscent(), clearWidth, clearHeight);
+    _display->setDrawColor(1); // Draw the new time
+    _display->drawStr(timeX, timeY, timeBuffer);
 
     // Highlight the currently adjusted value (hours or minutes)
     if (_adjustingHours) {
         // Highlight hours (first two characters)
-        display->drawHLine(timeX, timeY + 2, display->getStrWidth("00"));
+        _display->drawHLine(timeX, timeY + 2, _display->getStrWidth("00"));
     } else {
         // Highlight minutes (last two characters)
-        display->drawHLine(timeX + display->getStrWidth("00:"), timeY + 2, display->getStrWidth("00"));
+        _display->drawHLine(timeX + _display->getStrWidth("00:"), timeY + 2, _display->getStrWidth("00"));
     }
 
     if(_currentDays > 0) {
-        display->setFont(u8g2_font_ncenB12_tr);
+        _display->setFont(u8g2_font_ncenB12_tr);
         sprintf(timeBuffer, "+%dj", _currentDays); // Format the days as +1j
-        display->drawStr(timeX + timeWidth + 2, timeY - 4, timeBuffer);
+        _display->drawStr(timeX + timeWidth + 2, timeY - 4, timeBuffer);
     }
 
-    display->sendBuffer();
+    _display->sendBuffer();
 }

@@ -14,6 +14,7 @@ public:
 
 private:
     void beginImpl(const char* title, const uint8_t startH = 0, const uint8_t startM = 0);
+    void drawScreen();
 
     Storage _storage;
     const char* _title;
@@ -24,9 +25,7 @@ private:
     uint8_t _valueY;
     int64_t _oldPosition;
 
-    DisplayManager* display;
-    InputManager* inputManager;
-    const char* startTime;
-
-    void drawScreen();
+    DisplayManager* _display;
+    InputManager* _inputManager;
+    const char* _startTime;
 };
