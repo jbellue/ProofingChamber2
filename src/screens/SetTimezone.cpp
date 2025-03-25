@@ -27,14 +27,15 @@ bool SetTimezone::update(bool forceRedraw) {
 void SetTimezone::drawScreen() {
     _display->setFont(u8g2_font_t0_11_tf);
     const uint8_t padding = 5;
+    const char* buttonText = "OK";
     const uint8_t screenHeight = _display->getDisplayHeight();
     const uint8_t screenWidth = _display->getDisplayWidth();
-    const uint8_t buttonWidth = _display->getStrWidth("OK");
+    const uint8_t buttonWidth = _display->getStrWidth(buttonText);
     const uint8_t buttonX = (screenWidth - buttonWidth) / 2;
     const uint8_t buttonY = _display->getDisplayHeight() - padding;
 
-    _display->setDrawColor(1); // Draw the new buttons
-    _display->drawUTF8(buttonX, buttonY, "OK");
+    _display->setDrawColor(1); // Draw the new button
+    _display->drawUTF8(buttonX, buttonY, buttonText);
 
     _display->setDrawColor(2);
     _display->drawRBox(buttonX - 5, screenHeight - 16, buttonWidth + 10, 15, 1);
