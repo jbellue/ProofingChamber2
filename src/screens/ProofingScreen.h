@@ -9,7 +9,7 @@ class ProofingScreen : public Screen {
 public:
     ProofingScreen(DisplayManager* display, InputManager* inputManager);
     void beginImpl() override {};
-    void begin(tm* startTime, int initialTemp, bool isRising, bool isIconOn);
+    void begin(tm* startTime);
     bool update(bool forceRedraw = false) override;
 
 private:
@@ -23,7 +23,7 @@ private:
 
     void drawScreen();
     void drawTime();
-    void beginImpl(tm* startTime, int initialTemp, bool isRising, bool isIconOn);
+    void beginImpl(tm* startTime);
 };
 
 #endif

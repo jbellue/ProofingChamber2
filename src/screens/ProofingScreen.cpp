@@ -7,15 +7,15 @@ ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManag
     _currentTemp(0), _isRising(false), _isIconOn(false), _previousDiffSeconds(0)
 {}
 
-void ProofingScreen::begin(tm* startTime, int initialTemp, bool isRising, bool isIconOn) {
-    beginImpl(startTime, initialTemp, isRising, isIconOn);
+void ProofingScreen::begin(tm* startTime) {
+    beginImpl(startTime);
 }
 
-void ProofingScreen::beginImpl(tm* startTime, int initialTemp, bool isRising, bool isIconOn) {
+void ProofingScreen::beginImpl(tm* startTime) {
     _startTime = mktime((tm*)startTime);
-    _currentTemp = initialTemp;
-    _isRising = isRising;
-    _isIconOn = isIconOn;
+    _currentTemp = 0;
+    _isRising = true;
+    _isIconOn = true;
     _previousDiffSeconds = 999999; // Force a redraw on the first update
 
     _display->clear();
@@ -40,7 +40,7 @@ void ProofingScreen::drawTime() {
     // Calculate dimensions and position
     const uint8_t timeWidth = _display->getStrWidth(timeBuffer);
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
-    const uint8_t timeY = 34;
+    const uint8_t timeY = 36;
     const uint8_t fontHeight = _display->getAscent() - _display->getDescent();
 
     // Clear out the previous value
@@ -77,9 +77,9 @@ void ProofingScreen::drawScreen() {
     const uint8_t tempX = _display->getDisplayWidth() - tempWidth - 10;
     const uint8_t tempY = 60;
 
-    // Clear out the previous value
+    // Clear out the previous temperature
     _display->setDrawColor(0);
-    _display->drawBox(tempX - 2, tempY - _display->getAscent() - 2, _display->getDisplayWidth(), _display->getAscent() + 4);
+    _display->drawBox(tempX - 2, tempY - _display->getAscent() - 2, tempWidth + 12, _display->getAscent() + 4);
     _display->setDrawColor(1);
 
     _display->drawUTF8(tempX, tempY, tempBuffer);
@@ -91,8 +91,7 @@ void ProofingScreen::drawScreen() {
     // Display the small icon (on or off)
     if (_isIconOn) {
         _display->drawXBMP(iconsX, iconY, proofIconSize, proofIconSize, iconProof);
-    }
-    else {
+    } else {
         _display->setDrawColor(0);
         _display->drawBox(iconsX, iconY, proofIconSize, proofIconSize);
         _display->setDrawColor(1);
@@ -106,8 +105,13 @@ void ProofingScreen::drawScreen() {
         _display->drawXBMP(iconsX, iconY, 8, 8, iconLower);
     }
 
-    // Display the "Annuler" button
-    _display->drawUTF8(10, tempY, "Annuler");
+    // Move the "Annuler" button drawing here
+    const char* buttonText = "Annuler";
+    const uint8_t buttonWidth = _display->getStrWidth(buttonText) + 10;
+    _display->setDrawColor(1); // white button
+    _display->drawRBox(5, tempY - _display->getAscent() - 3, buttonWidth, 15, 1);
+    _display->setDrawColor(0); // black text
+    _display->drawUTF8(10, tempY, buttonText);
 
     _display->sendBuffer();
 }

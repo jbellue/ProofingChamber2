@@ -19,7 +19,7 @@ void MenuActions::proofNowAction() {
     _proofingScreen->setNextScreen(menu);
     struct tm startTime;
     getLocalTime(&startTime);
-    _proofingScreen->begin(&startTime, 0, true, false);
+    _proofingScreen->begin(&startTime);
 }
 
 void MenuActions::proofInAction() {
