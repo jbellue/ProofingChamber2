@@ -13,7 +13,7 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _timeCalculator = callback;
     _proofingScreen = proofingScreen;
     _menuScreen = menuScreen;
-    _onCancelButton = false;
+    _onCancelButton = true;
     _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
     _endTime = 0;
     _lastUpdateTime = 0;
@@ -71,18 +71,38 @@ void CoolingScreen::drawScreen() {
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
     const int remainingSeconds = difftime(_endTime, now);
-    // TODO display remaining time in hours, minutes and seconds
-    // Center everything
-    snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dh%02dm)", remainingSeconds / 60, remainingSeconds % 60);
-    _display->drawUTF8(10, 38, timeBuffer);
+    if (remainingSeconds >= 3600) {
+        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dh%02dm)",
+            remainingSeconds / 3600, (remainingSeconds % 3600) / 60);
+    } else if (remainingSeconds >= 60) {
+        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dm%02ds)",
+            remainingSeconds / 60, remainingSeconds % 60);
+    } else {
+        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %ds)", remainingSeconds);
+    }
+    const uint8_t timeWidth = _display->getStrWidth(timeBuffer);
+    _display->drawUTF8((_display->getDisplayWidth() - timeWidth) / 2, 38, timeBuffer);
 
-    // TODO calculate the buttons position based on the screen width
+    const uint8_t padding = 5;
+    const uint8_t screenHeight = _display->getDisplayHeight();
+    const uint8_t screenWidth = _display->getDisplayWidth();
+    const uint8_t buttonsY = _display->getDisplayHeight() - padding;
+    const uint8_t buttonWidth = screenWidth / 2 - 1;
+
+    // Erase the previous buttons
+    _display->setDrawColor(0);
+    _display->drawBox(0, screenHeight - 16, screenWidth, 16);
+
     _display->setDrawColor(1);
-    _display->drawUTF8(10, 60, "Annuler");
-    _display->drawUTF8(80, 60, "Pousser");
+    const char* proofText = "Démarrer";
+    const uint8_t proofWidth = _display->getStrWidth(proofText);
+    _display->drawUTF8((buttonWidth - proofWidth) / 2, buttonsY, proofText);
+
+    const char* cancelText = "Annuler";
+    const uint8_t cancelWidth = _display->getStrWidth(cancelText);
+    _display->drawUTF8(buttonWidth + (buttonWidth - cancelWidth) / 2, buttonsY, cancelText);
 
     _display->setDrawColor(2);
-    _display->drawRBox(_onCancelButton ? 5 : 75, 50, 60, 15, 1);
-
+    _display->drawRBox(_onCancelButton? buttonWidth : 0, screenHeight - 16, buttonWidth, 15, 1);
     _display->sendBuffer();
 }
