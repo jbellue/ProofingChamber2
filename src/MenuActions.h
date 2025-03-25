@@ -5,12 +5,13 @@
 #include "screens/AdjustValue.h"
 #include "screens/AdjustTime.h"
 #include "screens/ProofingScreen.h"
+#include "screens/CoolingScreen.h"
 #include "screens/WiFiReset.h"
 #include "screens/SetTimezone.h"
 
 class MenuActions {
 public:
-    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone);
+    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -27,6 +28,7 @@ private:
     AdjustTime* _adjustTime;
     AdjustValue* _adjustValue;
     ProofingScreen* _proofingScreen;
+    CoolingScreen* _coolingScreen;
     WiFiReset* _wifiReset;
     SetTimezone* _setTimezone;
 };

@@ -3,11 +3,12 @@
 #include "DebugUtils.h"
 
 MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime,
-                        ProofingScreen* proofingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone) :
+                        ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone) :
     _screensManager(screensManager),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
     _proofingScreen(proofingScreen),
+    _coolingScreen(coolingScreen),
     _wifiReset(wifiReset),
     _setTimezone(setTimezone)
 {}
@@ -24,7 +25,9 @@ void MenuActions::proofInAction() {
     DEBUG_PRINTLN("MenuActions: proofInAction called");
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
-    _adjustTime->setNextScreen(menu); // TODO go to screen cooling
+    _adjustTime->setNextScreen(_coolingScreen);
+    time_t endTime = time(nullptr) + 3600; // Example: Cooling ends in 1 hour
+    _coolingScreen->begin(endTime, _proofingScreen, menu); // Pass menu screen
     _adjustTime->begin("Pousser dans...");
 }
 
@@ -32,13 +35,15 @@ void MenuActions::proofAtAction() {
     DEBUG_PRINTLN("MenuActions: proofAtAction called");
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
-    _adjustTime->setNextScreen(menu); // TODO go to screen cooling
+    _adjustTime->setNextScreen(_coolingScreen);
     struct tm timeinfo;
     int hour, minute;
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
         _adjustTime->begin("Pousser \xC3\xA0...");
     }
+    time_t endTime = time(nullptr) + 3600; // Example: Cooling ends in 1 hour
+    _coolingScreen->begin(endTime, _proofingScreen, menu); // Pass menu screen
     _adjustTime->begin("Pousser \xC3\xA0...", timeinfo.tm_hour, timeinfo.tm_min);
 }
 

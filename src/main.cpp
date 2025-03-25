@@ -12,6 +12,7 @@
 #include "screens/ProofingScreen.h"
 #include "screens/WiFiReset.h"
 #include "screens/SetTimezone.h"
+#include "screens/CoolingScreen.h"
 
 #define ENCODER_CLK 2
 #define ENCODER_DT  3
@@ -28,8 +29,9 @@ AdjustTime adjustTime(&displayManager, &inputManager);
 ProofingScreen proofingScreen(&displayManager, &inputManager);
 SetTimezone setTimezone(&displayManager, &inputManager);
 Initialization initialization(&displayManager);
+CoolingScreen coolingScreen(&displayManager, &inputManager);
 WiFiReset wifiReset(&displayManager, &inputManager);
-MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &wifiReset, &setTimezone);
+MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone);
 Menu menu(&displayManager, &inputManager, &menuActions);
 
 void setup() {
