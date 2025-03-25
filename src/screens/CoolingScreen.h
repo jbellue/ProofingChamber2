@@ -3,12 +3,16 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
+#include <functional>
 #include <ctime>
 
 class CoolingScreen : public Screen {
 public:
+    // Define a callback type that returns the end time
+    using TimeCalculatorCallback = std::function<time_t()>;
+
     CoolingScreen(DisplayManager* display, InputManager* inputManager);
-    void begin(time_t endTime, Screen* proofingScreen, Screen* menuScreen);
+    void begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
     void beginImpl() override {}
     bool update(bool forceRedraw = false) override;
 
@@ -20,8 +24,10 @@ private:
     Screen* _menuScreen;
     int64_t _oldPosition;
     bool _onCancelButton;
+    TimeCalculatorCallback _timeCalculator;
+    time_t _lastUpdateTime;
 
     void drawScreen();
-    void beginImpl(time_t endTime, Screen* proofingScreen, Screen* menuScreen);
+    void beginImpl(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
 
 };

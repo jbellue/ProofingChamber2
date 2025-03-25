@@ -26,8 +26,20 @@ void MenuActions::proofInAction() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
     _adjustTime->setNextScreen(_coolingScreen);
-    time_t endTime = time(nullptr) + 3600; // Example: Cooling ends in 1 hour
-    _coolingScreen->begin(endTime, _proofingScreen, menu); // Pass menu screen
+
+    // Lambda calculates end time based on user input from AdjustTime
+    auto timeCalculator = [this]() -> time_t {
+        struct tm timeinfo = _adjustTime->getTime();
+        const time_t delayInSeconds = timeinfo.tm_mday * 24 * 60 * 60 + timeinfo.tm_hour * 60 * 60 + timeinfo.tm_min * 60;
+        struct tm now;
+        getLocalTime(&now);
+        const time_t now_time = mktime(&now);
+        const time_t endTime = now_time + delayInSeconds;
+        DEBUG_PRINT("end time in:");
+        DEBUG_PRINTLN(endTime);
+        return endTime;
+    };
+    _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
     _adjustTime->begin("Pousser dans...");
 }
 
@@ -42,8 +54,20 @@ void MenuActions::proofAtAction() {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
         _adjustTime->begin("Pousser \xC3\xA0...");
     }
-    time_t endTime = time(nullptr) + 3600; // Example: Cooling ends in 1 hour
-    _coolingScreen->begin(endTime, _proofingScreen, menu); // Pass menu screen
+    // Lambda calculates end time based on user input from AdjustTime
+    auto timeCalculator = [this]() -> time_t {
+        struct tm timeinfo = _adjustTime->getTime();
+        struct tm endTime;
+        getLocalTime(&endTime);
+        endTime.tm_mday += timeinfo.tm_mday;
+        endTime.tm_hour = timeinfo.tm_hour;
+        endTime.tm_min = timeinfo.tm_min;
+        endTime.tm_sec = 0;
+        DEBUG_PRINT("end time in:");
+        DEBUG_PRINTLN(mktime(&endTime));
+        return mktime(&endTime);
+    };
+    _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
     _adjustTime->begin("Pousser \xC3\xA0...", timeinfo.tm_hour, timeinfo.tm_min);
 }
 
