@@ -16,10 +16,10 @@ public:
     virtual bool update(bool forceRedraw) = 0;
 
     // Get the next screen
-    Screen* getNextScreen() const { return nextScreen; }
+    Screen* getNextScreen() const { return _nextScreen; }
 
     // Set the next screen
-    void setNextScreen(Screen* screen) { nextScreen = screen; }
+    void setNextScreen(Screen* screen) { _nextScreen = screen; }
 
 protected:
     virtual void beginImpl() = 0;
@@ -30,5 +30,5 @@ protected:
     }
 
 private:
-    Screen* nextScreen = nullptr; // Pointer to the next screen
+    Screen* _nextScreen = nullptr; // Pointer to the next screen
 };
