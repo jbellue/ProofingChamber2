@@ -7,12 +7,14 @@ ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManag
     _currentTemp(0), _isRising(false), _isIconOn(false), _previousDiffSeconds(0)
 {}
 
-void ProofingScreen::begin(tm* startTime) {
-    beginImpl(startTime);
+void ProofingScreen::begin() {
+    beginImpl();
 }
 
-void ProofingScreen::beginImpl(tm* startTime) {
-    _startTime = mktime((tm*)startTime);
+void ProofingScreen::beginImpl() {
+    struct tm startTime;
+    getLocalTime(&startTime);
+    _startTime = mktime(&startTime);
     _currentTemp = 0;
     _isRising = true;
     _isIconOn = true;

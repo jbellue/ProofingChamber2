@@ -8,8 +8,8 @@
 class ProofingScreen : public Screen {
 public:
     ProofingScreen(DisplayManager* display, InputManager* inputManager);
-    void beginImpl() override {};
-    void begin(tm* startTime);
+    void beginImpl() override;
+    void begin();
     bool update(bool forceRedraw = false) override;
 
 private:
@@ -23,7 +23,6 @@ private:
 
     void drawScreen();
     void drawTime();
-    void beginImpl(tm* startTime);
 };
 
 #endif

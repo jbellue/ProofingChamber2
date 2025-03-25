@@ -61,6 +61,7 @@ bool Menu::update(bool forceRedraw) {
 void Menu::drawMenu(MenuItem* menu, const uint8_t index) {
     _display->clearBuffer();
     _display->setFontMode(1);
+    _display->setDrawColor(1);
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
     for (uint8_t i = 0; menu[i].name != nullptr; i++) {
