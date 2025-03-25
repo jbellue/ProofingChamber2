@@ -19,7 +19,6 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _lastUpdateTime = 0;
 
     _display->clear();
-    _display->drawTitle("Cooling in progress");
 }
 
 bool CoolingScreen::update(bool forceRedraw) {
@@ -61,26 +60,29 @@ bool CoolingScreen::update(bool forceRedraw) {
 
 void CoolingScreen::drawScreen() {
     _display->clearBuffer();
+    const tm* tm_end = localtime(&_endTime);
+    char timeBuffer[34] = {'\0'};
+    snprintf(timeBuffer, sizeof(timeBuffer), "Démarrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
+    _display->drawTitle(timeBuffer);
     _display->setFont(u8g2_font_t0_11_tf);
-
-    // Display title
-    _display->drawUTF8(10, 10, "Cooling in progress");
 
     // Display remaining time
     struct tm tm_now;
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
     const int remainingSeconds = difftime(_endTime, now);
-    char timeBuffer[16];
-    snprintf(timeBuffer, sizeof(timeBuffer), "Ends in %02d:%02d", remainingSeconds / 60, remainingSeconds % 60);
-    _display->drawUTF8(10, 30, timeBuffer);
+    // TODO display remaining time in hours, minutes and seconds
+    // Center everything
+    snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dh%02dm)", remainingSeconds / 60, remainingSeconds % 60);
+    _display->drawUTF8(10, 38, timeBuffer);
 
+    // TODO calculate the buttons position based on the screen width
     _display->setDrawColor(1);
-    _display->drawUTF8(20, 60, "Annuler");
-    _display->drawUTF8(90, 60, "Pousser");
+    _display->drawUTF8(10, 60, "Annuler");
+    _display->drawUTF8(80, 60, "Pousser");
 
     _display->setDrawColor(2);
-    _display->drawRBox(_onCancelButton ? 10 : 80, 50, 60, 15, 2);
+    _display->drawRBox(_onCancelButton ? 5 : 75, 50, 60, 15, 1);
 
     _display->sendBuffer();
 }
