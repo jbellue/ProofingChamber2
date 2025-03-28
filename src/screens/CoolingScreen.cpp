@@ -14,7 +14,7 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _proofingScreen = proofingScreen;
     _menuScreen = menuScreen;
     _onCancelButton = true;
-    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
+    _inputManager->begin();
     _endTime = 0;
     _lastUpdateTime = 0;
 
@@ -45,10 +45,9 @@ bool CoolingScreen::update(bool forceRedraw) {
     bool redraw = forceRedraw || (now != _lastUpdateTime);
     _lastUpdateTime = now;
 
-    const int64_t newPosition = _inputManager->getEncoderPosition();
-    if (newPosition != _oldPosition) {
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != InputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
-        _oldPosition = newPosition;
         redraw = true;
     }
 

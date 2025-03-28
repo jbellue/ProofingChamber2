@@ -19,7 +19,6 @@ private:
     const char* _title;
     const char* _path;
     uint8_t _valueY;
-    int64_t _oldPosition;
     int _currentValue;
     DisplayManager* _display;
     InputManager* _inputManager;

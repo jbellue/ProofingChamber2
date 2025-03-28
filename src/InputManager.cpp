@@ -7,16 +7,26 @@ InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin)
 
 void InputManager::begin() {
     pinMode(_encoderSWPin, INPUT_PULLUP);
-    update();
+    _encoder.tick();
+    _lastEncoderPosition = _encoder.getPosition();
+    _lastDirection = EncoderDirection::None;
 }
 
 void InputManager::update() {
     _encoder.tick();
-    //TODO maybe this should return a direction?
+    const int64_t newPosition = _encoder.getPosition();
+    if (newPosition != _lastEncoderPosition) {
+        _lastDirection = (newPosition > _lastEncoderPosition) ?
+            EncoderDirection::Clockwise :
+            EncoderDirection::CounterClockwise;
+        _lastEncoderPosition = newPosition;
+    }
 }
 
-int64_t InputManager::getEncoderPosition() {
-    return _encoder.getPosition();
+InputManager::EncoderDirection InputManager::getEncoderDirection() {
+    const EncoderDirection direction = _lastDirection;
+    _lastDirection = EncoderDirection::None;
+    return direction;
 }
 
 bool InputManager::isButtonPressed() {

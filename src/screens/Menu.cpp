@@ -10,7 +10,7 @@
 Menu::Menu(DisplayManager* display, InputManager* inputManager, MenuActions* menuActions) :
     _menuActions(menuActions),
     _display(display),
-    inputManager(inputManager),
+    _inputManager(inputManager),
     _currentMenu(nullptr),
     _menuIndex(0)
 {}
@@ -27,7 +27,7 @@ void Menu::beginImpl() {
         _currentMenu = mainMenu;
         _menuIndex = 0;
     }
-    _oldPosition = inputManager->getEncoderPosition();
+    _inputManager->begin();
     _display->clear();
 }
 
@@ -35,14 +35,13 @@ void Menu::beginImpl() {
 bool Menu::update(bool forceRedraw) {
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    const int64_t newPosition = inputManager->getEncoderPosition();
-    if (newPosition != _oldPosition) {
-        if (newPosition > _oldPosition) {
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != InputManager::EncoderDirection::None) {
+        if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
         } else {
             _menuIndex = (_menuIndex - 1 + getMenuSize(_currentMenu)) % getMenuSize(_currentMenu);
         }
-        _oldPosition = newPosition;
         redraw = true;
     }
     if (redraw) {
@@ -50,7 +49,7 @@ bool Menu::update(bool forceRedraw) {
     }
 
     // Handle encoder button press
-    if (inputManager->isButtonPressed()) {
+    if (_inputManager->isButtonPressed()) {
         return handleMenuSelection();
     }
     return true;

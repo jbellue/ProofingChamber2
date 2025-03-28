@@ -1,4 +1,5 @@
 #include <U8g2lib.h>
+
 #include "DisplayManager.h"
 #include "DebugUtils.h"
 #include "InputManager.h"

@@ -26,11 +26,10 @@ public:
 private:
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
-    int64_t _oldPosition = 0;
 
     MenuActions* _menuActions;
     DisplayManager* _display;
-    InputManager* inputManager;
+    InputManager* _inputManager;
 
     // Helper functions
     void drawMenu(MenuItem* menu, const uint8_t index);

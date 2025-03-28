@@ -10,7 +10,6 @@ public:
     bool update(bool forceRedraw = false) override;
 
 private:
-    int64_t _oldPosition;
     DisplayManager* _display;
     InputManager* _inputManager;
     void drawScreen();

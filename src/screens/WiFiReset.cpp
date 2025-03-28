@@ -12,7 +12,7 @@ void WiFiReset::begin() {
 
 void WiFiReset::beginImpl() {
     _onCancelButton = true;
-    _oldPosition = _inputManager->getEncoderPosition();
+    _inputManager->begin();
     _display->clear();
     _display->drawTitle("Effacer tous les\nparam\xC3\xA8tres du WiFi ?", 20);
 }
@@ -20,10 +20,9 @@ void WiFiReset::beginImpl() {
 bool WiFiReset::update(bool forceRedraw) {
     // Handle encoder rotation
     bool redraw = forceRedraw;
-    int64_t newPosition = _inputManager->getEncoderPosition();
-    if (newPosition != _oldPosition) {
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != InputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
-        _oldPosition = newPosition;
         redraw = true;
     }
     if (redraw) {

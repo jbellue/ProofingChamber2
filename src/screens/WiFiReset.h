@@ -10,7 +10,6 @@ WiFiReset(DisplayManager* display, InputManager* inputManager);
     bool update(bool forceRedraw = false) override;
 
 private:
-    int64_t _oldPosition;
     DisplayManager* _display;
     InputManager* _inputManager;
     bool _onCancelButton;

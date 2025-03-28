@@ -5,7 +5,6 @@
 AdjustTime::AdjustTime(DisplayManager* display, InputManager* inputManager) :
     _display(display),
     _inputManager(inputManager),
-    _oldPosition(0),
     _currentDays(0),
     _currentHours(0),
     _currentMinutes(0),
@@ -20,7 +19,7 @@ void AdjustTime::begin(const char* title, const uint8_t startH, const uint8_t st
 
 void AdjustTime::beginImpl(const char* title, const uint8_t startH, const uint8_t startM) {
     _title = title;
-    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
+    _inputManager->begin();
     _currentHours = startH;
     _currentMinutes = startM;
     _currentDays = 0;
@@ -34,10 +33,11 @@ void AdjustTime::beginImpl(const char* title, const uint8_t startH, const uint8_
 bool AdjustTime::update(bool forceRedraw) {
     // Handle encoder rotation
     bool redraw = forceRedraw;
-    const int64_t newPosition = _inputManager->getEncoderPosition();
-    if (newPosition != _oldPosition) {
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+
+    if (encoderDirection != InputManager::EncoderDirection::None) {
         if (_adjustingHours) {
-            _currentHours += (newPosition > _oldPosition) ? 1 : -1;
+            _currentHours += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
             if (_currentHours < 0) {
                 _currentHours = 23;
                 if (_currentDays > 0) _currentDays -= 1;
@@ -47,11 +47,10 @@ bool AdjustTime::update(bool forceRedraw) {
                 _currentDays += 1;
             }
         } else {
-            _currentMinutes += (newPosition > _oldPosition) ? 1 : -1;
+            _currentMinutes += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
             if (_currentMinutes < 0) _currentMinutes = 59;
             if (_currentMinutes > 59) _currentMinutes = 0;
         }
-        _oldPosition = newPosition;
         redraw = true;
     }
     // Handle encoder button press to switch between hours and minutes, or confirm and save

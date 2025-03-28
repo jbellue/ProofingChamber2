@@ -30,7 +30,6 @@ private:
     int8_t _currentMinutes;
     bool _adjustingHours;
     uint8_t _valueY;
-    int64_t _oldPosition;
 
     DisplayManager* _display;
     InputManager* _inputManager;

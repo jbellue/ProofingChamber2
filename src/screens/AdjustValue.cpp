@@ -15,7 +15,7 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
     _title = title;
     _path = path;
     _currentValue = _storage.readIntFromFile(path, 0); // Load initial value
-    _oldPosition = _inputManager->getEncoderPosition(); // Reset encoder position
+    _inputManager->begin(); // Reset encoder position
 
     // Update the _display immediately
     _display->clear();
@@ -25,10 +25,9 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
 bool AdjustValue::update(bool forceRedraw) {
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    int64_t newPosition = _inputManager->getEncoderPosition();
-    if (newPosition != _oldPosition) {
-        _currentValue += (newPosition > _oldPosition) ? 1 : -1;
-        _oldPosition = newPosition;
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != InputManager::EncoderDirection::None) {
+        _currentValue += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
         redraw = true;
     }
     if (redraw) {

@@ -22,7 +22,6 @@ private:
     time_t _endTime;
     Screen* _proofingScreen;
     Screen* _menuScreen;
-    int64_t _oldPosition;
     bool _onCancelButton;
     TimeCalculatorCallback _timeCalculator;
     time_t _lastUpdateTime;
