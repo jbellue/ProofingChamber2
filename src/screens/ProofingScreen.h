@@ -13,12 +13,19 @@ public:
     bool update(bool forceRedraw = false) override;
 
 private:
+    enum temperature_change_t {
+        TEMPERATURE_LOWERING,
+        TEMPERATURE_STABLE,
+        TEMPERATURE_RISING,
+        TEMPERATURE_UNKNOWN
+    };
     DisplayManager* _display;
     InputManager* _inputManager;
     time_t _startTime;
     uint _previousDiffSeconds;
-    int _currentTemp;
-    bool _isRising;
+    float _previousTemp;
+    float _currentTemp;
+    temperature_change_t _temperatureChange;
     bool _isIconOn;
 
     void drawScreen();

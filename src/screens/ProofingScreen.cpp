@@ -4,7 +4,7 @@
 
 ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManager) :
     _display(display), _inputManager(inputManager), _startTime(0),
-    _currentTemp(0), _isRising(false), _isIconOn(false), _previousDiffSeconds(0)
+    _currentTemp(0.0), _previousTemp(0.0), _temperatureChange(TEMPERATURE_UNKNOWN), _isIconOn(false), _previousDiffSeconds(0)
 {}
 
 void ProofingScreen::begin() {
@@ -15,8 +15,9 @@ void ProofingScreen::beginImpl() {
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
-    _currentTemp = 0;
-    _isRising = true;
+    _inputManager->startTemperaturePolling();
+    _currentTemp = _inputManager->getTemperature();
+    _previousDiffSeconds = _currentTemp;
     _isIconOn = true;
     _previousDiffSeconds = 999999; // Force a redraw on the first update
 
@@ -59,13 +60,25 @@ bool ProofingScreen::update(bool forceRedraw) {
     const time_t now_time = mktime(&now);
     const double diff_seconds = difftime(now_time, _startTime);
 
+    _currentTemp = _inputManager->getTemperature();
+    if (abs(_currentTemp - _previousTemp) > 0.1) {
+        _temperatureChange = (_currentTemp > _previousTemp) ? TEMPERATURE_RISING : TEMPERATURE_LOWERING;
+        _previousTemp = _currentTemp;
+        forceRedraw = true;
+    } else {
+        _temperatureChange = TEMPERATURE_STABLE;
+    }
+
     if (forceRedraw || diff_seconds - _previousDiffSeconds >= 60) {
         _previousDiffSeconds = diff_seconds;
-        _isRising = !_isRising;
         _isIconOn = !_isIconOn;
         drawScreen();
     }
-    return !_inputManager->isButtonPressed();
+    if (_inputManager->isButtonPressed()) {
+        _inputManager->stopTemperaturePolling();
+        return false; // Return to the previous screen
+    }
+    return true;
 }
 
 void ProofingScreen::drawScreen() {
@@ -74,7 +87,7 @@ void ProofingScreen::drawScreen() {
     // Display the current temperature
     _display->setFont(u8g2_font_t0_11_tf);
     char tempBuffer[7] = {'\0'};
-    snprintf(tempBuffer, sizeof(tempBuffer), "%d°C", _currentTemp);
+    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°C", _currentTemp);
     const uint8_t tempWidth = _display->getStrWidth(tempBuffer);
     const uint8_t tempX = _display->getDisplayWidth() - tempWidth - 10;
     const uint8_t tempY = 60;
@@ -101,9 +114,9 @@ void ProofingScreen::drawScreen() {
 
     // Display the arrow (up or down)
     iconY += proofIconSize + 3;
-    if (_isRising) {
+    if (_temperatureChange == TEMPERATURE_RISING) {
         _display->drawXBMP(iconsX, iconY, 8, 8, iconRise);
-    } else {
+    } else if (_temperatureChange == TEMPERATURE_LOWERING) {
         _display->drawXBMP(iconsX, iconY, 8, 8, iconLower);
     }
 

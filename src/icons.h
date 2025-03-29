@@ -7,7 +7,7 @@ const uint8_t iconProof[] = {
 };
 
 const uint8_t iconCool[] = {
-    0x00, 0x00, 0x10, 0x00, 0x82, 0x00, 0x54, 0x00, 0x38, 0x00, 0x6d, 0x01, 0x38, 0x00, 0x54, 0x00, 0x82, 0x00, 0x10, 0x00
+    0x10 ,0x00, 0x92, 0x00, 0x44, 0x00, 0x10, 0x00, 0xab, 0x01, 0x10, 0x00, 0x44, 0x00, 0x92, 0x00, 0x10, 0x00
 };
 
 const uint8_t iconSettings[] = {
@@ -42,7 +42,6 @@ const uint8_t iconWiFi[] = {
     0x78, 0x00, 0x86, 0x01, 0x31, 0x02, 0xcc, 0x00, 0x02, 0x01, 0x78, 0x00, 0x84, 0x00, 0x30, 0x00, 0x30, 0x00, 0x00, 0x00
 };
 
-// Define the degree symbol as a custom character
 const uint8_t degreeSymbol[] U8X8_PROGMEM = {
     0b00111100,
     0b01100110,
@@ -55,18 +54,6 @@ const uint8_t degreeSymbol[] U8X8_PROGMEM = {
 };
 
 const uint8_t iconRise[] U8X8_PROGMEM = {
-    0b00000001,
-    0b00000010,
-    0b00000100,
-    0b00001000,
-    0b10010000,
-    0b10100000,
-    0b11000000,
-    0b11110000
-};
-
-// Define the degree symbol as a custom character
-const uint8_t iconLower[] U8X8_PROGMEM = {
     0b11110000,
     0b11000000,
     0b10100000,
@@ -75,5 +62,16 @@ const uint8_t iconLower[] U8X8_PROGMEM = {
     0b00000100,
     0b00000010,
     0b00000001
+};
+
+const uint8_t iconLower[] U8X8_PROGMEM = {
+    0b00000001,
+    0b00000010,
+    0b00000100,
+    0b00001000,
+    0b10010000,
+    0b10100000,
+    0b11000000,
+    0b11110000
 };
 #endif // ICONS_H
