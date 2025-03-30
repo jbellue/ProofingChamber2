@@ -4,7 +4,7 @@
 
 ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManager) :
     _display(display), _inputManager(inputManager), _startTime(0),
-    _currentTemp(0.0), _previousTemp(0.0), _isIconOn(false), _previousDiffSeconds(0)
+    _currentTemp(0.0), _previousTemp(200.0), _isIconOn(false), _previousDiffSeconds(0)
 {}
 
 void ProofingScreen::begin() {
@@ -17,6 +17,7 @@ void ProofingScreen::beginImpl() {
     _startTime = mktime(&startTime);
     _inputManager->startTemperaturePolling();
     _currentTemp = _inputManager->getTemperature();
+    _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
     _isIconOn = true;
     _previousDiffSeconds = -60; // Force a redraw on the first update
     _lastGraphUpdate = 0;       // Force a redraw on the first update
