@@ -70,7 +70,7 @@ bool ProofingScreen::update(bool forceRedraw) {
 
     // Check if 10 seconds have elapsed since last graph update
     if (difftime(now_time, _lastGraphUpdate) >= 10.0) {
-        _temperatureGraph.commitAverage(); // Commit the average value
+        _temperatureGraph.commitAverage(_currentTemp); // Commit the average value
         drawGraph();
         _lastGraphUpdate = now_time;
     }
