@@ -21,7 +21,7 @@ public:
     void addPoint(const float value);
 
     // Draw the graph
-    void draw(U8G2* display, const uint8_t xPos, const uint8_t yPos);
+    void draw(U8G2* display, const uint8_t xPos, uint8_t yPos);
 
     // Clear the graph
     void clear();

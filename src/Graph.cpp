@@ -37,23 +37,26 @@ void Graph::addPoint(float value) {
     _currentIndex = (_currentIndex + 1) % _width;
 }
 
-void Graph::draw(U8G2* display, const uint8_t xPos, const uint8_t yPos) {
+void Graph::draw(U8G2* display, const uint8_t xPos, uint8_t yPos) {
     // Clear the graph area
     display->setDrawColor(0);
     display->drawBox(xPos, yPos, _width, _height);
     display->setDrawColor(1);
+    uint8_t usableHeight = _height;
 
     // Draw axes
     if (_drawAxes) {
         display->drawFrame(xPos, yPos, _width, _height);
+        usableHeight -= 2; // Adjust height for axes
+        yPos++; // Offset by 1 to account for top border
     }
 
     // Draw data points
     for (uint8_t x = 0; x < _width; x++) {
-        uint8_t idx = (_currentIndex + x) % _width;
-        float val = _values[idx];
+        const uint8_t idx = (_currentIndex + x) % _width;
+        const float val = _values[idx];
         if (val < -273.0) continue; // Skip invalid values
-        uint8_t y = yPos + _height - 1 - static_cast<uint8_t>((val - _minValue) / (_maxValue - _minValue) * (_height - 1));
+        const uint8_t y = yPos + usableHeight - 1 - static_cast<uint8_t>((val - _minValue) / (_maxValue - _minValue) * (usableHeight - 1));
 
         // Draw point
         display->drawPixel(xPos + x, y);
