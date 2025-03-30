@@ -31,6 +31,7 @@ public:
     void print(const char* str);
 
     uint8_t drawTitle(const char* title, const uint8_t y = 10);
+    U8G2* getDisplay() const { return _display; }
 private:
     U8G2* _display;
 };

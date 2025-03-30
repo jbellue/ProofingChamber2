@@ -66,6 +66,7 @@ void DS18B20Manager::handleState() {
         }
 
         case State::ERROR:
+            _currentState = State::WAITING_CONVERSION;
             // Could implement retry logic here
             break;
 
