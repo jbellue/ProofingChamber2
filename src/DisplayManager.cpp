@@ -41,6 +41,10 @@ uint8_t DisplayManager::getStrWidth(const char* str) const {
     return _display->getStrWidth(str);
 }
 
+uint8_t DisplayManager::getUTF8Width(const char* str) const {
+    return _display->getUTF8Width(str);
+}
+
 uint8_t DisplayManager::getWidth() const {
     return _display->getWidth();
 }
@@ -99,6 +103,7 @@ void DisplayManager::print(const char* str) {
 
 uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     _display->setFont(u8g2_font_t0_11_tf);
+    _display->setDrawColor(1);
     const uint8_t lineHeight = _display->getAscent() - _display->getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display->getDisplayWidth(); // Get the display width
 

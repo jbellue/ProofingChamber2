@@ -13,6 +13,7 @@ public:
     void drawRBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r);
     void setDrawColor(uint8_t color);
     uint8_t getStrWidth(const char* str) const;
+    uint8_t getUTF8Width(const char* str) const;
     uint8_t getAscent() const;
     uint8_t getDescent() const;
     uint8_t getDisplayWidth() const;

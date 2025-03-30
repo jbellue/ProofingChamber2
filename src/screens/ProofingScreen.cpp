@@ -18,12 +18,13 @@ void ProofingScreen::beginImpl() {
     _inputManager->startTemperaturePolling();
     _currentTemp = _inputManager->getTemperature();
     _isIconOn = true;
-    _previousDiffSeconds = 999999; // Force a redraw on the first update
-    _lastGraphUpdate = 999999;     // Force a redraw on the first update
+    _previousDiffSeconds = -60; // Force a redraw on the first update
+    _lastGraphUpdate = 0;       // Force a redraw on the first update
 
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _display->clear();
     _display->drawTitle("En pousse depuis");
+    drawButtons();
 }
 
 void ProofingScreen::drawTime() {
@@ -48,14 +49,14 @@ void ProofingScreen::drawTime() {
     const uint8_t fontHeight = _display->getAscent() - _display->getDescent();
 
     // Clear out the previous value
-    _display->setDrawColor(0); // Clear the previous value
-    _display->drawBox(0, timeY - _display->getAscent() - 2, _display->getDisplayWidth(), fontHeight + 4);
+    _display->setDrawColor(0);
+    _display->drawBox(timeX, timeY - _display->getAscent(), timeWidth, fontHeight);
 
     _display->setDrawColor(1);
     _display->drawUTF8(timeX, timeY, timeBuffer);
 }
 
-bool ProofingScreen::update(bool forceRedraw) {
+bool ProofingScreen::update(bool shouldRedraw) {
     struct tm now;
     getLocalTime(&now);
     const time_t now_time = mktime(&now);
@@ -65,7 +66,8 @@ bool ProofingScreen::update(bool forceRedraw) {
     if (abs(_currentTemp - _previousTemp) > 0.1) {
         _temperatureGraph.addValueToAverage(_currentTemp);
         _previousTemp = _currentTemp;
-        forceRedraw = true;
+        drawTemperature(); // Update the temperature display
+        shouldRedraw = true; // Force a buffer update
     }
 
     // Check if 10 seconds have elapsed since last graph update
@@ -73,12 +75,18 @@ bool ProofingScreen::update(bool forceRedraw) {
         _temperatureGraph.commitAverage(_currentTemp); // Commit the average value
         drawGraph();
         _lastGraphUpdate = now_time;
+        _isIconOn = !_isIconOn;
+        drawIcons();
+        shouldRedraw = true; // Force a buffer update
     }
 
-    if (forceRedraw || diff_seconds - _previousDiffSeconds >= 60) {
+    if (diff_seconds - _previousDiffSeconds >= 60) {
         _previousDiffSeconds = diff_seconds;
-        _isIconOn = !_isIconOn;
-        drawScreen();
+        drawTime();
+        shouldRedraw = true; // Force a buffer update
+    }
+    if (shouldRedraw) {
+        _display->sendBuffer(); // Send the buffer to the display
     }
     if (_inputManager->isButtonPressed()) {
         _inputManager->stopTemperaturePolling();
@@ -94,25 +102,25 @@ void ProofingScreen::drawGraph() {
     _display->sendBuffer();
 }
 
+void ProofingScreen::drawTemperature() {
+        _display->setFont(u8g2_font_t0_11_tf);
+        char tempBuffer[7] = {'\0'};
+        snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", _currentTemp);
+        const uint8_t tempWidth = _display->getUTF8Width("99.9°"); // Max width for temperature string
+        const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
+        const uint8_t tempX = _display->getDisplayWidth() / 2;
+        const uint8_t tempY = 60;
 
-void ProofingScreen::drawScreen() {
-    drawTime();
+        // Clear out the previous temperature
+        _display->setDrawColor(0);
+        _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
+        _display->setDrawColor(1);
 
-    // Display the current temperature
-    _display->setFont(u8g2_font_t0_11_tf);
-    char tempBuffer[7] = {'\0'};
-    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°C", _currentTemp);
-    const uint8_t tempWidth = _display->getStrWidth(tempBuffer);
-    const uint8_t tempX = _display->getDisplayWidth() / 2;
-    const uint8_t tempY = 60;
+        _display->drawUTF8(tempX, tempY, tempBuffer);
+}
 
-    // Clear out the previous temperature
-    _display->setDrawColor(0);
-    _display->drawBox(tempX - 2, tempY - _display->getAscent() - 2, tempWidth, _display->getAscent() + 4);
-    _display->setDrawColor(1);
 
-    _display->drawUTF8(tempX, tempY, tempBuffer);
-
+void ProofingScreen::drawIcons() {
     const uint8_t proofIconSize = 10;
     const uint8_t iconsX = _display->getDisplayWidth() - proofIconSize - 2;
     const uint8_t iconY = 35;
@@ -125,13 +133,13 @@ void ProofingScreen::drawScreen() {
         _display->drawBox(iconsX, iconY, proofIconSize, proofIconSize);
         _display->setDrawColor(1);
     }
+}
 
+void ProofingScreen::drawButtons() {
     const char* buttonText = "Annuler";
     const uint8_t buttonWidth = _display->getStrWidth(buttonText) + 10;
     _display->setDrawColor(1); // white button
-    _display->drawRBox(5, tempY - _display->getAscent() - 3, buttonWidth, 15, 1);
+    _display->drawRBox(5, 60 - _display->getAscent() - 3, buttonWidth, 15, 1);
     _display->setDrawColor(0); // black text
-    _display->drawUTF8(10, tempY, buttonText);
-
-    _display->sendBuffer();
+    _display->drawUTF8(10, 60, buttonText);
 }

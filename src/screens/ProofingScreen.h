@@ -18,14 +18,16 @@ private:
     InputManager* _inputManager;
     time_t _startTime;
     time_t _lastGraphUpdate;
-    uint _previousDiffSeconds;
+    time_t _previousDiffSeconds;
     float _previousTemp;
     float _currentTemp;
     bool _isIconOn;
     Graph _temperatureGraph;
 
-    void drawScreen();
     void drawTime();
+    void drawTemperature();
+    void drawIcons();
+    void drawButtons();
     void drawGraph();
 };
 
