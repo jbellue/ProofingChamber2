@@ -18,14 +18,18 @@ void Graph::addValueToAverage(const float value) {
     _countForAverage++;
 }
 
-void Graph::commitAverage() {
+void Graph::commitAverage(const float defaultValue) {
+    // If no values were added, use the default value
     if (_countForAverage > 0) {
         const float average = _sumForAverage / _countForAverage;
         addPoint(average);
-        // Reset averaging
-        _sumForAverage = 0;
-        _countForAverage = 0;
     }
+    else {
+        addPoint(defaultValue);
+    }
+    // Reset averaging
+    _sumForAverage = 0;
+    _countForAverage = 0;
 }
 
 void Graph::addPoint(float value) {

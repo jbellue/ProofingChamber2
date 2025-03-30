@@ -15,7 +15,7 @@ public:
     void addValueToAverage(const float value);
 
     // Calculate average and add it as a point
-    void commitAverage();
+    void commitAverage(const float defaultValue);
 
     // Add a data point directly (no averaging)
     void addPoint(const float value);
