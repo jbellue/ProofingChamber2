@@ -25,7 +25,6 @@ void MenuActions::proofInAction() {
     DEBUG_PRINTLN("MenuActions: proofInAction called");
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
-    _adjustTime->setNextScreen(_coolingScreen);
 
     // Lambda calculates end time based on user input from AdjustTime
     auto timeCalculator = [this]() -> time_t {
@@ -40,19 +39,18 @@ void MenuActions::proofInAction() {
         return endTime;
     };
     _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
-    _adjustTime->begin("Pousser dans...");
+    _adjustTime->begin("Pousser dans...", _coolingScreen, menu);
 }
 
 void MenuActions::proofAtAction() {
     DEBUG_PRINTLN("MenuActions: proofAtAction called");
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
-    _adjustTime->setNextScreen(_coolingScreen);
     struct tm timeinfo;
     int hour, minute;
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTime->begin("Pousser \xC3\xA0...");
+        _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu);
     }
     // Lambda calculates end time based on user input from AdjustTime
     auto timeCalculator = [this]() -> time_t {
@@ -68,7 +66,7 @@ void MenuActions::proofAtAction() {
         return mktime(&endTime);
     };
     _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
-    _adjustTime->begin("Pousser \xC3\xA0...", timeinfo.tm_hour, timeinfo.tm_min);
+    _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, timeinfo.tm_hour, timeinfo.tm_min);
 }
 
 void MenuActions::adjustHotTargetTemp() {
