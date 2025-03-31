@@ -117,7 +117,7 @@ uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
 
     while (line != nullptr) {
         // Draw the current line centered on the display
-        _display->drawUTF8((displayWidth - _display->getStrWidth(line)) / 2, currentY, line);
+        _display->drawUTF8((displayWidth - _display->getUTF8Width(line)) / 2, currentY, line);
         currentY += lineHeight; // Move Y position down
 
         // Get the next line
