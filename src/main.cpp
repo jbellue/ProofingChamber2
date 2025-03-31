@@ -49,8 +49,6 @@ void setup() {
 
     initialization.setNextScreen(&menu);
     screensManager.setActiveScreen(&initialization);
-
-    ds18b20Manager.startPolling();
 }
 
 void loop() {
