@@ -21,6 +21,7 @@ void ProofingScreen::beginImpl() {
     _isIconOn = true;
     _previousDiffSeconds = -60; // Force a redraw on the first update
     _lastGraphUpdate = 0;       // Force a redraw on the first update
+    _lastTemperatureUpdate = 0; // Force a redraw on the first update
 
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _display->clear();
@@ -58,17 +59,23 @@ void ProofingScreen::drawTime() {
 }
 
 bool ProofingScreen::update(bool shouldRedraw) {
+    if (_inputManager->isButtonPressed()) {
+        _inputManager->stopTemperaturePolling();
+        return false; // Return to the previous screen
+    }
     struct tm now;
     getLocalTime(&now);
     const time_t now_time = mktime(&now);
     const double diff_seconds = difftime(now_time, _startTime);
 
-    _currentTemp = _inputManager->getTemperature();
-    if (abs(_currentTemp - _previousTemp) > 0.1) {
-        _temperatureGraph.addValueToAverage(_currentTemp);
-        _previousTemp = _currentTemp;
-        drawTemperature(); // Update the temperature display
-        shouldRedraw = true; // Force a buffer update
+    if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
+        _currentTemp = _inputManager->getTemperature();
+        if (abs(_currentTemp - _previousTemp) > 0.1) {
+            _temperatureGraph.addValueToAverage(_currentTemp);
+            _previousTemp = _currentTemp;
+            drawTemperature(); // Update the temperature display
+            shouldRedraw = true; // Force a buffer update
+        }
     }
 
     // Check if 10 seconds have elapsed since last graph update
@@ -89,18 +96,12 @@ bool ProofingScreen::update(bool shouldRedraw) {
     if (shouldRedraw) {
         _display->sendBuffer(); // Send the buffer to the display
     }
-    if (_inputManager->isButtonPressed()) {
-        _inputManager->stopTemperaturePolling();
-        return false; // Return to the previous screen
-    }
     return true;
 }
 
 void ProofingScreen::drawGraph() {
     _display->setDrawColor(1);
     _temperatureGraph.draw(_display->getDisplay(), _display->getWidth() - 30, 48);
-
-    _display->sendBuffer();
 }
 
 void ProofingScreen::drawTemperature() {

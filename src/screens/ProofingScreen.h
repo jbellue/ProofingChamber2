@@ -18,6 +18,7 @@ private:
     InputManager* _inputManager;
     time_t _startTime;
     time_t _lastGraphUpdate;
+    time_t _lastTemperatureUpdate;
     time_t _previousDiffSeconds;
     float _previousTemp;
     float _currentTemp;
