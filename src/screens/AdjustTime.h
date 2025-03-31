@@ -21,7 +21,8 @@ public:
 
 private:
     void beginImpl(const char* title, const uint8_t startH = 0, const uint8_t startM = 0);
-    void drawScreen();
+    void drawTime();
+    void drawHighlight();
 
     Storage _storage;
     const char* _title;
