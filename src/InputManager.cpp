@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, DS18B20Manager* ds18b20Manager) :
-    _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin),
+    _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin), _buttonPressed(false),
     _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Manager) {}
 
 void InputManager::begin() {
@@ -15,7 +15,7 @@ void InputManager::begin() {
 }
 
 void InputManager::update() {
-    _ds18b20Manager->update();
+    // Handle encoder rotation
     _encoder.tick();
     const int64_t newPosition = _encoder.getPosition();
     if (newPosition != _lastEncoderPosition) {
@@ -24,6 +24,23 @@ void InputManager::update() {
             EncoderDirection::CounterClockwise;
         _lastEncoderPosition = newPosition;
     }
+
+    // Handle button press
+    const int reading = digitalRead(_encoderSWPin);
+    if (reading != _lastButtonState) {
+        _lastDebounceTime = millis();
+    }
+    if ((millis() - _lastDebounceTime) > _debounceDelay) {
+        if (reading != _buttonState) {
+            _buttonState = reading;
+            if (_buttonState == LOW) {
+                _buttonPressed = true;
+            }
+        }
+    }
+    _lastButtonState = reading;
+
+    _ds18b20Manager->update();
 }
 
 InputManager::EncoderDirection InputManager::getEncoderDirection() {
@@ -33,19 +50,10 @@ InputManager::EncoderDirection InputManager::getEncoderDirection() {
 }
 
 bool InputManager::isButtonPressed() {
-    const int reading = digitalRead(_encoderSWPin);
-    if (reading != _lastButtonState) {
-        _lastDebounceTime = millis();
+    if (_buttonPressed) {
+        _buttonPressed = false; // Clear the flag
+        return true;
     }
-    if ((millis() - _lastDebounceTime) > 50) {
-        if (reading != _buttonState) {
-            _buttonState = reading;
-            if (_buttonState == LOW) {
-                return true;
-            }
-        }
-    }
-    _lastButtonState = reading;
     return false;
 }
 
