@@ -38,14 +38,14 @@ bool Menu::update(bool forceRedraw) {
     const auto encoderDirection = _inputManager->getEncoderDirection();
     if (encoderDirection != InputManager::EncoderDirection::None) {
         if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
-            _menuIndex = (_menuIndex + 1) % getMenuSize(_currentMenu);
+            _menuIndex = (_menuIndex + 1) % getCurrentMenuSize();
         } else {
-            _menuIndex = (_menuIndex - 1 + getMenuSize(_currentMenu)) % getMenuSize(_currentMenu);
+            _menuIndex = (_menuIndex - 1 + getCurrentMenuSize()) % getCurrentMenuSize();
         }
         redraw = true;
     }
     if (redraw) {
-        drawMenu(_currentMenu, _menuIndex);
+        drawMenu();
     }
 
     // Handle encoder button press
@@ -57,19 +57,19 @@ bool Menu::update(bool forceRedraw) {
 
 
 // Helper functions
-void Menu::drawMenu(MenuItem* menu, const uint8_t index) {
+void Menu::drawMenu() {
     _display->clearBuffer();
     _display->setFontMode(1);
     _display->setDrawColor(1);
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
-    for (uint8_t i = 0; menu[i].name != nullptr; i++) {
+    for (uint8_t i = 0; _currentMenu[i].name != nullptr; i++) {
         const uint8_t yPos = (i + 1) * 16 - 3;
-        _display->drawUTF8(16, yPos, menu[i].name);
-        if (menu[i].icon != nullptr) {
-            _display->drawXBMP(3, yPos - 9, 10, 10, menu[i].icon);
+        _display->drawUTF8(16, yPos, _currentMenu[i].name);
+        if (_currentMenu[i].icon != nullptr) {
+            _display->drawXBMP(3, yPos - 9, 10, 10, _currentMenu[i].icon);
         }
-        if (i == index) {
+        if (i == _menuIndex) {
             _display->setDrawColor(2);
             _display->drawRBox(0, yPos - 12, 128, 15, 1);
         }
@@ -78,9 +78,9 @@ void Menu::drawMenu(MenuItem* menu, const uint8_t index) {
     DEBUG_PRINTLN("Menu drawn");
 }
 
-uint8_t Menu::getMenuSize(MenuItem* menu) {
+uint8_t Menu::getCurrentMenuSize() const {
     uint8_t size = 0;
-    while (menu[size].name != nullptr) size++;
+    while (_currentMenu[size].name != nullptr) size++;
     return size;
 }
 
@@ -89,7 +89,7 @@ bool Menu::handleMenuSelection() {
     if (selectedItem->subMenu != nullptr) {
         _currentMenu = selectedItem->subMenu;
         _menuIndex = 0;
-        drawMenu(_currentMenu, _menuIndex);
+        drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr) {
         selectedItem->action();

@@ -32,7 +32,7 @@ private:
     InputManager* _inputManager;
 
     // Helper functions
-    void drawMenu(MenuItem* menu, const uint8_t index);
-    uint8_t getMenuSize(MenuItem* menu);
+    void drawMenu();
+    uint8_t getCurrentMenuSize() const;
     bool handleMenuSelection();
 };
