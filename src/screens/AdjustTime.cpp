@@ -74,7 +74,7 @@ bool AdjustTime::update(bool shouldRedraw) {
 }
 
 void AdjustTime::drawTime() {
-    _display->setFont(u8g2_font_ncenB18_tn);
+    _display->setFont(u8g2_font_ncenB18_tf);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
     sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
     const uint8_t timeWidth = _display->getStrWidth("00:00"); // Measure the width of a default time string
@@ -97,7 +97,7 @@ void AdjustTime::drawTime() {
 }
 
 void AdjustTime::drawHighlight() {
-    _display->setFont(u8g2_font_ncenB18_tn);
+    _display->setFont(u8g2_font_ncenB18_tf);
     const uint8_t timeWidth = _display->getStrWidth("00:00"); // Measure the width of a default time string
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
     const uint8_t timeY = _valueY + 2;

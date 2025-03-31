@@ -20,20 +20,10 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
     // Update the _display immediately
     _display->clear();
     _valueY = _display->drawTitle(title);
+    drawButton();
 }
 
-bool AdjustValue::update(bool forceRedraw) {
-    bool redraw = forceRedraw;
-    // Handle encoder rotation
-    const auto encoderDirection = _inputManager->getEncoderDirection();
-    if (encoderDirection != InputManager::EncoderDirection::None) {
-        _currentValue += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
-        redraw = true;
-    }
-    if (redraw) {
-        drawScreen();
-    }
-
+bool AdjustValue::update(bool shouldRedraw) {
     // Handle encoder button press to confirm and save
     if (_inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
@@ -41,30 +31,52 @@ bool AdjustValue::update(bool forceRedraw) {
         DEBUG_PRINTLN("AdjustValue: Value saved, exiting screen.");
         return false;
     }
+    // Handle encoder rotation
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (shouldRedraw || encoderDirection != InputManager::EncoderDirection::None) {
+        if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
+            _currentValue += 1;
+        } else if (encoderDirection == InputManager::EncoderDirection::CounterClockwise) {
+            _currentValue -= 1;
+        }
+        drawValue(); // Redraw the value on the display
+        shouldRedraw = true;
+    }
+    if (shouldRedraw) {
+        _display->sendBuffer(); // Send the buffer to the display
+    }
     return true;
 }
 
-void AdjustValue::drawScreen() {
-    _display->setFont(u8g2_font_ncenB18_tn);
-    char buffer[4] = {'\0'};
-    sprintf(buffer, "%d", _currentValue);
-    const uint8_t degreeSymbolWidth = 8;
-    const uint8_t valueWidth = _display->getStrWidth(buffer);
-    const uint8_t valueX = (_display->getDisplayWidth() - valueWidth - degreeSymbolWidth) / 2; // Calculate the X position to center the value
-    const uint8_t valueY = _valueY + 2;
+void AdjustValue::drawButton() {
+    _display->setFont(u8g2_font_t0_11_tf);
+    const uint8_t padding = 2;
+    const char* buttonText = "OK";
+    const uint8_t screenHeight = _display->getDisplayHeight();
+    const uint8_t screenWidth = _display->getDisplayWidth();
+    const uint8_t buttonWidth = _display->getStrWidth(buttonText);
+    const uint8_t buttonX = (screenWidth - buttonWidth) / 2;
+    const uint8_t buttonY = screenHeight - padding;
 
-    // Only redraw the value and degree symbol
+    _display->setDrawColor(1); // Draw the new button
+    _display->drawUTF8(buttonX, buttonY, buttonText);
+
+    _display->setDrawColor(2);
+    _display->drawRBox(buttonX - 7, screenHeight - 12, buttonWidth + 14, 12, 1);
+}
+
+void AdjustValue::drawValue() {
+    _display->setFont(u8g2_font_ncenB18_tf);
+    char buffer[6] = {'\0'}; // "999°" + '\0' ; degree symbol is two bytes
+    const uint8_t writtenChars = sprintf(buffer, "%d", _currentValue);
+    const uint8_t valueWidth = _display->getUTF8Width(buffer);
+    buffer[writtenChars] = '°'; // Add the degree symbol after measurement
+    const uint8_t valueX = (_display->getDisplayWidth() - valueWidth) / 2; // Calculate the X position to center the value
+    const uint8_t valueY = _valueY + 1;
+
     _display->setDrawColor(0); // Clear the previous value
-    const uint8_t clearWidth = valueWidth + degreeSymbolWidth + 1; // Add buffer to ensure full clearing
-    const uint8_t clearHeight = _display->getAscent() - _display->getDescent() + 4; // Add buffer to ensure full clearing
-    _display->drawBox(valueX, valueY - _display->getAscent(), clearWidth, clearHeight);
+    const uint8_t ascent = _display->getAscent();
+    _display->drawBox(0, valueY - ascent, _display->getDisplayWidth(), ascent);
     _display->setDrawColor(1); // Draw the new value
     _display->drawStr(valueX, valueY, buffer);
-
-    // Draw the custom degree symbol just after the value
-    const uint8_t symbolX = valueX + valueWidth;
-    const uint8_t symbolY = valueY - _display->getAscent();
-    _display->drawXBMP(symbolX, symbolY, degreeSymbolWidth, degreeSymbolWidth, degreeSymbol);
-
-    _display->sendBuffer();
 }

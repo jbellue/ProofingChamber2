@@ -42,17 +42,6 @@ const uint8_t iconWiFi[] = {
     0x78, 0x00, 0x86, 0x01, 0x31, 0x02, 0xcc, 0x00, 0x02, 0x01, 0x78, 0x00, 0x84, 0x00, 0x30, 0x00, 0x30, 0x00, 0x00, 0x00
 };
 
-const uint8_t degreeSymbol[] U8X8_PROGMEM = {
-    0b00111100,
-    0b01100110,
-    0b11000011,
-    0b11000011,
-    0b11000011,
-    0b01100110,
-    0b00111100,
-    0b00000000
-};
-
 const uint8_t iconRise[] U8X8_PROGMEM = {
     0b11110000,
     0b11000000,

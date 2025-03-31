@@ -12,7 +12,8 @@ AdjustValue(DisplayManager* display, InputManager* inputManager);
     void beginImpl() override {};
     bool update(bool forceRedraw = false) override;
 private:
-    void drawScreen();
+    void drawValue();
+    void drawButton();
     void beginImpl(const char* title, const char* path);
 
     Storage _storage;
