@@ -70,7 +70,8 @@ void AdjustValue::drawValue() {
     char buffer[6] = {'\0'}; // "999°" + '\0' ; degree symbol is two bytes
     const uint8_t writtenChars = sprintf(buffer, "%d", _currentValue);
     const uint8_t valueWidth = _display->getUTF8Width(buffer);
-    buffer[writtenChars] = '°'; // Add the degree symbol after measurement
+    buffer[writtenChars] = 0xC2;    // Add the degree symbol after measurement
+    buffer[writtenChars+1] = 0xB0;  // as the multibyte character it is
     const uint8_t valueX = (_display->getDisplayWidth() - valueWidth) / 2; // Calculate the X position to center the value
     const uint8_t valueY = _valueY + 1;
 
