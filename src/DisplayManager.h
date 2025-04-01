@@ -32,6 +32,9 @@ public:
     void print(const char* str);
 
     uint8_t drawTitle(const char* title, const uint8_t y = 10);
+    void drawButton(const char* text, bool selected = true);
+    void drawButton(const char* text, const uint8_t x, bool selected = true);
+    void drawButtons(const char* leftText, const char* rightText, int8_t selectedButton = -1);
     U8G2* getDisplay() const { return _display; }
 private:
     U8G2* _display;

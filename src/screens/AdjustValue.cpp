@@ -49,20 +49,7 @@ bool AdjustValue::update(bool shouldRedraw) {
 }
 
 void AdjustValue::drawButton() {
-    _display->setFont(u8g2_font_t0_11_tf);
-    const uint8_t padding = 2;
-    const char* buttonText = "OK";
-    const uint8_t screenHeight = _display->getDisplayHeight();
-    const uint8_t screenWidth = _display->getDisplayWidth();
-    const uint8_t buttonWidth = _display->getStrWidth(buttonText);
-    const uint8_t buttonX = (screenWidth - buttonWidth) / 2;
-    const uint8_t buttonY = screenHeight - padding;
-
-    _display->setDrawColor(1); // Draw the new button
-    _display->drawUTF8(buttonX, buttonY, buttonText);
-
-    _display->setDrawColor(2);
-    _display->drawRBox(buttonX - 7, screenHeight - 12, buttonWidth + 14, 12, 1);
+    _display->drawButton("OK", true);
 }
 
 void AdjustValue::drawValue() {

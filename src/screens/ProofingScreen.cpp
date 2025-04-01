@@ -111,7 +111,7 @@ void ProofingScreen::drawTemperature() {
         const uint8_t tempWidth = _display->getUTF8Width("99.9°"); // Max width for temperature string
         const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
         const uint8_t tempX = _display->getDisplayWidth() / 2;
-        const uint8_t tempY = 60;
+        const uint8_t tempY = 61;
 
         // Clear out the previous temperature
         _display->setDrawColor(0);
@@ -138,10 +138,5 @@ void ProofingScreen::drawIcons() {
 }
 
 void ProofingScreen::drawButtons() {
-    const char* buttonText = "Annuler";
-    const uint8_t buttonWidth = _display->getStrWidth(buttonText) + 10;
-    _display->setDrawColor(1); // white button
-    _display->drawRBox(5, 60 - _display->getAscent() - 3, buttonWidth, 15, 1);
-    _display->setDrawColor(0); // black text
-    _display->drawUTF8(10, 60, buttonText);
+    _display->drawButton("Annuler", 0, true);
 }

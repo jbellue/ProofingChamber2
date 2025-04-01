@@ -125,3 +125,66 @@ uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     }
     return currentY + lineHeight;
 }
+
+void DisplayManager::drawButton(const char * text, const uint8_t x, bool selected) {
+    setFont(u8g2_font_t0_11_tf);
+    const uint8_t padding = 3;
+    const uint8_t screenHeight = getDisplayHeight();
+    const uint8_t screenWidth = getDisplayWidth();
+    const uint8_t buttonsY = screenHeight - padding;
+    const uint8_t buttonHeight = 13;
+
+    // Clear button area
+    setDrawColor(0);
+    drawBox(0, screenHeight - buttonHeight, screenWidth, buttonHeight);
+
+    // Single centered button
+    const uint8_t sidePadding = 7;
+    const uint8_t textWidth = getUTF8Width(text);
+    const uint8_t buttonWidth = textWidth + 2 * sidePadding;
+
+    // Draw text
+    _display->setDrawColor(1);
+    drawUTF8(x + sidePadding, buttonsY, text);
+
+    // Draw button highlight if selected
+    if (selected) {
+        _display->setDrawColor(2);
+        drawRBox(x, screenHeight - buttonHeight, buttonWidth, buttonHeight, 1);
+    }
+}
+
+void DisplayManager::drawButton(const char * text, bool selected) {
+    const uint8_t sidePadding = 7;
+    const uint8_t buttonWidth = getUTF8Width(text) + 2 * sidePadding;
+    const uint8_t buttonX = (getDisplayWidth() - buttonWidth) / 2;
+    drawButton(text, buttonX, selected);
+}
+
+void DisplayManager::drawButtons(const char * leftText, const char * rightText, int8_t selectedButton) {
+    setFont(u8g2_font_t0_11_tf);
+    const uint8_t padding = 3;
+    const uint8_t screenHeight = getDisplayHeight();
+    const uint8_t screenWidth = getDisplayWidth();
+    const uint8_t buttonsY = screenHeight - padding;
+    const uint8_t buttonHeight = 13;
+
+    // Clear button area
+    setDrawColor(0);
+    drawBox(0, screenHeight - buttonHeight, screenWidth, buttonHeight);
+
+    // Two buttons side by side
+    const uint8_t buttonWidth = screenWidth / 2 - 1;
+    const uint8_t leftWidth = getUTF8Width(leftText);
+    const uint8_t rightWidth = getUTF8Width(rightText);
+
+    _display->setDrawColor(1);
+    drawUTF8((buttonWidth - leftWidth) / 2, buttonsY, leftText);
+    drawUTF8(buttonWidth + (buttonWidth - rightWidth) / 2, buttonsY, rightText);
+
+    // Draw highlight
+    if (selectedButton != -1) {
+        _display->setDrawColor(2);
+        drawRBox(selectedButton == 0 ? 0 : buttonWidth, screenHeight - buttonHeight, buttonWidth, buttonHeight, 1);
+    }
+}

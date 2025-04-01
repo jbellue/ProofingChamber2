@@ -82,26 +82,6 @@ void CoolingScreen::drawScreen() {
     const uint8_t timeWidth = _display->getUTF8Width(timeBuffer);
     _display->drawUTF8((_display->getDisplayWidth() - timeWidth) / 2, 38, timeBuffer);
 
-    const uint8_t padding = 5;
-    const uint8_t screenHeight = _display->getDisplayHeight();
-    const uint8_t screenWidth = _display->getDisplayWidth();
-    const uint8_t buttonsY = _display->getDisplayHeight() - padding;
-    const uint8_t buttonWidth = screenWidth / 2 - 1;
-
-    // Erase the previous buttons
-    _display->setDrawColor(0);
-    _display->drawBox(0, screenHeight - 16, screenWidth, 16);
-
-    _display->setDrawColor(1);
-    const char* proofText = "Démarrer";
-    const uint8_t proofWidth = _display->getUTF8Width(proofText);
-    _display->drawUTF8((buttonWidth - proofWidth) / 2, buttonsY, proofText);
-
-    const char* cancelText = "Annuler";
-    const uint8_t cancelWidth = _display->getUTF8Width(cancelText);
-    _display->drawUTF8(buttonWidth + (buttonWidth - cancelWidth) / 2, buttonsY, cancelText);
-
-    _display->setDrawColor(2);
-    _display->drawRBox(_onCancelButton? buttonWidth : 0, screenHeight - 16, buttonWidth, 15, 1);
+    _display->drawButtons("Démarrer", "Annuler", _onCancelButton ? 1 : 0);
     _display->sendBuffer();
 }

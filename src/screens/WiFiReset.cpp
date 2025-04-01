@@ -55,26 +55,6 @@ bool WiFiReset::update(bool forceRedraw) {
 
 
 void WiFiReset::drawScreen() {
-    _display->setFont(u8g2_font_t0_11_tf);
-    const uint8_t padding = 5;
-    const uint8_t screenHeight = _display->getDisplayHeight();
-    const uint8_t screenWidth = _display->getDisplayWidth();
-    const uint8_t buttonsY = _display->getDisplayHeight() - padding;
-    const uint8_t buttonWidth = screenWidth / 2 - 1;
-
-    // Erase the previous buttons
-    _display->setDrawColor(0); // Clear the previous time
-    _display->drawBox(0, screenHeight - 20, screenWidth, 20);
-
-    _display->setDrawColor(1); // Draw the new buttons
-    const char* confirmText = "Confirmer";
-    const uint8_t confirmWidth = _display->getStrWidth(confirmText);
-    _display->drawUTF8((buttonWidth - confirmWidth) / 2, buttonsY, confirmText);
-    const char* cancelText = "Annuler";
-    const uint8_t cancelWidth = _display->getStrWidth(cancelText);
-    _display->drawUTF8(buttonWidth + (buttonWidth - cancelWidth) / 2, buttonsY, cancelText);
-
-    _display->setDrawColor(2);
-    _display->drawRBox(_onCancelButton? buttonWidth : 0, screenHeight - 16, buttonWidth, 15, 1);
+    _display->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
     _display->sendBuffer();
 }

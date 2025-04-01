@@ -106,32 +106,13 @@ bool AdjustTime::update(bool shouldRedraw) {
 }
 
 void AdjustTime::drawButtons() {
-    _display->setFont(u8g2_font_t0_11_tf);
-    const uint8_t screenHeight = _display->getDisplayHeight();
-    const uint8_t screenWidth = _display->getDisplayWidth();
-    const uint8_t buttonWidth = screenWidth / 2 - 1;
-    const uint8_t padding = 5;
-    const uint8_t buttonsY = _display->getDisplayHeight() - padding;
-
-    // Erase the previous buttons
-    _display->setDrawColor(0);
-    _display->drawBox(0, screenHeight - 16, screenWidth, 16);
-
-    _display->setDrawColor(1);
-    const char* buttonText = "Démarrer";
-    const uint8_t proofWidth = _display->getUTF8Width(buttonText);
-    _display->drawUTF8((buttonWidth - proofWidth) / 2, buttonsY, buttonText);
-
-    const char* cancelText = "Annuler";
-    const uint8_t cancelWidth = _display->getUTF8Width(cancelText);
-    _display->drawUTF8(buttonWidth + (buttonWidth - cancelWidth) / 2, buttonsY, cancelText);
-
-    _display->setDrawColor(2);
+    int8_t highlightedButton = -1;
     if (_selectedItem == SelectedItem::Ok) {
-        _display->drawRBox(0, screenHeight - 16, buttonWidth, 15, 1);
+        highlightedButton = 0; // Highlight the "Démarrer" button
     } else if (_selectedItem == SelectedItem::Cancel) {
-        _display->drawRBox(buttonWidth, screenHeight - 16, buttonWidth, 15, 1);
+        highlightedButton = 1; // Highlight the "Annuler" button
     }
+    _display->drawButtons("Démarrer", "Annuler", highlightedButton);
 }
 
 void AdjustTime::drawTime() {

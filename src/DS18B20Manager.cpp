@@ -80,7 +80,7 @@ void DS18B20Manager::handleState() {
                 DEBUG_PRINTLN("Attempting to recover from error...");
                 _sensors.begin(); // Reinitialize the sensor
                 if (_sensors.getAddress(_deviceAddress, 0)) {
-                    setResolution(_currentResolution);
+                    setResolution(10); // quick retry
                     _currentState = State::WAITING_CONVERSION;
                     startConversion();
                     _errorRetryCount = 0; // Reset counter on successful recovery
