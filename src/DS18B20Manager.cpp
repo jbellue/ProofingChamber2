@@ -5,7 +5,8 @@
 
 DS18B20Manager::DS18B20Manager(const uint8_t oneWirePin):
         _oneWire(oneWirePin), _sensors(&_oneWire), _lastTemperature(0.0),
-        _currentResolution(9), _currentState(State::STOPPED) { }
+        _currentResolution(9), _currentState(State::STOPPED),
+        _lastErrorTime(0), _errorRetryCount(0) { }
 
 void DS18B20Manager::begin() {
     _sensors.begin();
@@ -20,6 +21,8 @@ void DS18B20Manager::begin() {
 }
 
 void DS18B20Manager::startConversion() {
+    _lastErrorTime = 0;
+    _errorRetryCount = 0;
     _lastUpdateTime = millis();
     _sensors.requestTemperatures();
 }
@@ -71,18 +74,26 @@ void DS18B20Manager::handleState() {
         }
 
         case State::ERROR: {
-            // Attempt to recover by resetting the sensor
-            DEBUG_PRINTLN("Attempting to recover from error...");
-            _sensors.begin(); // Reinitialize the sensor
-            if (_sensors.getAddress(_deviceAddress, 0)) {
-                setResolution(_currentResolution);
-                _currentState = State::WAITING_CONVERSION;
-                startConversion();
-            } else {
-                DEBUG_PRINTLN("Recovery failed. Sensor not found.");
-                // Stay in ERROR state; could add a retry delay here
+            const uint32_t currentMillis = millis();
+            // Only attempt recovery after delay and if under max retries
+            if (currentMillis - _lastErrorTime >= _errorRetryDelay && _errorRetryCount < _maxErrorRetries) {
+                DEBUG_PRINTLN("Attempting to recover from error...");
+                _sensors.begin(); // Reinitialize the sensor
+                if (_sensors.getAddress(_deviceAddress, 0)) {
+                    setResolution(_currentResolution);
+                    _currentState = State::WAITING_CONVERSION;
+                    startConversion();
+                    _errorRetryCount = 0; // Reset counter on successful recovery
+                } else {
+                    DEBUG_PRINTLN("Recovery failed. Sensor not found.");
+                    _errorRetryCount++;
+                    _lastErrorTime = currentMillis;
+                    if (_errorRetryCount >= _maxErrorRetries) {
+                        DEBUG_PRINTLN("Max retries reached. Stopping polling.");
+                        _currentState = State::STOPPED;
+                    }
+                }
             }
-            break;
         }
 
         case State::STOPPED:
