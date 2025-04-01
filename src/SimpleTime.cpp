@@ -1,13 +1,5 @@
 #include "SimpleTime.h"
 
-bool SimpleTime::isGreaterThanOrEqual(const SimpleTime& other) const {
-    if (days > other.days) return true;
-    if (days < other.days) return false;
-    if (hours > other.hours) return true;
-    if (hours < other.hours) return false;
-    return minutes >= other.minutes;
-}
-
 void SimpleTime::incrementHours() {
     hours++;
     if (hours > 23) {

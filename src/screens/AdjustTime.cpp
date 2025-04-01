@@ -35,7 +35,7 @@ bool AdjustTime::isTimeValid(const SimpleTime& t) const {
     if (_startingTime.hours == 0 && _startingTime.minutes == 0) {
         return t.days >= 0 && t.hours >= 0 && t.minutes >= 0;
     }
-    return t.isGreaterThanOrEqual(_startingTime);
+    return t >= _startingTime;
 }
 
 SimpleTime AdjustTime::getAdjustedTime(bool isHours, bool increment) const {
