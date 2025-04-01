@@ -1,4 +1,5 @@
 #include <WiFiManager.h>
+#include "SimpleTime.h"
 #include "MenuActions.h"
 #include "DebugUtils.h"
 
@@ -39,7 +40,8 @@ void MenuActions::proofInAction() {
         return endTime;
     };
     _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
-    _adjustTime->begin("Pousser dans...", _coolingScreen, menu);
+    SimpleTime startTime(0, 0, 0);
+    _adjustTime->begin("Pousser dans...", _coolingScreen, menu, startTime);
 }
 
 void MenuActions::proofAtAction() {
@@ -47,11 +49,13 @@ void MenuActions::proofAtAction() {
     Screen* menu = _screensManager->getActiveScreen();
     menu->setNextScreen(_adjustTime);
     struct tm timeinfo;
-    int hour, minute;
+    SimpleTime startTime(0, 0, 0);
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu);
+        _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
     }
+    startTime.hours = timeinfo.tm_hour;
+    startTime.minutes = timeinfo.tm_min;
     // Lambda calculates end time based on user input from AdjustTime
     auto timeCalculator = [this]() -> time_t {
         struct tm timeinfo = _adjustTime->getTime();
@@ -66,7 +70,7 @@ void MenuActions::proofAtAction() {
         return mktime(&endTime);
     };
     _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
-    _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, timeinfo.tm_hour, timeinfo.tm_min);
+    _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
 }
 
 void MenuActions::adjustHotTargetTemp() {

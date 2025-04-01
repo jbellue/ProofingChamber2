@@ -4,18 +4,19 @@
 #include "DisplayManager.h"
 #include "InputManager.h"
 #include "Storage.h"
+#include "SimpleTime.h"
 
 class AdjustTime : public Screen {
 public:
     AdjustTime(DisplayManager* display, InputManager* inputManager);
-    void begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const uint8_t startH = 0, const uint8_t startM = 0);
+    void begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
     void beginImpl() override {};
     bool update(bool forceRedraw = false) override;
     struct tm getTime() const {
         struct tm timeinfo;
-        timeinfo.tm_hour = _currentHours;
-        timeinfo.tm_min = _currentMinutes;
-        timeinfo.tm_mday = _currentDays;
+        timeinfo.tm_hour = _currentTime.hours;
+        timeinfo.tm_min = _currentTime.minutes;
+        timeinfo.tm_mday = _currentTime.days;
         return timeinfo;
     }
 
@@ -26,16 +27,16 @@ private:
         Ok,
         Cancel
     } _selectedItem;
-    void beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const uint8_t startH = 0, const uint8_t startM = 0);
+
+    void beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
     void drawTime();
     void drawHighlight();
     void drawButtons();
 
     Storage _storage;
     const char* _title;
-    uint8_t _currentDays;
-    int8_t _currentHours;
-    int8_t _currentMinutes;
+    SimpleTime _startingTime;
+    SimpleTime _currentTime;
     uint8_t _valueY;
 
     DisplayManager* _display;
@@ -44,4 +45,8 @@ private:
 
     Screen* _coolingScreen;
     Screen* _menuScreen;
+
+    SimpleTime getAdjustedTime(bool isHours, bool increment) const;
+    bool isTimeValid(const SimpleTime& t) const;
+
 };

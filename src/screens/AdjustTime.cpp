@@ -3,22 +3,21 @@
 #include "DebugUtils.h"
 
 AdjustTime::AdjustTime(DisplayManager* display, InputManager* inputManager) :
-    _display(display), _inputManager(inputManager), _currentDays(0),
-    _currentHours(0), _currentMinutes(0), _selectedItem(SelectedItem::Hours),
-    _valueY(0), _coolingScreen(nullptr), _menuScreen(nullptr)
+    _display(display), _inputManager(inputManager), 
+    _selectedItem(SelectedItem::Hours), _valueY(0),
+    _coolingScreen(nullptr), _menuScreen(nullptr)
 {}
 
-void AdjustTime::begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const uint8_t startH, const uint8_t startM) {
+void AdjustTime::begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
     DEBUG_PRINTLN("AdjustTime::begin called");
-    beginImpl(title, coolingScreen, menuScreen, startH, startM);
+    beginImpl(title, coolingScreen, menuScreen, startTime);
 }
 
-void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const uint8_t startH, const uint8_t startM) {
+void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
     _title = title;
     _inputManager->begin();
-    _currentHours = startH;
-    _currentMinutes = startM;
-    _currentDays = 0;
+    _startingTime = startTime;
+    _currentTime = startTime;
     _selectedItem = SelectedItem::Hours;
     _coolingScreen = coolingScreen;
     _menuScreen = menuScreen;
@@ -31,6 +30,25 @@ void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* men
     drawButtons();
 }
 
+bool AdjustTime::isTimeValid(const SimpleTime& t) const {
+    if (t.days > 0) return true;
+    if (_startingTime.hours == 0 && _startingTime.minutes == 0) {
+        return t.days >= 0 && t.hours >= 0 && t.minutes >= 0;
+    }
+    return t.isGreaterThanOrEqual(_startingTime);
+}
+
+SimpleTime AdjustTime::getAdjustedTime(bool isHours, bool increment) const {
+    SimpleTime newTime = _currentTime;
+
+    if (increment) {
+        isHours ? newTime.incrementHours() : newTime.incrementMinutes();
+    } else {
+        isHours ? newTime.decrementHours() : newTime.decrementMinutes();
+    }
+    return newTime;
+}
+
 bool AdjustTime::update(bool shouldRedraw) {
     // Handle encoder rotation
     const auto encoderDirection = _inputManager->getEncoderDirection();
@@ -38,23 +56,17 @@ bool AdjustTime::update(bool shouldRedraw) {
         switch (_selectedItem)
         {
         case SelectedItem::Hours:
-            _currentHours += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
-            if (_currentHours < 0) {
-                _currentHours = 23;
-                if (_currentDays > 0) _currentDays -= 1;
+        case SelectedItem::Minutes: {
+            SimpleTime newTime = getAdjustedTime(
+                _selectedItem == SelectedItem::Hours,
+                encoderDirection == InputManager::EncoderDirection::Clockwise
+            );
+            if (isTimeValid(newTime)) {
+                _currentTime = newTime;
+                drawTime();
             }
-            if (_currentHours > 23) {
-                _currentHours = 0;
-                _currentDays += 1;
-            }
-            drawTime();
             break;
-        case SelectedItem::Minutes:
-            _currentMinutes += (encoderDirection == InputManager::EncoderDirection::Clockwise) ? 1 : -1;
-            if (_currentMinutes < 0) _currentMinutes = 59;
-            if (_currentMinutes > 59) _currentMinutes = 0;
-            drawTime();
-            break;
+        }
         case SelectedItem::Ok:
             _selectedItem = SelectedItem::Cancel;
             drawButtons();
@@ -125,7 +137,7 @@ void AdjustTime::drawButtons() {
 void AdjustTime::drawTime() {
     _display->setFont(u8g2_font_ncenB18_tf);
     char timeBuffer[6]; // Buffer for the time string (e.g., "12:34")
-    sprintf(timeBuffer, "%02d:%02d", _currentHours, _currentMinutes); // Format the time as HH:MM
+    sprintf(timeBuffer, "%02d:%02d", _currentTime.hours, _currentTime.minutes); // Format the time as HH:MM
     const uint8_t timeWidth = _display->getStrWidth("00:00"); // Measure the width of a default time string
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2; // Calculate the X position to center the time
     const uint8_t timeY = _valueY + 2;
@@ -138,9 +150,9 @@ void AdjustTime::drawTime() {
     _display->setDrawColor(1); // Draw the new time
     _display->drawStr(timeX, timeY, timeBuffer);
 
-    if(_currentDays > 0) {
+    if(_currentTime.days > 0) {
         _display->setFont(u8g2_font_ncenB12_tr);
-        sprintf(timeBuffer, "+%dj", _currentDays); // Format the days as +1j
+        sprintf(timeBuffer, "+%dj", _currentTime.days); // Format the days as +1j
         _display->drawStr(timeX + timeWidth + 2, timeY - 4, timeBuffer);
     }
 }
