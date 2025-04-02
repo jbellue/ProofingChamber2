@@ -3,7 +3,6 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
-#include "Storage.h"
 #include "SimpleTime.h"
 
 class AdjustTime : public Screen {
@@ -33,7 +32,6 @@ private:
     void drawHighlight();
     void drawButtons();
 
-    Storage _storage;
     const char* _title;
     SimpleTime _startingTime;
     SimpleTime _currentTime;
@@ -48,5 +46,4 @@ private:
 
     SimpleTime getAdjustedTime(bool isHours, bool increment) const;
     bool isTimeValid(const SimpleTime& t) const;
-
 };

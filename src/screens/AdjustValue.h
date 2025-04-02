@@ -3,7 +3,6 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
-#include "Storage.h"
 
 class AdjustValue : public Screen {
 public:
@@ -16,7 +15,6 @@ private:
     void drawButton();
     void beginImpl(const char* title, const char* path);
 
-    Storage _storage;
     const char* _title;
     const char* _path;
     uint8_t _valueY;

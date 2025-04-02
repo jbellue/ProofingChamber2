@@ -1,20 +1,20 @@
 #include <U8g2lib.h>
-
-#include "DisplayManager.h"
 #include "DebugUtils.h"
-#include "InputManager.h"
+#include "DisplayManager.h"
 #include "DS18B20Manager.h"
-#include "Screens/Menu.h"
+#include "InputManager.h"
 #include "MenuActions.h"
 #include "MenuItems.h"
-#include "ScreensManager.h"
 #include "screens/AdjustTime.h"
 #include "screens/AdjustValue.h"
-#include "screens/Initialization.h"
-#include "screens/ProofingScreen.h"
-#include "screens/WiFiReset.h"
-#include "screens/SetTimezone.h"
 #include "screens/CoolingScreen.h"
+#include "screens/Initialization.h"
+#include "screens/Menu.h"
+#include "screens/ProofingScreen.h"
+#include "screens/SetTimezone.h"
+#include "screens/WiFiReset.h"
+#include "ScreensManager.h"
+#include "Storage.h"
 
 #define DS18B20_PIN 0
 #define ENCODER_CLK 2
@@ -43,6 +43,10 @@ void setup() {
     // Initialize serial communication
     Serial.begin(115200);
 #endif
+    if (!Storage::begin()) {
+        // Handle initialization failure
+        DEBUG_PRINTLN("Storage initialization failed");
+    }
     ds18b20Manager.begin();
     displayManager.begin();
     inputManager.begin();

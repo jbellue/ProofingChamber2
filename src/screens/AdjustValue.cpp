@@ -1,5 +1,6 @@
 #include "AdjustValue.h"
 #include "DebugUtils.h"
+#include "Storage.h"
 #include "icons.h"
 
 AdjustValue::AdjustValue(DisplayManager* _display, InputManager* inputManager) :
@@ -14,7 +15,7 @@ void AdjustValue::begin(const char* title, const char* path) {
 void AdjustValue::beginImpl(const char* title, const char* path) {
     _title = title;
     _path = path;
-    _currentValue = _storage.readIntFromFile(path, 0); // Load initial value
+    _currentValue = Storage::readIntFromFile(path, 0); // Load initial value
     _inputManager->begin(); // Reset encoder position
 
     // Update the _display immediately
@@ -27,7 +28,7 @@ bool AdjustValue::update(bool shouldRedraw) {
     // Handle encoder button press to confirm and save
     if (_inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
-        _storage.writeIntToFile(_path, _currentValue);
+        Storage::writeIntToFile(_path, _currentValue);
         DEBUG_PRINTLN("AdjustValue: Value saved, exiting screen.");
         return false;
     }
