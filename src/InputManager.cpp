@@ -4,7 +4,7 @@
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, DS18B20Manager* ds18b20Manager) :
     _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin), _buttonPressed(false),
-    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Manager) {}
+    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Manager), _initialized(false) {}
 
 
 void InputManager::resetEncoderPosition() {
@@ -14,11 +14,13 @@ void InputManager::resetEncoderPosition() {
 }
 
 void InputManager::begin() {
-    pinMode(_encoderSWPin, INPUT_PULLUP);
-    _ds18b20Manager->begin();
+    if (!_initialized) {
+        pinMode(_encoderSWPin, INPUT_PULLUP);
+        _ds18b20Manager->begin();
+        _initialized = true;
+    }
     _encoder.tick();
-    _lastEncoderPosition = _encoder.getPosition();
-    _lastDirection = EncoderDirection::None;
+    resetEncoderPosition();
 }
 
 void InputManager::update() {

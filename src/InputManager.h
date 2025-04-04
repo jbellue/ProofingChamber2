@@ -27,6 +27,7 @@ private:
     uint8_t _encoderSWPin;
     int _lastButtonState;
     int _buttonState;
+    bool _initialized;
     unsigned long _lastDebounceTime;
     int64_t _lastEncoderPosition;
     EncoderDirection _lastDirection;
