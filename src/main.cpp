@@ -17,12 +17,12 @@
 #include "Storage.h"
 #include "TemperatureController.h"
 
-#define DS18B20_PIN 0
-#define ENCODER_CLK 2
-#define ENCODER_DT  3
-#define ENCODER_SW  10
-#define HEATING_RELAY_PIN 20
-#define COOLING_RELAY_PIN 21
+#define DS18B20_PIN       0
+#define COOLING_RELAY_PIN 1
+#define HEATING_RELAY_PIN 2
+#define ENCODER_CLK       3
+#define ENCODER_DT        4
+#define ENCODER_SW        10
 
 // Global objects
 U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, U8X8_PIN_NONE);
