@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Screens/Menu.h"
+#include "screens/Menu.h"
 #include "icons.h"
 #include "MenuActions.h"
 
