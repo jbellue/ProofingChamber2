@@ -2,8 +2,8 @@
 #include "icons.h"
 #include "DebugUtils.h"
 
-ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManager) :
-    _display(display), _inputManager(inputManager), _startTime(0), _temperatureController(20, 21),
+ProofingScreen::ProofingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController) :
+    _display(display), _inputManager(inputManager), _startTime(0), _temperatureController(temperatureController),
     _currentTemp(0.0), _previousTemp(200.0), _isIconOn(false), _previousDiffSeconds(0)
 {}
 
@@ -23,9 +23,7 @@ void ProofingScreen::beginImpl() {
     _lastGraphUpdate = 0;       // Force a redraw on the first update
     _lastTemperatureUpdate = 0; // Force a redraw on the first update
 
-    _temperatureController.begin();
-    _temperatureController.setMode(TemperatureController::HEATING);
-
+    _temperatureController->setMode(TemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _display->clear();
     _display->drawTitle("En pousse depuis");
@@ -64,6 +62,7 @@ void ProofingScreen::drawTime() {
 bool ProofingScreen::update(bool shouldRedraw) {
     if (_inputManager->isButtonPressed()) {
         _inputManager->stopTemperaturePolling();
+        _temperatureController->setMode(TemperatureController::OFF);
         return false; // Return to the previous screen
     }
     struct tm now;
@@ -78,7 +77,7 @@ bool ProofingScreen::update(bool shouldRedraw) {
             _previousTemp = _currentTemp;
             drawTemperature(); // Update the temperature display
             shouldRedraw = true; // Force a buffer update
-            _temperatureController.update(_currentTemp);
+            _temperatureController->update(_currentTemp);
         }
     }
 

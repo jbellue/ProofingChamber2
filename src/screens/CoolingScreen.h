@@ -12,7 +12,7 @@ public:
     // Define a callback type that returns the end time
     using TimeCalculatorCallback = std::function<time_t()>;
 
-    CoolingScreen(DisplayManager* display, InputManager* inputManager);
+    CoolingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController);
     void begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
     void beginImpl() override {}
     bool update(bool forceRedraw = false) override;
@@ -26,7 +26,7 @@ private:
     bool _onCancelButton;
     TimeCalculatorCallback _timeCalculator;
     time_t _lastUpdateTime;
-    TemperatureController _temperatureController;
+    TemperatureController* _temperatureController;
     time_t _lastTemperatureUpdate;
     float _previousTemp;
 

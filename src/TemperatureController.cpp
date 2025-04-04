@@ -34,16 +34,20 @@ void TemperatureController::loadTemperatureSettings() {
     const char* lowerFile;
     const char* higherFile;
 
-    if (_currentMode == HEATING) {
-        targetFile = "/hot/target_temp.txt";
-        lowerFile = "/hot/lower_limit.txt";
-        higherFile = "/hot/higher_limit.txt";
-    } else if (_currentMode == COOLING) {
-        targetFile = "/cold/target_temp.txt";
-        lowerFile = "/cold/lower_limit.txt";
-        higherFile = "/cold/higher_limit.txt";
-    } else {
-        return;
+    switch (_currentMode)
+    {
+        case HEATING:
+            targetFile = "/hot/target_temp.txt";
+            lowerFile = "/hot/lower_limit.txt";
+            higherFile = "/hot/higher_limit.txt";
+            break;
+        case COOLING:
+            targetFile = "/cold/target_temp.txt";
+            lowerFile = "/cold/lower_limit.txt";
+            higherFile = "/cold/higher_limit.txt";
+            break;
+        case OFF:
+            return; // No need to load settings when off
     }
 
     _targetTemp = Storage::readIntFromFile(targetFile);
@@ -81,24 +85,29 @@ void TemperatureController::updateRelays(float currentTemp) {
     DEBUG_PRINT(_lowerLimit);
     DEBUG_PRINT(" - Higher: ");
     DEBUG_PRINTLN(_higherLimit);
-    if (_currentMode == HEATING) {
-        if (currentTemp < _lowerLimit) {
-            DEBUG_PRINTLN("Turning the heater ON");
-            digitalWrite(_heaterPin, HIGH);  // Turn heater on
-            digitalWrite(_coolerPin, LOW);   // Make sure cooler is off
-        } else if (currentTemp > _higherLimit) {
-            DEBUG_PRINTLN("Turning the heater OFF");
-            digitalWrite(_heaterPin, LOW);   // Turn heater off
-        }
-    } else if (_currentMode == COOLING) {
-        if (currentTemp > _higherLimit) {
-            DEBUG_PRINTLN("Turning the cooler ON");
-            digitalWrite(_coolerPin, HIGH);  // Turn cooler on
-            digitalWrite(_heaterPin, LOW);   // Make sure heater is off
-        } else if (currentTemp < _lowerLimit) {
-            DEBUG_PRINTLN("Turning the cooler ON");
-            digitalWrite(_coolerPin, LOW);   // Turn cooler off
-        }
+    switch (_currentMode) {
+        case HEATING:
+            if (currentTemp < _lowerLimit) {
+                DEBUG_PRINTLN("Turning the heater ON");
+                digitalWrite(_heaterPin, HIGH);  // Turn heater on
+                digitalWrite(_coolerPin, LOW);   // Make sure cooler is off
+            } else if (currentTemp > _higherLimit) {
+                DEBUG_PRINTLN("Turning the heater OFF");
+                digitalWrite(_heaterPin, LOW);   // Turn heater off
+            }
+            break;
+        case COOLING:
+            if (currentTemp > _higherLimit) {
+                DEBUG_PRINTLN("Turning the cooler ON");
+                digitalWrite(_coolerPin, HIGH);  // Turn cooler on
+                digitalWrite(_heaterPin, LOW);   // Make sure heater is off
+            } else if (currentTemp < _lowerLimit) {
+                DEBUG_PRINTLN("Turning the cooler OFF");
+                digitalWrite(_coolerPin, LOW);   // Turn cooler off
+            }
+            break;
+        case OFF: // No action needed
+            break;
     }
 }
 

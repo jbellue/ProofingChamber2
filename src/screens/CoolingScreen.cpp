@@ -2,9 +2,9 @@
 #include "icons.h"
 #include "DebugUtils.h"
 
-CoolingScreen::CoolingScreen(DisplayManager* display, InputManager* inputManager)
+CoolingScreen::CoolingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController)
     : _display(display), _inputManager(inputManager), _endTime(0), _proofingScreen(nullptr),
-    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(20, 21) {}
+    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(temperatureController) {}
 
 void CoolingScreen::begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
     beginImpl(callback, proofingScreen, menuScreen);
@@ -19,8 +19,7 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _endTime = 0;
     _lastUpdateTime = 0;
 
-    _temperatureController.begin();
-    _temperatureController.setMode(TemperatureController::COOLING);
+    _temperatureController->setMode(TemperatureController::COOLING);
 
     _display->clear();
 }
@@ -34,17 +33,18 @@ bool CoolingScreen::update(bool shouldRedraw) {
     if(shouldRedraw) {
         _endTime = _timeCalculator();
     }
-    if (isButtonPressed && !_onCancelButton || now >= _endTime) {
-        setNextScreen(_proofingScreen);
-        _proofingScreen->setNextScreen(_menuScreen);
-        _proofingScreen->begin();
+    bool timesUp = now >= _endTime;
+    if(isButtonPressed || timesUp) {
         _inputManager->stopTemperaturePolling();
-        return false;
-    }
-    if (isButtonPressed && _onCancelButton) {
-        setNextScreen(_menuScreen);
-        _menuScreen->begin();
-        _inputManager->stopTemperaturePolling();
+        _temperatureController->setMode(TemperatureController::OFF);
+
+        bool goingToProofScreen = !_onCancelButton || timesUp;
+        Screen* nextScreen = goingToProofScreen ? _proofingScreen : _menuScreen;
+        setNextScreen(nextScreen);
+        if (goingToProofScreen) {
+            _proofingScreen->setNextScreen(_menuScreen);
+        }
+        nextScreen->begin();
         return false;
     }
 
@@ -57,7 +57,7 @@ bool CoolingScreen::update(bool shouldRedraw) {
         _lastUpdateTime = now;
         if (abs(currentTemp - _previousTemp) > 0.1) {
             _previousTemp = currentTemp;
-            _temperatureController.update(currentTemp);
+            _temperatureController->update(currentTemp);
         }
         shouldRedraw = true;
     }

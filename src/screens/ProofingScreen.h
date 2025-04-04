@@ -9,7 +9,7 @@
 
 class ProofingScreen : public Screen {
 public:
-    ProofingScreen(DisplayManager* display, InputManager* inputManager);
+    ProofingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController);
     void beginImpl() override;
     void begin();
     bool update(bool forceRedraw = false) override;
@@ -25,7 +25,7 @@ private:
     float _currentTemp;
     bool _isIconOn;
     Graph _temperatureGraph;
-    TemperatureController _temperatureController;
+    TemperatureController* _temperatureController;
 
     void drawTime();
     void drawTemperature();
