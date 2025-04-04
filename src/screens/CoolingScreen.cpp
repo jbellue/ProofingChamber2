@@ -14,7 +14,7 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _proofingScreen = proofingScreen;
     _menuScreen = menuScreen;
     _onCancelButton = true;
-    _inputManager->begin();
+    _inputManager->resetEncoderPosition();
     _inputManager->startTemperaturePolling();
     _endTime = 0;
     _lastUpdateTime = 0;

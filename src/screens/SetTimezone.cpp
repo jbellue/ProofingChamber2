@@ -10,7 +10,7 @@ void SetTimezone::begin() {
 }
 
 void SetTimezone::beginImpl() {
-    _inputManager->begin();
+    _inputManager->resetEncoderPosition();
     _display->clear();
     _display->drawTitle("Buy PRO to unlock", 20);
 }

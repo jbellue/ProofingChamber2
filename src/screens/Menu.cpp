@@ -27,7 +27,7 @@ void Menu::beginImpl() {
         _currentMenu = mainMenu;
         _menuIndex = 0;
     }
-    _inputManager->begin();
+    _inputManager->resetEncoderPosition();
     _display->clear();
 }
 

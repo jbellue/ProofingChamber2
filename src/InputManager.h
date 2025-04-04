@@ -14,6 +14,7 @@ public:
     InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, DS18B20Manager* ds18b20Manager);
     void begin();
     void update();
+    void resetEncoderPosition();
     bool isButtonPressed();
     EncoderDirection getEncoderDirection();
     void startTemperaturePolling();

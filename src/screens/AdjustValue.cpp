@@ -16,7 +16,7 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
     _title = title;
     _path = path;
     _currentValue = Storage::readIntFromFile(path, 0); // Load initial value
-    _inputManager->begin(); // Reset encoder position
+    _inputManager->resetEncoderPosition();
 
     // Update the _display immediately
     _display->clear();

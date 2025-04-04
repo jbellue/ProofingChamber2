@@ -12,7 +12,7 @@ void WiFiReset::begin() {
 
 void WiFiReset::beginImpl() {
     _onCancelButton = true;
-    _inputManager->begin();
+    _inputManager->resetEncoderPosition();
     _display->clear();
     _display->drawTitle("Effacer tous les\nparam\xC3\xA8tres du WiFi ?", 20);
 }

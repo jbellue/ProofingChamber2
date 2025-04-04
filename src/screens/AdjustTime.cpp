@@ -15,7 +15,7 @@ void AdjustTime::begin(const char* title, Screen* coolingScreen, Screen* menuScr
 
 void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
     _title = title;
-    _inputManager->begin();
+    _inputManager->resetEncoderPosition();
     _startingTime = startTime;
     _currentTime = startTime;
     _selectedItem = SelectedItem::Hours;
