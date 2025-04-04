@@ -27,10 +27,11 @@ Menu::MenuItem settingsMenu[] = {
 };
 
 Menu::MenuItem moreSettingsMenu[] = {
-    {"Reset du WiFi",  iconWiFi,  nullptr,      std::bind(&MenuActions::resetWiFiAndReboot, &menuActions)},
-    {"Fuseau horaire", iconClock, nullptr,      std::bind(&MenuActions::adjustTimezone, &menuActions)},
-    {"Retour",         iconBack,  settingsMenu, nullptr},
-    {nullptr,          nullptr,   nullptr,      nullptr} // End of menu
+    {"Reset du WiFi",     iconWiFi,  nullptr,      std::bind(&MenuActions::resetWiFiAndReboot, &menuActions)},
+    {"Fuseau horaire",    iconClock, nullptr,      std::bind(&MenuActions::adjustTimezone, &menuActions)},
+    {"Red\xC3\xA9marrer", iconReset, nullptr,      std::bind(&MenuActions::reboot, &menuActions)},
+    {"Retour",            iconBack,  settingsMenu, nullptr},
+    {nullptr,             nullptr,   nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem hotMenu[] = {

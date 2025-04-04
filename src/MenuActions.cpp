@@ -3,8 +3,10 @@
 #include "MenuActions.h"
 #include "DebugUtils.h"
 
-MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime,
-                        ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone) :
+MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, 
+        AdjustTime* adjustTime,ProofingScreen* proofingScreen, CoolingScreen* coolingScreen,
+        WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot) :
+    _reboot(reboot),
     _screensManager(screensManager),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
@@ -127,6 +129,14 @@ void MenuActions::resetWiFiAndReboot() {
     menu->setNextScreen(_wifiReset);
     _wifiReset->setNextScreen(menu);
     _wifiReset->begin();
+}
+
+void MenuActions::reboot() {
+    DEBUG_PRINTLN("MenuActions: reboot called");
+    Screen* menu = _screensManager->getActiveScreen();
+    menu->setNextScreen(_reboot);
+    _reboot->setNextScreen(menu);
+    _reboot->begin();
 }
 
 void MenuActions::adjustTimezone() {

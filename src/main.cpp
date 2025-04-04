@@ -11,6 +11,7 @@
 #include "screens/Initialization.h"
 #include "screens/Menu.h"
 #include "screens/ProofingScreen.h"
+#include "screens/Reboot.h"
 #include "screens/SetTimezone.h"
 #include "screens/WiFiReset.h"
 #include "ScreensManager.h"
@@ -39,7 +40,8 @@ SetTimezone setTimezone(&displayManager, &inputManager);
 Initialization initialization(&displayManager);
 CoolingScreen coolingScreen(&displayManager, &inputManager, &temperatureController);
 WiFiReset wifiReset(&displayManager, &inputManager);
-MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone);
+Reboot reboot(&displayManager, &inputManager);
+MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone, &reboot);
 Menu menu(&displayManager, &inputManager, &menuActions);
 
 void setup() {

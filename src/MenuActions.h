@@ -7,11 +7,12 @@
 #include "screens/ProofingScreen.h"
 #include "screens/CoolingScreen.h"
 #include "screens/WiFiReset.h"
+#include "screens/Reboot.h"
 #include "screens/SetTimezone.h"
 
 class MenuActions {
 public:
-    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone);
+    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -22,6 +23,7 @@ public:
     void adjustColdLowerLimit();
     void adjustColdHigherLimit();
     void resetWiFiAndReboot();
+    void reboot();
     void adjustTimezone();
     ScreensManager* _screensManager;
 private:
@@ -31,6 +33,7 @@ private:
     CoolingScreen* _coolingScreen;
     WiFiReset* _wifiReset;
     SetTimezone* _setTimezone;
+    Reboot* _reboot;
 };
 
 #endif
