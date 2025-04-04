@@ -4,7 +4,7 @@
 
 CoolingScreen::CoolingScreen(DisplayManager* display, InputManager* inputManager)
     : _display(display), _inputManager(inputManager), _endTime(0), _proofingScreen(nullptr),
-    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0) {}
+    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(20, 21) {}
 
 void CoolingScreen::begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
     beginImpl(callback, proofingScreen, menuScreen);
@@ -15,43 +15,60 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _menuScreen = menuScreen;
     _onCancelButton = true;
     _inputManager->begin();
+    _inputManager->startTemperaturePolling();
     _endTime = 0;
     _lastUpdateTime = 0;
+
+    _temperatureController.begin();
+    _temperatureController.setMode(TemperatureController::COOLING);
 
     _display->clear();
 }
 
-bool CoolingScreen::update(bool forceRedraw) {
+bool CoolingScreen::update(bool shouldRedraw) {
     struct tm tm_now;
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
 
     bool isButtonPressed = _inputManager->isButtonPressed();
-    if(forceRedraw) {
+    if(shouldRedraw) {
         _endTime = _timeCalculator();
     }
     if (isButtonPressed && !_onCancelButton || now >= _endTime) {
         setNextScreen(_proofingScreen);
         _proofingScreen->setNextScreen(_menuScreen);
         _proofingScreen->begin();
+        _inputManager->stopTemperaturePolling();
         return false;
     }
     if (isButtonPressed && _onCancelButton) {
         setNextScreen(_menuScreen);
         _menuScreen->begin();
+        _inputManager->stopTemperaturePolling();
         return false;
     }
 
-    bool redraw = forceRedraw || (now != _lastUpdateTime);
-    _lastUpdateTime = now;
+    if (difftime(now, _lastUpdateTime) >= 1) {
+        const float currentTemp = _inputManager->getTemperature();
+        DEBUG_PRINT("Current temperature: ");
+        DEBUG_PRINT(currentTemp);
+        DEBUG_PRINT(" - Previous: ");
+        DEBUG_PRINTLN(_previousTemp);
+        _lastUpdateTime = now;
+        if (abs(currentTemp - _previousTemp) > 0.1) {
+            _previousTemp = currentTemp;
+            _temperatureController.update(currentTemp);
+        }
+        shouldRedraw = true;
+    }
 
     const auto encoderDirection = _inputManager->getEncoderDirection();
     if (encoderDirection != InputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
-        redraw = true;
+        shouldRedraw = true;
     }
 
-    if (redraw) {
+    if (shouldRedraw) {
         drawScreen();
     }
     return true; // Stay on the current screen

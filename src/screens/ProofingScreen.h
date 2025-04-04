@@ -4,6 +4,7 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
+#include "TemperatureController.h"
 #include "Graph.h"
 
 class ProofingScreen : public Screen {
@@ -24,6 +25,7 @@ private:
     float _currentTemp;
     bool _isIconOn;
     Graph _temperatureGraph;
+    TemperatureController _temperatureController;
 
     void drawTime();
     void drawTemperature();

@@ -3,6 +3,7 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
+#include "TemperatureController.h"
 #include <functional>
 #include <ctime>
 
@@ -25,6 +26,9 @@ private:
     bool _onCancelButton;
     TimeCalculatorCallback _timeCalculator;
     time_t _lastUpdateTime;
+    TemperatureController _temperatureController;
+    time_t _lastTemperatureUpdate;
+    float _previousTemp;
 
     void drawScreen();
     void beginImpl(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
