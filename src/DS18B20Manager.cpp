@@ -110,7 +110,10 @@ void DS18B20Manager::setSlowPolling(bool slowPolling) {
 int DS18B20Manager::getConversionDelay() const
 {
     const int baseDelay = 750 / (1 << (12 - _currentResolution)) + 50; // 50ms for stabilization
-    return _slowPolling ? baseDelay + 10000 : baseDelay; // Add 10 seconds if in slow polling mode
+    if (_currentResolution == 9 || !_slowPolling) {
+        return baseDelay;
+    }
+    return baseDelay + 10000; // Add 10 seconds if in slow polling mode
 }
 
 // Set resolution (9-12 bits)
