@@ -53,7 +53,6 @@ void setup() {
         // Handle initialization failure
         DEBUG_PRINTLN("Storage initialization failed");
     }
-    ds18b20Manager.begin();
     displayManager.begin();
     inputManager.begin();
     temperatureController.begin();
