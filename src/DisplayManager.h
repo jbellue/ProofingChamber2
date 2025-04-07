@@ -4,7 +4,7 @@
 
 class DisplayManager {
 public:
-    DisplayManager(U8G2* display);
+    DisplayManager(const u8g2_cb_t * rotation);
     void begin();
     void update();
     void clear();
@@ -12,13 +12,13 @@ public:
     void drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
     void drawRBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r);
     void setDrawColor(uint8_t color);
-    uint8_t getStrWidth(const char* str) const;
-    uint8_t getUTF8Width(const char* str) const;
-    uint8_t getAscent() const;
-    uint8_t getDescent() const;
-    uint8_t getDisplayWidth() const;
-    uint8_t getDisplayHeight() const;
-    uint8_t getWidth() const;
+    uint8_t getStrWidth(const char* str);
+    uint8_t getUTF8Width(const char* str);
+    uint8_t getAscent();
+    uint8_t getDescent();
+    uint8_t getDisplayWidth();
+    uint8_t getDisplayHeight();
+    uint8_t getWidth();
     void sendBuffer();
     void clearBuffer();
     void setFont(const uint8_t* font);
@@ -35,7 +35,7 @@ public:
     void drawButton(const char* text, bool selected = true);
     void drawButton(const char* text, const uint8_t x, bool selected = true);
     void drawButtons(const char* leftText, const char* rightText, int8_t selectedButton = -1);
-    U8G2* getDisplay() const { return _display; }
+    U8G2* getDisplay() { return &_display; }
 private:
-    U8G2* _display;
+    U8G2_SH1106_128X64_NONAME_F_HW_I2C _display;
 };

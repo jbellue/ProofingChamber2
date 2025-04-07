@@ -25,8 +25,7 @@
 #define ENCODER_SW        10
 
 // Global objects
-U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, U8X8_PIN_NONE);
-DisplayManager displayManager(&display);
+DisplayManager displayManager(U8G2_R0);
 TemperatureController temperatureController(HEATING_RELAY_PIN, COOLING_RELAY_PIN);
 
 ScreensManager screensManager;
