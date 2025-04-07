@@ -17,8 +17,7 @@ public:
     void resetEncoderPosition();
     bool isButtonPressed();
     EncoderDirection getEncoderDirection();
-    void startTemperaturePolling();
-    void stopTemperaturePolling();
+    void slowTemperaturePolling(bool slowPolling);
     float getTemperature() const;
 
 private:

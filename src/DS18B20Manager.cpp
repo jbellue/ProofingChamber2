@@ -6,11 +6,12 @@
 DS18B20Manager::DS18B20Manager(const uint8_t oneWirePin):
         _oneWire(oneWirePin), _sensors(&_oneWire), _lastTemperature(0.0),
         _currentResolution(9), _currentState(State::STOPPED),
-        _lastErrorTime(0), _errorRetryCount(0) { }
+        _lastErrorTime(0), _errorRetryCount(0), _slowPolling(true) { }
 
 void DS18B20Manager::begin() {
     _sensors.begin();
     _sensors.setWaitForConversion(false);
+    _slowPolling = true;
     if (_sensors.getAddress(_deviceAddress, 0)) {
         _currentState = State::STOPPED;  // Begin in stopped state
         setResolution(9);
@@ -102,9 +103,14 @@ void DS18B20Manager::handleState() {
     }
 }
 
+void DS18B20Manager::setSlowPolling(bool slowPolling) {
+    _slowPolling = slowPolling;
+}
+
 int DS18B20Manager::getConversionDelay() const
 {
-    return 750 / (1 << (12 - _currentResolution)) + 50; // 50ms for the sensor to stabilize
+    const int baseDelay = 750 / (1 << (12 - _currentResolution)) + 50; // 50ms for stabilization
+    return _slowPolling ? baseDelay + 10000 : baseDelay; // Add 10 seconds if in slow polling mode
 }
 
 // Set resolution (9-12 bits)

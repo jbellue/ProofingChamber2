@@ -15,7 +15,7 @@ void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingS
     _menuScreen = menuScreen;
     _onCancelButton = true;
     _inputManager->resetEncoderPosition();
-    _inputManager->startTemperaturePolling();
+    _inputManager->slowTemperaturePolling(false);
     _endTime = 0;
     _lastUpdateTime = 0;
 
@@ -35,7 +35,7 @@ bool CoolingScreen::update(bool shouldRedraw) {
     }
     bool timesUp = now >= _endTime;
     if(isButtonPressed || timesUp) {
-        _inputManager->stopTemperaturePolling();
+        _inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(TemperatureController::OFF);
 
         bool goingToProofScreen = !_onCancelButton || timesUp;

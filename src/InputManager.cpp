@@ -17,6 +17,8 @@ void InputManager::begin() {
     if (!_initialized) {
         pinMode(_encoderSWPin, INPUT_PULLUP);
         _ds18b20Manager->begin();
+        _ds18b20Manager->setSlowPolling(true);
+        _ds18b20Manager->startPolling();
         _initialized = true;
     }
     _encoder.tick();
@@ -67,12 +69,8 @@ bool InputManager::isButtonPressed() {
 }
 
 
-void InputManager::startTemperaturePolling() {
-    _ds18b20Manager->startPolling();
-}
-
-void InputManager::stopTemperaturePolling() {
-    _ds18b20Manager->stopPolling();
+void InputManager::slowTemperaturePolling(bool slowPolling) {
+    _ds18b20Manager->setSlowPolling(slowPolling);
 }
 
 float InputManager::getTemperature() const {

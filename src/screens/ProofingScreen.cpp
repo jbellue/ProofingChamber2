@@ -15,7 +15,7 @@ void ProofingScreen::beginImpl() {
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
-    _inputManager->startTemperaturePolling();
+    _inputManager->slowTemperaturePolling(false);
     _currentTemp = _inputManager->getTemperature();
     _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
     _isIconOn = true;
@@ -61,7 +61,7 @@ void ProofingScreen::drawTime() {
 
 bool ProofingScreen::update(bool shouldRedraw) {
     if (_inputManager->isButtonPressed()) {
-        _inputManager->stopTemperaturePolling();
+        _inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(TemperatureController::OFF);
         return false; // Return to the previous screen
     }
