@@ -2,9 +2,9 @@
 #include "DebugUtils.h"
 #include <Arduino.h>
 
-InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, DS18B20Manager* ds18b20Manager) :
+InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin) :
     _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin), _buttonPressed(false),
-    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Manager), _initialized(false) {}
+    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin), _initialized(false) {}
 
 
 void InputManager::resetEncoderPosition() {
@@ -16,9 +16,9 @@ void InputManager::resetEncoderPosition() {
 void InputManager::begin() {
     if (!_initialized) {
         pinMode(_encoderSWPin, INPUT_PULLUP);
-        _ds18b20Manager->begin();
-        _ds18b20Manager->setSlowPolling(true);
-        _ds18b20Manager->startPolling();
+        _ds18b20Manager.begin();
+        _ds18b20Manager.setSlowPolling(true);
+        _ds18b20Manager.startPolling();
         _initialized = true;
     }
     _encoder.tick();
@@ -51,7 +51,7 @@ void InputManager::update() {
     }
     _lastButtonState = reading;
 
-    _ds18b20Manager->update();
+    _ds18b20Manager.update();
 }
 
 InputManager::EncoderDirection InputManager::getEncoderDirection() {
@@ -70,9 +70,9 @@ bool InputManager::isButtonPressed() {
 
 
 void InputManager::slowTemperaturePolling(bool slowPolling) {
-    _ds18b20Manager->setSlowPolling(slowPolling);
+    _ds18b20Manager.setSlowPolling(slowPolling);
 }
 
 float InputManager::getTemperature() const {
-    return _ds18b20Manager->getTemperature();
+    return _ds18b20Manager.getTemperature();
 }

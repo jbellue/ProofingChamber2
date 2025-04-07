@@ -11,7 +11,7 @@ public:
         CounterClockwise
     };
 
-    InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, DS18B20Manager* ds18b20Manager);
+    InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin);
     void begin();
     void update();
     void resetEncoderPosition();
@@ -22,7 +22,7 @@ public:
 
 private:
     RotaryEncoder _encoder;
-    DS18B20Manager* _ds18b20Manager;
+    DS18B20Manager _ds18b20Manager;
     uint8_t _encoderSWPin;
     int _lastButtonState;
     int _buttonState;

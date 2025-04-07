@@ -1,7 +1,6 @@
 #include <U8g2lib.h>
 #include "DebugUtils.h"
 #include "DisplayManager.h"
-#include "DS18B20Manager.h"
 #include "InputManager.h"
 #include "MenuActions.h"
 #include "MenuItems.h"
@@ -31,8 +30,7 @@ DisplayManager displayManager(&display);
 TemperatureController temperatureController(HEATING_RELAY_PIN, COOLING_RELAY_PIN);
 
 ScreensManager screensManager;
-DS18B20Manager ds18b20Manager(DS18B20_PIN);
-InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, &ds18b20Manager);
+InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
 AdjustValue adjustValue(&displayManager, &inputManager);
 AdjustTime adjustTime(&displayManager, &inputManager);
 ProofingScreen proofingScreen(&displayManager, &inputManager, &temperatureController);
