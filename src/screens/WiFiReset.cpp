@@ -1,9 +1,11 @@
-#include <WiFiManager.h>
 #include "WiFiReset.h"
 #include "icons.h"
+// Include concrete service headers so we can call their methods
+#include "../services/INetworkService.h"
+#include "../services/IRebootService.h"
 
-WiFiReset::WiFiReset(DisplayManager* display, InputManager* inputManager) :
-    _display(display), _inputManager(inputManager), _onCancelButton(true)
+WiFiReset::WiFiReset(AppContext* ctx) :
+    _display(ctx->display), _inputManager(ctx->input), _networkService(ctx->networkService), _reboot_service(ctx->rebootService), _ctx(ctx), _onCancelButton(true)
 {}
 
 void WiFiReset::begin() {
@@ -32,9 +34,10 @@ bool WiFiReset::update(bool forceRedraw) {
         if (_onCancelButton) {
             return false;
         }
-        // Reset Wi-Fi credentials
-        WiFiManager wifiManager;
-        wifiManager.resetSettings();
+        // Reset Wi-Fi credentials via network service
+        if (_networkService) {
+            _networkService->resetSettings();
+        }
 
         // Notify the user
         _display->clear(); // Clear the screen for the reset message
@@ -46,8 +49,10 @@ bool WiFiReset::update(bool forceRedraw) {
         // Delay to allow the message to be displayed
         delay(2000);
 
-        // Reboot the device
-        ESP.restart();
+        // Reboot the device via the injected reboot service
+        if (_reboot_service) {
+            _reboot_service->reboot();
+        }
         delay(2000);  // delay just to keep that screen on so nothing blinks before reboot
     }
     return true;

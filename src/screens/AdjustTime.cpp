@@ -2,10 +2,10 @@
 #include "icons.h"
 #include "DebugUtils.h"
 
-AdjustTime::AdjustTime(DisplayManager* display, InputManager* inputManager) :
-    _display(display), _inputManager(inputManager), 
+AdjustTime::AdjustTime(AppContext* ctx) :
+    _display(ctx->display), _inputManager(ctx->input),
     _selectedItem(SelectedItem::Hours), _valueY(0),
-    _coolingScreen(nullptr), _menuScreen(nullptr)
+    _coolingScreen(nullptr), _menuScreen(nullptr), _ctx(ctx)
 {}
 
 void AdjustTime::begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
@@ -28,6 +28,18 @@ void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* men
     drawHighlight();
     drawTime();
     drawButtons();
+}
+
+void AdjustTime::prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
+    _title = title;
+    _coolingScreen = coolingScreen;
+    _coolingScreen = coolingScreen;
+    _menuScreen = menuScreen;
+    _startingTime = startTime;
+}
+
+void AdjustTime::beginImpl() {
+    beginImpl(_title, _coolingScreen, _menuScreen, _startingTime);
 }
 
 bool AdjustTime::isTimeValid(const SimpleTime& t) const {

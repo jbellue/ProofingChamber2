@@ -1,10 +1,11 @@
-#include <WiFiManager.h>
 #include <time.h>
 #include "DebugUtils.h"
 #include "Initialization.h"
 #include "icons.h"
+// Need the concrete service definition to call methods like autoConnect()/configureNtp()
+#include "../services/INetworkService.h"
 
-Initialization::Initialization(DisplayManager* display) : _display(display)
+Initialization::Initialization(AppContext* ctx) : _display(ctx->display), _networkService(ctx->networkService), _ctx(ctx)
 {}
 
 void Initialization::begin() {
@@ -28,18 +29,22 @@ void Initialization::drawScreen() {
     _display->drawStr(0, 22, "Connexion au WiFi...");
     _display->sendBuffer();
 
-    WiFiManager wifiManager;
-    wifiManager.autoConnect();
+    // Use the injected network service to connect
+    if (_networkService) {
+        _networkService->autoConnect();
+    }
     _display->drawUTF8(0, 34, "Succ\xC3\xA8s.");
     _display->drawStr(0, 46, "Connexion au NTP...");
     _display->sendBuffer();
     _display->setCursor(0, 58);
 
-    // Configure NTP
-    const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)
-    configTzTime(timezone, "pool.ntp.org", "time.nist.gov"); // Configure NTP with default servers
+    // Configure NTP via network service
+    const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone
+    if (_networkService) {
+        _networkService->configureNtp(timezone, "pool.ntp.org", "time.nist.gov");
+    }
     DEBUG_PRINT("Waiting for NTP time sync");
-    while (time(nullptr) < 1000000000) { // Wait until the time is synced
+    while (!_networkService || !_networkService->isTimeSyncReady(1000000000)) { // Wait until the time is synced
         delay(500);
         DEBUG_PRINT(".");
         _display->print(".");

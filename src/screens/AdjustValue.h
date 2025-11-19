@@ -3,12 +3,15 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
+#include "services/IStorage.h"
+#include "AppContextDecl.h"
 
 class AdjustValue : public Screen {
 public:
-AdjustValue(DisplayManager* display, InputManager* inputManager);
+    AdjustValue(AppContext* ctx);
     void begin(const char* title, const char* path);
-    void beginImpl() override {};
+    void beginImpl() override;
+    void prepare(const char* title, const char* path);
     bool update(bool forceRedraw = false) override;
 private:
     void drawValue();
@@ -21,5 +24,7 @@ private:
     int _currentValue;
     DisplayManager* _display;
     InputManager* _inputManager;
+        services::IStorage* _storage;
+        AppContext* _ctx;
     const char* _startTime;
 };

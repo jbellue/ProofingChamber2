@@ -1,6 +1,8 @@
 #include "TemperatureController.h"
 #include "DebugUtils.h"
-#include "Storage.h"
+#include "services/IStorage.h"
+
+static services::IStorage* _globalStorage = nullptr; // fallback pointer set by constructor or setter
 
 TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin) 
     : _heaterPin(heaterPin)
@@ -9,7 +11,12 @@ TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPi
     , _targetTemp(0)
     , _lowerLimit(0)
     , _higherLimit(0)
-{}
+{
+}
+
+void TemperatureController::setStorage(services::IStorage* storage) {
+    _globalStorage = storage;
+}
 
 void TemperatureController::begin() {
     pinMode(_heaterPin, OUTPUT);
@@ -50,9 +57,11 @@ void TemperatureController::loadTemperatureSettings() {
             return; // No need to load settings when off
     }
 
-    _targetTemp = Storage::readIntFromFile(targetFile);
-    _lowerLimit = Storage::readIntFromFile(lowerFile);
-    _higherLimit = Storage::readIntFromFile(higherFile);
+    if (_globalStorage) {
+        _targetTemp = _globalStorage->readInt(targetFile);
+        _lowerLimit = _globalStorage->readInt(lowerFile);
+        _higherLimit = _globalStorage->readInt(higherFile);
+    }
 
     DEBUG_PRINT("Mode: ");
     DEBUG_PRINTLN(_currentMode == HEATING ? "HEATING" : "COOLING");

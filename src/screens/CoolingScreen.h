@@ -6,15 +6,18 @@
 #include "TemperatureController.h"
 #include <functional>
 #include <ctime>
+#include "AppContextDecl.h"
 
 class CoolingScreen : public Screen {
 public:
     // Define a callback type that returns the end time
     using TimeCalculatorCallback = std::function<time_t()>;
 
-    CoolingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController);
+    CoolingScreen(AppContext* ctx);
     void begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
-    void beginImpl() override {}
+    void beginImpl() override;
+    // Prepare the parameters so begin() can be called later by ScreensManager
+    void prepare(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen);
     bool update(bool forceRedraw = false) override;
 
 private:

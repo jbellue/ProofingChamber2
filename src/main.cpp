@@ -10,12 +10,17 @@
 #include "screens/Initialization.h"
 #include "screens/Menu.h"
 #include "screens/ProofingScreen.h"
+#include "services/RebootService.h"
+#include "services/NetworkService.h"
+#include "services/StorageAdapter.h"
+#include "services/IStorage.h"
 #include "screens/Reboot.h"
 #include "screens/SetTimezone.h"
 #include "screens/WiFiReset.h"
 #include "ScreensManager.h"
 #include "Storage.h"
 #include "TemperatureController.h"
+#include "AppContextDecl.h"
 
 #define DS18B20_PIN       0
 #define COOLING_RELAY_PIN 1
@@ -26,33 +31,56 @@
 
 // Global objects
 DisplayManager displayManager(U8G2_R0);
+// Storage adapter and temperature controller depend on storage
+services::StorageAdapter storageAdapter;
 TemperatureController temperatureController(HEATING_RELAY_PIN, COOLING_RELAY_PIN);
 
 ScreensManager screensManager;
 InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
-AdjustValue adjustValue(&displayManager, &inputManager);
-AdjustTime adjustTime(&displayManager, &inputManager);
-ProofingScreen proofingScreen(&displayManager, &inputManager, &temperatureController);
-SetTimezone setTimezone(&displayManager, &inputManager);
-Initialization initialization(&displayManager);
-CoolingScreen coolingScreen(&displayManager, &inputManager, &temperatureController);
-WiFiReset wifiReset(&displayManager, &inputManager);
-Reboot reboot(&displayManager, &inputManager);
-MenuActions menuActions(&screensManager, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone, &reboot);
-Menu menu(&displayManager, &inputManager, &menuActions);
+// Global AppContext instance (defined early so globals can receive its pointer)
+AppContext appContext;
+
+AdjustValue adjustValue(&appContext);
+AdjustTime adjustTime(&appContext);
+ProofingScreen proofingScreen(&appContext);
+SetTimezone setTimezone(&appContext);
+// Network and reboot services
+services::NetworkService networkService;
+services::RebootService rebootService;
+
+// Screens (constructed with AppContext where applicable)
+Reboot reboot(&appContext);
+Initialization initialization(&appContext);
+CoolingScreen coolingScreen(&appContext);
+WiFiReset wifiReset(&appContext);
+
+MenuActions menuActions(&appContext, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone, &reboot);
+Menu menu(&appContext, &menuActions);
 
 void setup() {
 #if DEBUG
     // Initialize serial communication
     Serial.begin(115200);
 #endif
-    if (!Storage::begin()) {
+    if (!storageAdapter.begin()) {
         // Handle initialization failure
         DEBUG_PRINTLN("Storage initialization failed");
     }
     displayManager.begin();
     inputManager.begin();
     temperatureController.begin();
+
+    // Populate global AppContext so components can access shared services
+    appContext.display = &displayManager;
+    appContext.input = &inputManager;
+    appContext.screens = &screensManager;
+    appContext.tempController = &temperatureController;
+    appContext.rebootService = &rebootService;
+        appContext.networkService = &networkService;
+        appContext.storage = &storageAdapter;
+
+    // Provide storage to TemperatureController now that AppContext.storage is set
+    temperatureController.setStorage(appContext.storage);
 
     initialization.setNextScreen(&menu);
     screensManager.setActiveScreen(&initialization);

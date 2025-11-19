@@ -1,4 +1,3 @@
-#include <WiFiManager.h>
 #include "DebugUtils.h"
 #include "Menu.h"
 #include "MenuItems.h"
@@ -7,12 +6,13 @@
 #include "screens/Screen.h"
 
 // Constructor
-Menu::Menu(DisplayManager* display, InputManager* inputManager, MenuActions* menuActions) :
+Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _menuActions(menuActions),
-    _display(display),
-    _inputManager(inputManager),
+    _display(ctx->display),
+    _inputManager(ctx->input),
     _currentMenu(nullptr),
-    _menuIndex(0)
+    _menuIndex(0),
+    _ctx(ctx)
 {}
 
 void Menu::begin() {

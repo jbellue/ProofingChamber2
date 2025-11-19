@@ -1,0 +1,111 @@
+#include "ProofingController.h"
+#include "../../DebugUtils.h"
+#include "../../icons.h"
+#include "../views/ProofingView.h"
+#include "../../TemperatureController.h"
+
+ProofingController::ProofingController(AppContext* ctx)
+    : _view(new ProofingView(ctx->display)), _inputManager(ctx->input), _ctx(ctx), _startTime(0),
+      _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0), _previousTemp(200.0),
+      _currentTemp(0.0), _isIconOn(false), _temperatureController(ctx->tempController)
+{
+}
+
+ProofingController::~ProofingController() {
+    delete _view;
+}
+void ProofingController::beginImpl() {
+    struct tm startTime;
+    getLocalTime(&startTime);
+    _startTime = mktime(&startTime);
+    _inputManager->slowTemperaturePolling(false);
+    _currentTemp = _inputManager->getTemperature();
+    _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
+    _isIconOn = true;
+    _previousDiffSeconds = -60; // Force a redraw on the first update
+    _lastGraphUpdate = 0;       // Force a redraw on the first update
+    _lastTemperatureUpdate = 0; // Force a redraw on the first update
+
+    _temperatureController->setMode(TemperatureController::HEATING);
+    _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
+    _view->clear();
+    _view->drawTitle();
+    drawButtons();
+}
+
+bool ProofingController::update(bool shouldRedraw) {
+    if (_inputManager->isButtonPressed()) {
+        _inputManager->slowTemperaturePolling(true);
+        _temperatureController->setMode(TemperatureController::OFF);
+        return false;
+    }
+
+    struct tm now;
+    getLocalTime(&now);
+    const time_t now_time = mktime(&now);
+    const double diff_seconds = difftime(now_time, _startTime);
+
+    if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
+        _currentTemp = _inputManager->getTemperature();
+        if (abs(_currentTemp - _previousTemp) > 0.1) {
+            _temperatureGraph.addValueToAverage(_currentTemp);
+            _previousTemp = _currentTemp;
+            drawTemperature();
+            shouldRedraw = true;
+            _temperatureController->update(_currentTemp);
+        }
+    }
+
+    if (difftime(now_time, _lastGraphUpdate) >= 10.0) {
+        _temperatureGraph.commitAverage(_currentTemp);
+        drawGraph();
+        _lastGraphUpdate = now_time;
+        _isIconOn = !_isIconOn;
+        drawIcons();
+        shouldRedraw = true;
+    }
+
+    if (diff_seconds - _previousDiffSeconds >= 60) {
+        _previousDiffSeconds = diff_seconds;
+        drawTime();
+        shouldRedraw = true;
+    }
+
+    if (shouldRedraw) {
+        _view->sendBuffer();
+    }
+    return true;
+}
+
+void ProofingController::drawTime() {
+    const int total_minutes = _previousDiffSeconds / 60;
+    const int hours = total_minutes / 60;
+    const int minutes = total_minutes % 60;
+
+    char timeBuffer[8] = {'\0'};
+    if (hours > 0) {
+        snprintf(timeBuffer, sizeof(timeBuffer), "%dh%02dm", hours, minutes);
+    } else {
+        snprintf(timeBuffer, sizeof(timeBuffer), "%dm", minutes);
+    }
+    DEBUG_PRINTLN(timeBuffer);
+    _view->drawTime(timeBuffer);
+}
+
+void ProofingController::drawTemperature() {
+    char tempBuffer[7] = {'\0'};
+    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", _currentTemp);
+    _view->drawTemperature(tempBuffer);
+}
+
+void ProofingController::drawIcons() {
+    _view->drawIcons(_isIconOn);
+}
+
+void ProofingController::drawButtons() {
+    _view->drawButtons();
+}
+
+void ProofingController::drawGraph() {
+    _view->drawGraph(_temperatureGraph);
+}

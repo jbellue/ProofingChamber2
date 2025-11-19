@@ -1,21 +1,39 @@
 #include "AdjustValue.h"
 #include "DebugUtils.h"
-#include "Storage.h"
 #include "icons.h"
 
-AdjustValue::AdjustValue(DisplayManager* _display, InputManager* inputManager) :
-    _display(_display),
-    _inputManager(inputManager)
+AdjustValue::AdjustValue(AppContext* ctx) :
+    _display(ctx->display),
+    _inputManager(ctx->input),
+    _storage(nullptr),
+    _ctx(ctx)
 {}
 
 void AdjustValue::begin(const char* title, const char* path) {
     beginImpl(title, path);
 }
 
+void AdjustValue::prepare(const char* title, const char* path) {
+    _title = title;
+    _path = path;
+}
+
+void AdjustValue::beginImpl() {
+    beginImpl(_title, _path);
+}
+
 void AdjustValue::beginImpl(const char* title, const char* path) {
     _title = title;
     _path = path;
-    _currentValue = Storage::readIntFromFile(path, 0); // Load initial value
+    // Obtain storage from the AppContext at begin time (ctx is populated in setup)
+    if (_ctx && _ctx->storage) {
+        _storage = _ctx->storage;
+    }
+    if (_storage) {
+        _currentValue = _storage->readInt(path, 0); // Load initial value
+    } else {
+        _currentValue = 0;
+    }
     _inputManager->resetEncoderPosition();
 
     // Update the _display immediately
@@ -28,7 +46,9 @@ bool AdjustValue::update(bool shouldRedraw) {
     // Handle encoder button press to confirm and save
     if (_inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
-        Storage::writeIntToFile(_path, _currentValue);
+        if (_storage) {
+            _storage->writeInt(_path, _currentValue);
+        }
         DEBUG_PRINTLN("AdjustValue: Value saved, exiting screen.");
         return false;
     }

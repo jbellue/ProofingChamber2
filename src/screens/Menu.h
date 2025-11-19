@@ -7,6 +7,7 @@
 #include "InputManager.h"
 #include "ScreensManager.h"
 #include "MenuActions.h"
+#include "AppContextDecl.h"
 
 class Menu : public Screen {
 public:
@@ -17,7 +18,7 @@ public:
         std::function<void()> action;   // Action as a std::function
     };
 
-    Menu(DisplayManager* display, InputManager* inputManager, MenuActions* menuActions);
+    Menu(AppContext* ctx, MenuActions* menuActions);
     void begin();
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
@@ -29,6 +30,7 @@ private:
     MenuActions* _menuActions;
     DisplayManager* _display;
     InputManager* _inputManager;
+    AppContext* _ctx;
 
     // Helper functions
     void drawMenu();

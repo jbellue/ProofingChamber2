@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "services/IStorage.h"
 
 class TemperatureController {
 public:
@@ -11,6 +12,7 @@ public:
     };
 
     TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin);
+    void setStorage(services::IStorage* storage);
 
     void begin();
     void setMode(Mode mode);

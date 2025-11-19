@@ -2,16 +2,20 @@
 
 #include "Screen.h"
 #include "DisplayManager.h"
+#include "AppContextDecl.h"
 
 class WiFiReset : public Screen {
 public:
-WiFiReset(DisplayManager* display, InputManager* inputManager);
+    WiFiReset(AppContext* ctx);
     void begin();
     bool update(bool forceRedraw = false) override;
 
 private:
     DisplayManager* _display;
     InputManager* _inputManager;
+    services::INetworkService* _networkService;
+    services::IRebootService* _reboot_service;
+    AppContext* _ctx;
     bool _onCancelButton;
     void drawScreen();
     void beginImpl() override;

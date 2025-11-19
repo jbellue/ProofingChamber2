@@ -9,10 +9,11 @@
 #include "screens/WiFiReset.h"
 #include "screens/Reboot.h"
 #include "screens/SetTimezone.h"
+#include "AppContextDecl.h"
 
 class MenuActions {
 public:
-    MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot);
+    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -25,8 +26,8 @@ public:
     void resetWiFiAndReboot();
     void reboot();
     void adjustTimezone();
-    ScreensManager* _screensManager;
 private:
+    AppContext* _ctx;
     AdjustTime* _adjustTime;
     AdjustValue* _adjustValue;
     ProofingScreen* _proofingScreen;

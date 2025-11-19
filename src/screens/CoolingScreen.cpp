@@ -2,9 +2,9 @@
 #include "icons.h"
 #include "DebugUtils.h"
 
-CoolingScreen::CoolingScreen(DisplayManager* display, InputManager* inputManager, TemperatureController* temperatureController)
-    : _display(display), _inputManager(inputManager), _endTime(0), _proofingScreen(nullptr),
-    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(temperatureController) {}
+CoolingScreen::CoolingScreen(AppContext* ctx)
+    : _display(ctx->display), _inputManager(ctx->input), _endTime(0), _proofingScreen(nullptr),
+    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(ctx->tempController) {}
 
 void CoolingScreen::begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
     beginImpl(callback, proofingScreen, menuScreen);
@@ -101,4 +101,20 @@ void CoolingScreen::drawScreen() {
 
     _display->drawButtons("Démarrer", "Annuler", _onCancelButton ? 1 : 0);
     _display->sendBuffer();
+}
+
+void CoolingScreen::prepare(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
+    _timeCalculator = callback;
+    _proofingScreen = proofingScreen;
+    _menuScreen = menuScreen;
+}
+
+void CoolingScreen::beginImpl() {
+    // If parameters were prepared earlier, call the param overload to initialize
+    if (_timeCalculator) {
+        beginImpl(_timeCalculator, _proofingScreen, _menuScreen);
+    } else {
+        // No parameters prepared — fallback to default initialization
+        beginImpl(_timeCalculator, _proofingScreen, _menuScreen);
+    }
 }

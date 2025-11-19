@@ -3,13 +3,16 @@
 #include "Screen.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
+#include "AppContextDecl.h"
 #include "SimpleTime.h"
 
 class AdjustTime : public Screen {
 public:
-    AdjustTime(DisplayManager* display, InputManager* inputManager);
+    AdjustTime(AppContext* ctx);
     void begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
-    void beginImpl() override {};
+    void beginImpl() override;
+    // Prepare parameters for deferred begin
+    void prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
     bool update(bool forceRedraw = false) override;
     struct tm getTime() const {
         struct tm timeinfo;
@@ -39,6 +42,7 @@ private:
 
     DisplayManager* _display;
     InputManager* _inputManager;
+    AppContext* _ctx;
     const char* _startTime;
 
     Screen* _coolingScreen;

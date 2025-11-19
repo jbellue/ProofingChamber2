@@ -1,8 +1,8 @@
 #include "SetTimezone.h"
 #include "icons.h"
 
-SetTimezone::SetTimezone(DisplayManager* display, InputManager* inputManager) :
-    _display(display), _inputManager(inputManager)
+SetTimezone::SetTimezone(AppContext* ctx) :
+    _display(ctx->display), _inputManager(ctx->input), _ctx(ctx)
 {}
 
 void SetTimezone::begin() {
