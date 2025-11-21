@@ -5,7 +5,7 @@
 // Need the concrete service definition to call methods like autoConnect()/configureNtp()
 #include "../services/INetworkService.h"
 
-Initialization::Initialization(AppContext* ctx) : _display(ctx->display), _networkService(ctx->networkService), _ctx(ctx)
+Initialization::Initialization(AppContext* ctx) : _display(nullptr), _networkService(nullptr), _ctx(ctx)
 {}
 
 void Initialization::begin() {
@@ -13,7 +13,11 @@ void Initialization::begin() {
 }
 
 void Initialization::beginImpl() {
-    _display->clear();
+    if (_ctx) {
+        if (!_display) _display = _ctx->display;
+        if (!_networkService) _networkService = _ctx->networkService;
+    }
+    if (_display) _display->clear();
 }
 
 bool Initialization::update(bool forceRedraw) {

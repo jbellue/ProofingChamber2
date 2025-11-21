@@ -9,12 +9,12 @@
 #include "screens/CoolingScreen.h"
 #include "screens/Initialization.h"
 #include "screens/Menu.h"
-#include "screens/ProofingScreen.h"
+#include "screens/controllers/ProofingController.h"
 #include "services/RebootService.h"
 #include "services/NetworkService.h"
 #include "services/StorageAdapter.h"
 #include "services/IStorage.h"
-#include "screens/Reboot.h"
+#include "screens/controllers/RebootController.h"
 #include "screens/SetTimezone.h"
 #include "screens/WiFiReset.h"
 #include "ScreensManager.h"
@@ -42,19 +42,19 @@ AppContext appContext;
 
 AdjustValue adjustValue(&appContext);
 AdjustTime adjustTime(&appContext);
-ProofingScreen proofingScreen(&appContext);
+ProofingController ProofingController(&appContext);
 SetTimezone setTimezone(&appContext);
 // Network and reboot services
 services::NetworkService networkService;
 services::RebootService rebootService;
 
 // Screens (constructed with AppContext where applicable)
-Reboot reboot(&appContext);
+RebootController reboot(&appContext);
 Initialization initialization(&appContext);
 CoolingScreen coolingScreen(&appContext);
 WiFiReset wifiReset(&appContext);
 
-MenuActions menuActions(&appContext, &adjustValue, &adjustTime, &proofingScreen, &coolingScreen, &wifiReset, &setTimezone, &reboot);
+MenuActions menuActions(&appContext, &adjustValue, &adjustTime, &ProofingController, &coolingScreen, &wifiReset, &setTimezone, &reboot);
 Menu menu(&appContext, &menuActions);
 
 void setup() {

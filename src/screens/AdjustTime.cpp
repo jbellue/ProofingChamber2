@@ -3,7 +3,7 @@
 #include "DebugUtils.h"
 
 AdjustTime::AdjustTime(AppContext* ctx) :
-    _display(ctx->display), _inputManager(ctx->input),
+    _display(nullptr), _inputManager(nullptr),
     _selectedItem(SelectedItem::Hours), _valueY(0),
     _coolingScreen(nullptr), _menuScreen(nullptr), _ctx(ctx)
 {}
@@ -15,7 +15,11 @@ void AdjustTime::begin(const char* title, Screen* coolingScreen, Screen* menuScr
 
 void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
     _title = title;
-    _inputManager->resetEncoderPosition();
+    if (_ctx) {
+        if (!_inputManager) _inputManager = _ctx->input;
+        if (!_display) _display = _ctx->display;
+    }
+    if (_inputManager) _inputManager->resetEncoderPosition();
     _startingTime = startTime;
     _currentTime = startTime;
     _selectedItem = SelectedItem::Hours;
@@ -23,11 +27,13 @@ void AdjustTime::beginImpl(const char* title, Screen* coolingScreen, Screen* men
     _menuScreen = menuScreen;
 
     // Update the display immediately
-    _display->clear();
-    _valueY = _display->drawTitle(title);
-    drawHighlight();
-    drawTime();
-    drawButtons();
+    if (_display) {
+        _display->clear();
+        _valueY = _display->drawTitle(title);
+        drawHighlight();
+        drawTime();
+        drawButtons();
+    }
 }
 
 void AdjustTime::prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
@@ -90,7 +96,7 @@ bool AdjustTime::update(bool shouldRedraw) {
         }
         shouldRedraw = true;
     }
-    if (_inputManager->isButtonPressed()) {
+    if (_inputManager && _inputManager->isButtonPressed()) {
         switch (_selectedItem)
         {
         case SelectedItem::Hours:
@@ -110,7 +116,7 @@ bool AdjustTime::update(bool shouldRedraw) {
         drawHighlight();
         shouldRedraw = true;
     }
-    if (shouldRedraw) {
+    if (shouldRedraw && _display) {
         _display->sendBuffer();
     }
 

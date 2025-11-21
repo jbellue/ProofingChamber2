@@ -1,15 +1,15 @@
 #include "DebugUtils.h"
 #include "Menu.h"
 #include "MenuItems.h"
-#include "screens/ProofingScreen.h"
+#include "screens/controllers/ProofingController.h"
 #include "icons.h"
 #include "screens/Screen.h"
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _menuActions(menuActions),
-    _display(ctx->display),
-    _inputManager(ctx->input),
+    _display(nullptr),
+    _inputManager(nullptr),
     _currentMenu(nullptr),
     _menuIndex(0),
     _ctx(ctx)
@@ -27,15 +27,20 @@ void Menu::beginImpl() {
         _currentMenu = mainMenu;
         _menuIndex = 0;
     }
-    _inputManager->resetEncoderPosition();
-    _display->clear();
+    // Late-bind context pointers
+    if (_ctx) {
+        if (!_inputManager) _inputManager = _ctx->input;
+        if (!_display) _display = _ctx->display;
+    }
+    if (_inputManager) _inputManager->resetEncoderPosition();
+    if (_display) _display->clear();
 }
 
 // Update the menu
 bool Menu::update(bool forceRedraw) {
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    const auto encoderDirection = _inputManager->getEncoderDirection();
+    const auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
     if (encoderDirection != InputManager::EncoderDirection::None) {
         if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % getCurrentMenuSize();
@@ -49,7 +54,7 @@ bool Menu::update(bool forceRedraw) {
     }
 
     // Handle encoder button press
-    if (_inputManager->isButtonPressed()) {
+    if (_inputManager && _inputManager->isButtonPressed()) {
         return handleMenuSelection();
     }
     return true;
@@ -58,6 +63,7 @@ bool Menu::update(bool forceRedraw) {
 
 // Helper functions
 void Menu::drawMenu() {
+    if (!_display) return;
     _display->clearBuffer();
     _display->setFontMode(1);
     _display->setDrawColor(1);

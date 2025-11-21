@@ -5,20 +5,31 @@
 #include "../../TemperatureController.h"
 
 ProofingController::ProofingController(AppContext* ctx)
-    : _view(new ProofingView(ctx->display)), _inputManager(ctx->input), _ctx(ctx), _startTime(0),
+    : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
       _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0), _previousTemp(200.0),
-      _currentTemp(0.0), _isIconOn(false), _temperatureController(ctx->tempController)
+      _currentTemp(0.0), _isIconOn(false), _temperatureController(nullptr)
 {
 }
 
 ProofingController::~ProofingController() {
-    delete _view;
+    if (_view) {
+        delete _view;
+        _view = nullptr;
+    }
 }
 void ProofingController::beginImpl() {
+    // Late-bind context pointers. `appContext` should be populated in setup().
+    if (_ctx) {
+        _inputManager = _ctx->input;
+        _temperatureController = _ctx->tempController;
+        if (!_view && _ctx->display) {
+            _view = new ProofingView(_ctx->display);
+        }
+    }
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
-    _inputManager->slowTemperaturePolling(false);
+        if (_inputManager) _inputManager->slowTemperaturePolling(false);
     _currentTemp = _inputManager->getTemperature();
     _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
     _isIconOn = true;
@@ -26,18 +37,22 @@ void ProofingController::beginImpl() {
     _lastGraphUpdate = 0;       // Force a redraw on the first update
     _lastTemperatureUpdate = 0; // Force a redraw on the first update
 
-    _temperatureController->setMode(TemperatureController::HEATING);
+        if (_temperatureController) _temperatureController->setMode(TemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    _view->clear();
-    _view->drawTitle();
+        if (_view) {
+            _view->clear();
+            _view->drawTitle();
+        }
     drawButtons();
 }
 
 bool ProofingController::update(bool shouldRedraw) {
-    if (_inputManager->isButtonPressed()) {
-        _inputManager->slowTemperaturePolling(true);
-        _temperatureController->setMode(TemperatureController::OFF);
-        return false;
+    if (_inputManager) {
+        if (_inputManager->isButtonPressed()) {
+            _inputManager->slowTemperaturePolling(true);
+            if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
+            return false;
+        }
     }
 
     struct tm now;
@@ -45,14 +60,14 @@ bool ProofingController::update(bool shouldRedraw) {
     const time_t now_time = mktime(&now);
     const double diff_seconds = difftime(now_time, _startTime);
 
-    if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
+    if (_inputManager && difftime(now_time, _lastTemperatureUpdate) >= 1) {
         _currentTemp = _inputManager->getTemperature();
         if (abs(_currentTemp - _previousTemp) > 0.1) {
             _temperatureGraph.addValueToAverage(_currentTemp);
             _previousTemp = _currentTemp;
             drawTemperature();
             shouldRedraw = true;
-            _temperatureController->update(_currentTemp);
+            if (_temperatureController) _temperatureController->update(_currentTemp);
         }
     }
 
@@ -71,7 +86,7 @@ bool ProofingController::update(bool shouldRedraw) {
         shouldRedraw = true;
     }
 
-    if (shouldRedraw) {
+    if (shouldRedraw && _view) {
         _view->sendBuffer();
     }
     return true;
@@ -89,23 +104,23 @@ void ProofingController::drawTime() {
         snprintf(timeBuffer, sizeof(timeBuffer), "%dm", minutes);
     }
     DEBUG_PRINTLN(timeBuffer);
-    _view->drawTime(timeBuffer);
+    if (_view) _view->drawTime(timeBuffer);
 }
 
 void ProofingController::drawTemperature() {
     char tempBuffer[7] = {'\0'};
     snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", _currentTemp);
-    _view->drawTemperature(tempBuffer);
+    if (_view) _view->drawTemperature(tempBuffer);
 }
 
 void ProofingController::drawIcons() {
-    _view->drawIcons(_isIconOn);
+    if (_view) _view->drawIcons(_isIconOn);
 }
 
 void ProofingController::drawButtons() {
-    _view->drawButtons();
+    if (_view) _view->drawButtons();
 }
 
 void ProofingController::drawGraph() {
-    _view->drawGraph(_temperatureGraph);
+    if (_view) _view->drawGraph(_temperatureGraph);
 }

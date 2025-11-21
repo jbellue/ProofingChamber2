@@ -3,25 +3,33 @@
 #include "DebugUtils.h"
 
 CoolingScreen::CoolingScreen(AppContext* ctx)
-    : _display(ctx->display), _inputManager(ctx->input), _endTime(0), _proofingScreen(nullptr),
-    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(ctx->tempController) {}
+    : _display(nullptr), _inputManager(nullptr), _endTime(0), _ProofingController(nullptr),
+    _menuScreen(nullptr), _timeCalculator(nullptr), _lastUpdateTime(0), _temperatureController(nullptr), _ctx(ctx) {}
 
-void CoolingScreen::begin(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
-    beginImpl(callback, proofingScreen, menuScreen);
+void CoolingScreen::begin(TimeCalculatorCallback callback, Screen* ProofingController, Screen* menuScreen) {
+    beginImpl(callback, ProofingController, menuScreen);
 }
-void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
+void CoolingScreen::beginImpl(TimeCalculatorCallback callback, Screen* ProofingController, Screen* menuScreen) {
+    // Late-bind context pointers
+    if (_ctx) {
+        if (!_inputManager) _inputManager = _ctx->input;
+        if (!_display) _display = _ctx->display;
+        if (!_temperatureController) _temperatureController = _ctx->tempController;
+    }
     _timeCalculator = callback;
-    _proofingScreen = proofingScreen;
+    _ProofingController = ProofingController;
     _menuScreen = menuScreen;
     _onCancelButton = true;
-    _inputManager->resetEncoderPosition();
-    _inputManager->slowTemperaturePolling(false);
+    if (_inputManager) {
+        _inputManager->resetEncoderPosition();
+        _inputManager->slowTemperaturePolling(false);
+    }
     _endTime = 0;
     _lastUpdateTime = 0;
 
-    _temperatureController->setMode(TemperatureController::COOLING);
+    if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
 
-    _display->clear();
+    if (_display) _display->clear();
 }
 
 bool CoolingScreen::update(bool shouldRedraw) {
@@ -29,27 +37,26 @@ bool CoolingScreen::update(bool shouldRedraw) {
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
 
-    bool isButtonPressed = _inputManager->isButtonPressed();
+    bool isButtonPressed = _inputManager ? _inputManager->isButtonPressed() : false;
     if(shouldRedraw) {
         _endTime = _timeCalculator();
     }
     bool timesUp = now >= _endTime;
     if(isButtonPressed || timesUp) {
-        _inputManager->slowTemperaturePolling(true);
-        _temperatureController->setMode(TemperatureController::OFF);
+        if (_inputManager) _inputManager->slowTemperaturePolling(true);
+        if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
 
         bool goingToProofScreen = !_onCancelButton || timesUp;
-        Screen* nextScreen = goingToProofScreen ? _proofingScreen : _menuScreen;
+        Screen* nextScreen = goingToProofScreen ? _ProofingController : _menuScreen;
         setNextScreen(nextScreen);
         if (goingToProofScreen) {
-            _proofingScreen->setNextScreen(_menuScreen);
+            _ProofingController->setNextScreen(_menuScreen);
         }
-        nextScreen->begin();
+        if (nextScreen) nextScreen->begin();
         return false;
     }
-
     if (difftime(now, _lastUpdateTime) >= 1) {
-        const float currentTemp = _inputManager->getTemperature();
+        const float currentTemp = _inputManager ? _inputManager->getTemperature() : 0.0f;
         DEBUG_PRINT("Current temperature: ");
         DEBUG_PRINT(currentTemp);
         DEBUG_PRINT(" - Previous: ");
@@ -57,12 +64,12 @@ bool CoolingScreen::update(bool shouldRedraw) {
         _lastUpdateTime = now;
         if (abs(currentTemp - _previousTemp) > 0.1) {
             _previousTemp = currentTemp;
-            _temperatureController->update(currentTemp);
+            if (_temperatureController) _temperatureController->update(currentTemp);
         }
         shouldRedraw = true;
     }
 
-    const auto encoderDirection = _inputManager->getEncoderDirection();
+    const auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
     if (encoderDirection != InputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
         shouldRedraw = true;
@@ -75,6 +82,7 @@ bool CoolingScreen::update(bool shouldRedraw) {
 }
 
 void CoolingScreen::drawScreen() {
+    if (!_display) return;
     _display->clearBuffer();
     const tm* tm_end = localtime(&_endTime);
     char timeBuffer[34] = {'\0'};
@@ -103,18 +111,18 @@ void CoolingScreen::drawScreen() {
     _display->sendBuffer();
 }
 
-void CoolingScreen::prepare(TimeCalculatorCallback callback, Screen* proofingScreen, Screen* menuScreen) {
+void CoolingScreen::prepare(TimeCalculatorCallback callback, Screen* ProofingController, Screen* menuScreen) {
     _timeCalculator = callback;
-    _proofingScreen = proofingScreen;
+    _ProofingController = ProofingController;
     _menuScreen = menuScreen;
 }
 
 void CoolingScreen::beginImpl() {
     // If parameters were prepared earlier, call the param overload to initialize
     if (_timeCalculator) {
-        beginImpl(_timeCalculator, _proofingScreen, _menuScreen);
+        beginImpl(_timeCalculator, _ProofingController, _menuScreen);
     } else {
         // No parameters prepared — fallback to default initialization
-        beginImpl(_timeCalculator, _proofingScreen, _menuScreen);
+        beginImpl(_timeCalculator, _ProofingController, _menuScreen);
     }
 }

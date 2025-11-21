@@ -3,13 +3,13 @@
 #include "DebugUtils.h"
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
-        AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen,
-        WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot) :
+        AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen,
+        WiFiReset* wifiReset, SetTimezone* setTimezone, RebootController* rebootController) :
     _ctx(ctx),
-    _reboot(reboot),
+    _rebootController(rebootController),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
-    _proofingScreen(proofingScreen),
+    _proofingController(ProofingController),
     _coolingScreen(coolingScreen),
     _wifiReset(wifiReset),
     _setTimezone(setTimezone)
@@ -18,8 +18,8 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue,
 void MenuActions::proofNowAction() {
     DEBUG_PRINTLN("MenuActions: proofNowAction called");
     Screen* menu = _ctx->screens->getActiveScreen();
-    menu->setNextScreen(_proofingScreen);
-    _proofingScreen->setNextScreen(menu);
+    menu->setNextScreen(_proofingController);
+    _proofingController->setNextScreen(menu);
     // Lifecycle will be managed by ScreensManager; do not call begin() here.
 }
 
@@ -41,7 +41,7 @@ void MenuActions::proofInAction() {
         return endTime;
     };
     // Prepare screens for deferred begin via ScreensManager
-    _coolingScreen->prepare(timeCalculator, _proofingScreen, menu);
+    _coolingScreen->prepare(timeCalculator, _proofingController, menu);
     SimpleTime startTime(0, 0, 0);
     _adjustTime->prepare("Pousser dans...", _coolingScreen, menu, startTime);
 }
@@ -71,7 +71,7 @@ void MenuActions::proofAtAction() {
         DEBUG_PRINTLN(mktime(&endTime));
         return mktime(&endTime);
     };
-    _coolingScreen->prepare(timeCalculator, _proofingScreen, menu); // Pass menu screen
+    _coolingScreen->prepare(timeCalculator, _proofingController, menu); // Pass menu screen
     _adjustTime->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
 }
 
@@ -133,8 +133,8 @@ void MenuActions::resetWiFiAndReboot() {
 void MenuActions::reboot() {
     DEBUG_PRINTLN("MenuActions: reboot called");
     Screen* menu = _ctx->screens->getActiveScreen();
-    menu->setNextScreen(_reboot);
-    _reboot->setNextScreen(menu);
+    menu->setNextScreen(_rebootController);
+    _rebootController->setNextScreen(menu);
 }
 
 void MenuActions::adjustTimezone() {

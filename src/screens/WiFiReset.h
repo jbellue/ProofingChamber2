@@ -14,7 +14,7 @@ private:
     DisplayManager* _display;
     InputManager* _inputManager;
     services::INetworkService* _networkService;
-    services::IRebootService* _reboot_service;
+    services::IRebootService* _rebootService;
     AppContext* _ctx;
     bool _onCancelButton;
     void drawScreen();

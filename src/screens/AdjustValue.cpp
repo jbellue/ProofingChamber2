@@ -3,8 +3,8 @@
 #include "icons.h"
 
 AdjustValue::AdjustValue(AppContext* ctx) :
-    _display(ctx->display),
-    _inputManager(ctx->input),
+    _display(nullptr),
+    _inputManager(nullptr),
     _storage(nullptr),
     _ctx(ctx)
 {}
@@ -29,22 +29,29 @@ void AdjustValue::beginImpl(const char* title, const char* path) {
     if (_ctx && _ctx->storage) {
         _storage = _ctx->storage;
     }
+    // Late-bind display and input
+    if (_ctx) {
+        if (!_display) _display = _ctx->display;
+        if (!_inputManager) _inputManager = _ctx->input;
+    }
     if (_storage) {
         _currentValue = _storage->readInt(path, 0); // Load initial value
     } else {
         _currentValue = 0;
     }
-    _inputManager->resetEncoderPosition();
+    if (_inputManager) _inputManager->resetEncoderPosition();
 
     // Update the _display immediately
-    _display->clear();
-    _valueY = _display->drawTitle(title);
+    if (_display) {
+        _display->clear();
+        _valueY = _display->drawTitle(title);
+    }
     drawButton();
 }
 
 bool AdjustValue::update(bool shouldRedraw) {
     // Handle encoder button press to confirm and save
-    if (_inputManager->isButtonPressed()) {
+    if (_inputManager && _inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
         if (_storage) {
             _storage->writeInt(_path, _currentValue);
@@ -63,17 +70,18 @@ bool AdjustValue::update(bool shouldRedraw) {
         drawValue(); // Redraw the value on the display
         shouldRedraw = true;
     }
-    if (shouldRedraw) {
+    if (shouldRedraw && _display) {
         _display->sendBuffer(); // Send the buffer to the display
     }
     return true;
 }
 
 void AdjustValue::drawButton() {
-    _display->drawButton("OK", true);
+    if (_display) _display->drawButton("OK", true);
 }
 
 void AdjustValue::drawValue() {
+    if (!_display) return;
     _display->setFont(u8g2_font_ncenB18_tf);
     char buffer[6] = {'\0'}; // "999°" + '\0' ; degree symbol is two bytes
     const uint8_t writtenChars = sprintf(buffer, "%d", _currentValue);

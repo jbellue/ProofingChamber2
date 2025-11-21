@@ -4,16 +4,16 @@
 #include "ScreensManager.h"
 #include "screens/AdjustValue.h"
 #include "screens/AdjustTime.h"
-#include "screens/ProofingScreen.h"
+#include "screens/controllers/ProofingController.h"
 #include "screens/CoolingScreen.h"
 #include "screens/WiFiReset.h"
-#include "screens/Reboot.h"
+#include "screens/controllers/RebootController.h"
 #include "screens/SetTimezone.h"
 #include "AppContextDecl.h"
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingScreen* proofingScreen, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot);
+    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen, WiFiReset* wifiReset, SetTimezone* setTimezone, RebootController* reboot);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -30,11 +30,11 @@ private:
     AppContext* _ctx;
     AdjustTime* _adjustTime;
     AdjustValue* _adjustValue;
-    ProofingScreen* _proofingScreen;
+    ProofingController* _proofingController;
     CoolingScreen* _coolingScreen;
     WiFiReset* _wifiReset;
     SetTimezone* _setTimezone;
-    Reboot* _reboot;
+    RebootController* _rebootController;
 };
 
 #endif
