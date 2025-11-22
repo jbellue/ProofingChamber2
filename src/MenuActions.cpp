@@ -16,16 +16,17 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue,
 {}
 
 void MenuActions::proofNowAction() {
-    DEBUG_PRINTLN("MenuActions: proofNowAction called");
+    if (!_ctx || !_ctx->screens || !_proofingController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_proofingController);
     _proofingController->setNextScreen(menu);
-    // Lifecycle will be managed by ScreensManager; do not call begin() here.
 }
 
 void MenuActions::proofInAction() {
-    DEBUG_PRINTLN("MenuActions: proofInAction called");
+    if (!_ctx || !_ctx->screens || !_adjustTime || !_coolingScreen) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustTime);
 
     // Lambda calculates end time based on user input from AdjustTime
@@ -47,8 +48,9 @@ void MenuActions::proofInAction() {
 }
 
 void MenuActions::proofAtAction() {
-    DEBUG_PRINTLN("MenuActions: proofAtAction called");
+    if (!_ctx || !_ctx->screens || !_adjustTime || !_coolingScreen) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustTime);
     struct tm timeinfo;
     SimpleTime startTime(0, 0, 0);
@@ -76,70 +78,79 @@ void MenuActions::proofAtAction() {
 }
 
 void MenuActions::adjustHotTargetTemp() {
-    DEBUG_PRINTLN("MenuActions: adjustHotTargetTemp called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
 }
 
 void MenuActions::adjustHotLowerLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustHotLowerLimit called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void MenuActions::adjustHotHigherLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustHotHigherLimit called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void MenuActions::adjustColdTargetTemp() {
-    DEBUG_PRINTLN("MenuActions: adjustColdTargetTemp called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void MenuActions::adjustColdLowerLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustColdLowerLimit called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void MenuActions::adjustColdHigherLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustColdHigherLimit called");
+    if (!_ctx || !_ctx->screens || !_adjustValue) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_adjustValue);
     _adjustValue->setNextScreen(menu);
     _adjustValue->prepare("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void MenuActions::resetWiFiAndReboot() {
-    DEBUG_PRINTLN("MenuActions: resetWiFiAndReboot called");
+    if (!_ctx || !_ctx->screens || !_wifiReset) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_wifiReset);
     _wifiReset->setNextScreen(menu);
 }
 
 void MenuActions::reboot() {
-    DEBUG_PRINTLN("MenuActions: reboot called");
+    if (!_ctx || !_ctx->screens || !_rebootController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_rebootController);
     _rebootController->setNextScreen(menu);
 }
 
 void MenuActions::adjustTimezone() {
-    DEBUG_PRINTLN("MenuActions: adjustTimezone called");
+    if (!_ctx || !_ctx->screens || !_setTimezone) return;
     Screen* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
     menu->setNextScreen(_setTimezone);
     _setTimezone->setNextScreen(menu);
 }

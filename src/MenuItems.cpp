@@ -1,19 +1,19 @@
 #include "MenuItems.h"
 #include <functional>
 
-// Declare the global instance of MenuActions
-extern MenuActions menuActions;
+// MenuActions instance will be set at runtime; we use a pointer
+extern MenuActions* menuActions;
 
 Menu::MenuItem mainMenu[] = {
-    {"Mettre en pousse", iconProof,    nullptr,      std::bind(&MenuActions::proofNowAction, &menuActions)},
+    {"Mettre en pousse", iconProof,    nullptr,      []() { if (menuActions) menuActions->proofNowAction(); }},
     {"Mettre en froid",  iconCool,     coolMenu,     nullptr},
     {"R\xC3\xA9glages",  iconSettings, settingsMenu, nullptr},
     {nullptr,            nullptr,      nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem coolMenu[] = {
-    {"Pousser \xC3\xA0...", iconClock,     nullptr,  std::bind(&MenuActions::proofAtAction, &menuActions)},
-    {"Pousser dans...",     iconHourglass, nullptr,  std::bind(&MenuActions::proofInAction, &menuActions)},
+    {"Pousser \xC3\xA0...", iconClock,     nullptr,  []() { if (menuActions) menuActions->proofAtAction(); }},
+    {"Pousser dans...",     iconHourglass, nullptr,  []() { if (menuActions) menuActions->proofInAction(); }},
     {"Retour",              iconBack,      mainMenu, nullptr},
     {nullptr,               nullptr,       nullptr,  nullptr} // End of menu
 };
@@ -27,25 +27,25 @@ Menu::MenuItem settingsMenu[] = {
 };
 
 Menu::MenuItem moreSettingsMenu[] = {
-    {"Reset du WiFi",     iconWiFi,  nullptr,      std::bind(&MenuActions::resetWiFiAndReboot, &menuActions)},
-    {"Fuseau horaire",    iconClock, nullptr,      std::bind(&MenuActions::adjustTimezone, &menuActions)},
-    {"Red\xC3\xA9marrer", iconReset, nullptr,      std::bind(&MenuActions::reboot, &menuActions)},
+    {"Reset du WiFi",     iconWiFi,  nullptr,      []() { if (menuActions) menuActions->resetWiFiAndReboot(); }},
+    {"Fuseau horaire",    iconClock, nullptr,      []() { if (menuActions) menuActions->adjustTimezone(); }},
+    {"Red\xC3\xA9marrer", iconReset, nullptr,      []() { if (menuActions) menuActions->reboot(); }},
     {"Retour",            iconBack,  settingsMenu, nullptr},
     {nullptr,             nullptr,   nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem hotMenu[] = {
-    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      std::bind(&MenuActions::adjustHotTargetTemp, &menuActions)},
-    {"Limite basse",                       iconColdSettings, nullptr,      std::bind(&MenuActions::adjustHotLowerLimit, &menuActions)},
-    {"Limite haute",                       iconHotSettings,  nullptr,      std::bind(&MenuActions::adjustHotHigherLimit, &menuActions)},
+    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      []() { if (menuActions) menuActions->adjustHotTargetTemp(); }},
+    {"Limite basse",                       iconColdSettings, nullptr,      []() { if (menuActions) menuActions->adjustHotLowerLimit(); }},
+    {"Limite haute",                       iconHotSettings,  nullptr,      []() { if (menuActions) menuActions->adjustHotHigherLimit(); }},
     {"Retour",                             iconBack,         settingsMenu, nullptr},
     {nullptr,                              nullptr,          nullptr,      nullptr} // End of menu
 };
 
 Menu::MenuItem coldMenu[] = {
-    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      std::bind(&MenuActions::adjustColdTargetTemp, &menuActions)},
-    {"Limite basse",                       iconColdSettings, nullptr,      std::bind(&MenuActions::adjustColdLowerLimit, &menuActions)},
-    {"Limite haute",                       iconHotSettings,  nullptr,      std::bind(&MenuActions::adjustColdHigherLimit, &menuActions)},
+    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      []() { if (menuActions) menuActions->adjustColdTargetTemp(); }},
+    {"Limite basse",                       iconColdSettings, nullptr,      []() { if (menuActions) menuActions->adjustColdLowerLimit(); }},
+    {"Limite haute",                       iconHotSettings,  nullptr,      []() { if (menuActions) menuActions->adjustColdHigherLimit(); }},
     {"Retour",                             iconBack,         settingsMenu, nullptr},
     {nullptr,                              nullptr,          nullptr,      nullptr} // End of menu
 };

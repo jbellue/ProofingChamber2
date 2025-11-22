@@ -16,7 +16,6 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
 {}
 
 void Menu::begin() {
-    DEBUG_PRINTLN("Menu::begin called");
     beginImpl();
 }
 
@@ -81,7 +80,6 @@ void Menu::drawMenu() {
         }
     }
     _display->sendBuffer();
-    DEBUG_PRINTLN("Menu drawn");
 }
 
 uint8_t Menu::getCurrentMenuSize() const {

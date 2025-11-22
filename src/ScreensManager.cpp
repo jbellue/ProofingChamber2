@@ -4,17 +4,19 @@
 ScreensManager::ScreensManager() : activeScreen(nullptr) {}
 
 void ScreensManager::setActiveScreen(Screen* screen) {
-    activeScreen = screen; // Set the active screen
-    activeScreen->begin(); // Initialize the screen (if needed)
+    activeScreen = screen;
+    if (activeScreen) {
+        activeScreen->begin();
+    }
 }
 
 void ScreensManager::update() {
     if (activeScreen) {
         if (!activeScreen->update(false)) {
             DEBUG_PRINTLN("ScreensManager: Active screen finished. Transitioning to next screen.");
-            activeScreen = activeScreen->getNextScreen(); // Transition to the next screen
+            activeScreen = activeScreen->getNextScreen();
             if (activeScreen) {
-                activeScreen->begin(); // Initialize the new screen
+                activeScreen->begin();
                 activeScreen->update(true);
             }
         }

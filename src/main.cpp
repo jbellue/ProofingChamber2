@@ -39,23 +39,23 @@ ScreensManager screensManager;
 InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
 // Global AppContext instance (defined early so globals can receive its pointer)
 AppContext appContext;
-
-AdjustValue adjustValue(&appContext);
-AdjustTime adjustTime(&appContext);
-ProofingController ProofingController(&appContext);
-SetTimezone setTimezone(&appContext);
+// Screen/service pointers — constructed in setup() to avoid static init order issues
+AdjustValue* adjustValue = nullptr;
+AdjustTime* adjustTime = nullptr;
+ProofingController* proofingController = nullptr;
+SetTimezone* setTimezone = nullptr;
 // Network and reboot services
 services::NetworkService networkService;
 services::RebootService rebootService;
 
-// Screens (constructed with AppContext where applicable)
-RebootController reboot(&appContext);
-Initialization initialization(&appContext);
-CoolingScreen coolingScreen(&appContext);
-WiFiReset wifiReset(&appContext);
+// Screen pointers (created in setup)
+RebootController* reboot = nullptr;
+Initialization* initialization = nullptr;
+CoolingScreen* coolingScreen = nullptr;
+WiFiReset* wifiReset = nullptr;
 
-MenuActions menuActions(&appContext, &adjustValue, &adjustTime, &ProofingController, &coolingScreen, &wifiReset, &setTimezone, &reboot);
-Menu menu(&appContext, &menuActions);
+MenuActions* menuActions = nullptr;
+Menu* menu = nullptr;
 
 void setup() {
 #if DEBUG
@@ -82,8 +82,22 @@ void setup() {
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);
 
-    initialization.setNextScreen(&menu);
-    screensManager.setActiveScreen(&initialization);
+    // Now create screens and menu objects — pass `&appContext` so they can bind in beginImpl
+    adjustValue = new AdjustValue(&appContext);
+    adjustTime = new AdjustTime(&appContext);
+    proofingController = new ProofingController(&appContext);
+    setTimezone = new SetTimezone(&appContext);
+
+    reboot = new RebootController(&appContext);
+    initialization = new Initialization(&appContext);
+    coolingScreen = new CoolingScreen(&appContext);
+    wifiReset = new WiFiReset(&appContext);
+
+    menuActions = new MenuActions(&appContext, adjustValue, adjustTime, proofingController, coolingScreen, wifiReset, setTimezone, reboot);
+    menu = new Menu(&appContext, menuActions);
+
+    initialization->setNextScreen(menu);
+    screensManager.setActiveScreen(initialization);
 }
 
 void loop() {
