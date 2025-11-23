@@ -4,7 +4,7 @@
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
         AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen,
-        WiFiResetController* wifiResetController, SetTimezone* setTimezone, RebootController* rebootController) :
+        WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValue(adjustValue),
@@ -12,7 +12,7 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue,
     _proofingController(ProofingController),
     _coolingScreen(coolingScreen),
     _wifiResetController(wifiResetController),
-    _setTimezone(setTimezone)
+    _setTimezoneController(setTimezoneController)
 {}
 
 void MenuActions::proofNowAction() {
@@ -148,9 +148,9 @@ void MenuActions::reboot() {
 }
 
 void MenuActions::adjustTimezone() {
-    if (!_ctx || !_ctx->screens || !_setTimezone) return;
+    if (!_ctx || !_ctx->screens || !_setTimezoneController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_setTimezone);
-    _setTimezone->setNextScreen(menu);
+    menu->setNextScreen(_setTimezoneController);
+    _setTimezoneController->setNextScreen(menu);
 }

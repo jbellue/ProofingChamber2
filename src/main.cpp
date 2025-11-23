@@ -15,7 +15,7 @@
 #include "services/StorageAdapter.h"
 #include "services/IStorage.h"
 #include "screens/controllers/RebootController.h"
-#include "screens/SetTimezone.h"
+#include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/WiFiResetController.h"
 #include "ScreensManager.h"
 #include "Storage.h"
@@ -43,7 +43,7 @@ AppContext appContext;
 AdjustValue* adjustValue = nullptr;
 AdjustTime* adjustTime = nullptr;
 ProofingController* proofingController = nullptr;
-SetTimezone* setTimezone = nullptr;
+SetTimezoneController* setTimezoneController = nullptr;
 // Network and reboot services
 services::NetworkService networkService;
 services::RebootService rebootService;
@@ -86,14 +86,14 @@ void setup() {
     adjustValue = new AdjustValue(&appContext);
     adjustTime = new AdjustTime(&appContext);
     proofingController = new ProofingController(&appContext);
-    setTimezone = new SetTimezone(&appContext);
+    setTimezoneController = new SetTimezoneController(&appContext);
 
     reboot = new RebootController(&appContext);
     initialization = new Initialization(&appContext);
     coolingScreen = new CoolingScreen(&appContext);
     wifiResetController = new WiFiResetController(&appContext);
 
-    menuActions = new MenuActions(&appContext, adjustValue, adjustTime, proofingController, coolingScreen, wifiResetController, setTimezone, reboot);
+    menuActions = new MenuActions(&appContext, adjustValue, adjustTime, proofingController, coolingScreen, wifiResetController, setTimezoneController, reboot);
     menu = new Menu(&appContext, menuActions);
 
     initialization->setNextScreen(menu);

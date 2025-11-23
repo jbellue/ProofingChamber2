@@ -8,12 +8,12 @@
 #include "screens/CoolingScreen.h"
 #include "screens/controllers/WiFiResetController.h"
 #include "screens/controllers/RebootController.h"
-#include "screens/SetTimezone.h"
+#include "screens/controllers/SetTimezoneController.h"
 #include "AppContextDecl.h"
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen, WiFiResetController* wifiResetController, SetTimezone* setTimezone, RebootController* reboot);
+    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -33,7 +33,7 @@ private:
     ProofingController* _proofingController;
     CoolingScreen* _coolingScreen;
     WiFiResetController* _wifiResetController;
-    SetTimezone* _setTimezone;
+    SetTimezoneController* _setTimezoneController;
     RebootController* _rebootController;
 };
 
