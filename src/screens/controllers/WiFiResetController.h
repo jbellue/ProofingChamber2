@@ -1,22 +1,23 @@
 #pragma once
 
-#include "Screen.h"
-#include "DisplayManager.h"
+#include "../Screen.h"
 #include "AppContextDecl.h"
+#include "../../services/INetworkService.h"
+#include "../../services/IRebootService.h"
+#include "InputManager.h"
+#include "../views/WiFiResetView.h"
 
-class WiFiReset : public Screen {
+class WiFiResetController : public Screen {
 public:
-    WiFiReset(AppContext* ctx);
+    WiFiResetController(AppContext* ctx);
     void begin();
     bool update(bool forceRedraw = false) override;
-
 private:
-    DisplayManager* _display;
+    AppContext* _ctx;
     InputManager* _inputManager;
     services::INetworkService* _networkService;
     services::IRebootService* _rebootService;
-    AppContext* _ctx;
+    WiFiResetView* _view;
     bool _onCancelButton;
-    void drawScreen();
     void beginImpl() override;
 };

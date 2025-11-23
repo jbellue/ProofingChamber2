@@ -4,14 +4,14 @@
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
         AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen,
-        WiFiReset* wifiReset, SetTimezone* setTimezone, RebootController* rebootController) :
+        WiFiResetController* wifiResetController, SetTimezone* setTimezone, RebootController* rebootController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValue(adjustValue),
     _adjustTime(adjustTime),
     _proofingController(ProofingController),
     _coolingScreen(coolingScreen),
-    _wifiReset(wifiReset),
+    _wifiResetController(wifiResetController),
     _setTimezone(setTimezone)
 {}
 
@@ -132,11 +132,11 @@ void MenuActions::adjustColdHigherLimit() {
 }
 
 void MenuActions::resetWiFiAndReboot() {
-    if (!_ctx || !_ctx->screens || !_wifiReset) return;
+    if (!_ctx || !_ctx->screens || !_wifiResetController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_wifiReset);
-    _wifiReset->setNextScreen(menu);
+    menu->setNextScreen(_wifiResetController);
+    _wifiResetController->setNextScreen(menu);
 }
 
 void MenuActions::reboot() {
