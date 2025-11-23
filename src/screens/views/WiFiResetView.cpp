@@ -1,9 +1,6 @@
 #include "WiFiResetView.h"
 #include "../../icons.h"
 
-WiFiResetView::WiFiResetView(DisplayManager* display)
-    : _display(display) {}
-
 void WiFiResetView::showInitialPrompt() {
     if (_display) {
         _display->clear();

@@ -1,20 +1,14 @@
 #pragma once
-#include "../../DisplayManager.h"
+#include "IBaseView.h"
 #include "../../Graph.h"
 
-class ProofingView {
+class ProofingView : public IBaseView {
 public:
-    explicit ProofingView(DisplayManager* display);
-
-    void clear();
+    explicit ProofingView(DisplayManager* display) : IBaseView(display) {}
     void drawTitle();
     void drawTime(const char* timeBuffer);
     void drawTemperature(const char* tempBuffer);
     void drawIcons(bool on);
     void drawButtons();
     void drawGraph(Graph& graph);
-    void sendBuffer();
-
-private:
-    DisplayManager* _display;
 };

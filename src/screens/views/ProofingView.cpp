@@ -2,12 +2,6 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 
-ProofingView::ProofingView(DisplayManager* display) : _display(display) {}
-
-void ProofingView::clear() {
-    _display->clear();
-}
-
 void ProofingView::drawTitle() {
     _display->drawTitle("En pousse depuis");
 }
@@ -62,8 +56,4 @@ void ProofingView::drawButtons() {
 void ProofingView::drawGraph(Graph& graph) {
     _display->setDrawColor(1);
     graph.draw(_display->getDisplay(), _display->getWidth() - 30, 48);
-}
-
-void ProofingView::sendBuffer() {
-    _display->sendBuffer();
 }

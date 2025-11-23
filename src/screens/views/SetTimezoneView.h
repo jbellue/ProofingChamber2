@@ -1,13 +1,9 @@
 #pragma once
+#include "IBaseView.h"
 
-#include "../Screen.h"
-#include "DisplayManager.h"
-
-class SetTimezoneView {
+class SetTimezoneView : public IBaseView {
 public:
-    SetTimezoneView(DisplayManager* display);
+    SetTimezoneView(DisplayManager* display) : IBaseView(display) {}
     void showInitialPrompt();
     void drawButton();
-private:
-    DisplayManager* _display;
 };

@@ -1,9 +1,6 @@
 #include "SetTimezoneView.h"
 #include "../../icons.h"
 
-SetTimezoneView::SetTimezoneView(DisplayManager* display)
-    : _display(display) {}
-
 void SetTimezoneView::showInitialPrompt() {
     if (_display) {
         _display->clear();

@@ -1,12 +1,9 @@
 #pragma once
-#include "../../DisplayManager.h"
+#include "IBaseView.h"
 
-class RebootView {
+class RebootView : public IBaseView {
 public:
-    explicit RebootView(DisplayManager* display);
+    explicit RebootView(DisplayManager* display) : IBaseView(display) {}
     void showTitle();
     void drawButtons(bool onCancel);
-
-private:
-    DisplayManager* _display;
 };

@@ -1,14 +1,10 @@
 #pragma once
+#include "IBaseView.h"
 
-#include "../Screen.h"
-#include "DisplayManager.h"
-
-class WiFiResetView {
+class WiFiResetView : public IBaseView {
 public:
-    WiFiResetView(DisplayManager* display);
+    WiFiResetView(DisplayManager* display) : IBaseView(display) {}
     void showInitialPrompt();
     void showResetMessage();
     void drawButtons(bool onCancelButton);
-private:
-    DisplayManager* _display;
 };

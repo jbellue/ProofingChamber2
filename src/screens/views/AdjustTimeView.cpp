@@ -1,9 +1,6 @@
 #include "AdjustTimeView.h"
 #include "../../icons.h"
 
-AdjustTimeView::AdjustTimeView(DisplayManager* display)
-    : _display(display) {}
-
 void AdjustTimeView::showTitle(const char* title) {
     if (_display) {
         _display->clear();
@@ -50,8 +47,4 @@ void AdjustTimeView::drawHighlight(uint8_t selectedItem, uint8_t valueY) {
 
 void AdjustTimeView::drawButtons(uint8_t highlightedButton) {
     _display->drawButtons("Démarrer", "Annuler", highlightedButton);
-}
-
-void AdjustTimeView::sendBuffer() {
-    _display->sendBuffer();
 }
