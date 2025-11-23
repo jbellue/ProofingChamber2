@@ -4,7 +4,7 @@
 #include "InputManager.h"
 #include "MenuActions.h"
 #include "MenuItems.h"
-#include "screens/AdjustTime.h"
+#include "screens/controllers/AdjustTimeController.h"
 #include "screens/AdjustValue.h"
 #include "screens/CoolingScreen.h"
 #include "screens/Initialization.h"
@@ -41,7 +41,7 @@ InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
 AppContext appContext;
 // Screen/service pointers — constructed in setup() to avoid static init order issues
 AdjustValue* adjustValue = nullptr;
-AdjustTime* adjustTime = nullptr;
+AdjustTimeController* adjustTimeController = nullptr;
 ProofingController* proofingController = nullptr;
 SetTimezoneController* setTimezoneController = nullptr;
 // Network and reboot services
@@ -84,7 +84,7 @@ void setup() {
 
     // Now create screens and menu objects — pass `&appContext` so they can bind in beginImpl
     adjustValue = new AdjustValue(&appContext);
-    adjustTime = new AdjustTime(&appContext);
+    adjustTimeController = new AdjustTimeController(&appContext);
     proofingController = new ProofingController(&appContext);
     setTimezoneController = new SetTimezoneController(&appContext);
 
@@ -93,7 +93,7 @@ void setup() {
     coolingScreen = new CoolingScreen(&appContext);
     wifiResetController = new WiFiResetController(&appContext);
 
-    menuActions = new MenuActions(&appContext, adjustValue, adjustTime, proofingController, coolingScreen, wifiResetController, setTimezoneController, reboot);
+    menuActions = new MenuActions(&appContext, adjustValue, adjustTimeController, proofingController, coolingScreen, wifiResetController, setTimezoneController, reboot);
     menu = new Menu(&appContext, menuActions);
 
     initialization->setNextScreen(menu);

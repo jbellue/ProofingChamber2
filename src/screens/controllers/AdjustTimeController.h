@@ -1,27 +1,19 @@
 #pragma once
 
-#include "Screen.h"
-#include "DisplayManager.h"
-#include "InputManager.h"
+#include "../Screen.h"
 #include "AppContextDecl.h"
+#include "InputManager.h"
 #include "SimpleTime.h"
+#include "../views/AdjustTimeView.h"
 
-class AdjustTime : public Screen {
+class AdjustTimeController : public Screen {
 public:
-    AdjustTime(AppContext* ctx);
+    AdjustTimeController(AppContext* ctx);
     void begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
     void beginImpl() override;
-    // Prepare parameters for deferred begin
     void prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
     bool update(bool forceRedraw = false) override;
-    struct tm getTime() const {
-        struct tm timeinfo;
-        timeinfo.tm_hour = _currentTime.hours;
-        timeinfo.tm_min = _currentTime.minutes;
-        timeinfo.tm_mday = _currentTime.days;
-        return timeinfo;
-    }
-
+    struct tm getTime() const;
 private:
     enum class SelectedItem {
         Hours,
@@ -29,25 +21,16 @@ private:
         Ok,
         Cancel
     } _selectedItem;
-
     void beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
-    void drawTime();
-    void drawHighlight();
-    void drawButtons();
-
     const char* _title;
     SimpleTime _startingTime;
     SimpleTime _currentTime;
     uint8_t _valueY;
-
-    DisplayManager* _display;
-    InputManager* _inputManager;
     AppContext* _ctx;
-    const char* _startTime;
-
+    InputManager* _inputManager;
+    AdjustTimeView* _view;
     Screen* _coolingScreen;
     Screen* _menuScreen;
-
     SimpleTime getAdjustedTime(bool isHours, bool increment) const;
     bool isTimeValid(const SimpleTime& t) const;
 };

@@ -3,12 +3,12 @@
 #include "DebugUtils.h"
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
-        AdjustTime* adjustTime, ProofingController* ProofingController, CoolingScreen* coolingScreen,
+        AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingScreen* coolingScreen,
         WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValue(adjustValue),
-    _adjustTime(adjustTime),
+    _adjustTimeController(adjustTimeController),
     _proofingController(ProofingController),
     _coolingScreen(coolingScreen),
     _wifiResetController(wifiResetController),
@@ -24,14 +24,14 @@ void MenuActions::proofNowAction() {
 }
 
 void MenuActions::proofInAction() {
-    if (!_ctx || !_ctx->screens || !_adjustTime || !_coolingScreen) return;
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingScreen) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustTime);
+    menu->setNextScreen(_adjustTimeController);
 
     // Lambda calculates end time based on user input from AdjustTime
     auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTime->getTime();
+        struct tm timeinfo = _adjustTimeController->getTime();
         const time_t delayInSeconds = timeinfo.tm_mday * 24 * 60 * 60 + timeinfo.tm_hour * 60 * 60 + timeinfo.tm_min * 60;
         struct tm now;
         getLocalTime(&now);
@@ -44,25 +44,25 @@ void MenuActions::proofInAction() {
     // Prepare screens for deferred begin via ScreensManager
     _coolingScreen->prepare(timeCalculator, _proofingController, menu);
     SimpleTime startTime(0, 0, 0);
-    _adjustTime->prepare("Pousser dans...", _coolingScreen, menu, startTime);
+    _adjustTimeController->prepare("Pousser dans...", _coolingScreen, menu, startTime);
 }
 
 void MenuActions::proofAtAction() {
-    if (!_ctx || !_ctx->screens || !_adjustTime || !_coolingScreen) return;
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingScreen) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustTime);
+    menu->setNextScreen(_adjustTimeController);
     struct tm timeinfo;
     SimpleTime startTime(0, 0, 0);
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTime->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
+        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
     }
     startTime.hours = timeinfo.tm_hour;
     startTime.minutes = timeinfo.tm_min;
     // Lambda calculates end time based on user input from AdjustTime
     auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTime->getTime();
+        struct tm timeinfo = _adjustTimeController->getTime();
         struct tm endTime;
         getLocalTime(&endTime);
         endTime.tm_mday += timeinfo.tm_mday;
@@ -74,7 +74,7 @@ void MenuActions::proofAtAction() {
         return mktime(&endTime);
     };
     _coolingScreen->prepare(timeCalculator, _proofingController, menu); // Pass menu screen
-    _adjustTime->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
+    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
 }
 
 void MenuActions::adjustHotTargetTemp() {
