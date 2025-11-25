@@ -3,14 +3,14 @@
 #include "DebugUtils.h"
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
-        AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingScreen* coolingScreen,
+        AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
         WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValue(adjustValue),
     _adjustTimeController(adjustTimeController),
     _proofingController(ProofingController),
-    _coolingScreen(coolingScreen),
+    _coolingController(coolingController),
     _wifiResetController(wifiResetController),
     _setTimezoneController(setTimezoneController)
 {}
@@ -24,7 +24,7 @@ void MenuActions::proofNowAction() {
 }
 
 void MenuActions::proofInAction() {
-    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingScreen) return;
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustTimeController);
@@ -42,13 +42,13 @@ void MenuActions::proofInAction() {
         return endTime;
     };
     // Prepare screens for deferred begin via ScreensManager
-    _coolingScreen->prepare(timeCalculator, _proofingController, menu);
+    _coolingController->prepare(timeCalculator, _proofingController, menu);
     SimpleTime startTime(0, 0, 0);
-    _adjustTimeController->prepare("Pousser dans...", _coolingScreen, menu, startTime);
+    _adjustTimeController->prepare("Pousser dans...", _coolingController, menu, startTime);
 }
 
 void MenuActions::proofAtAction() {
-    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingScreen) return;
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustTimeController);
@@ -56,7 +56,7 @@ void MenuActions::proofAtAction() {
     SimpleTime startTime(0, 0, 0);
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
+        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime);
     }
     startTime.hours = timeinfo.tm_hour;
     startTime.minutes = timeinfo.tm_min;
@@ -73,8 +73,8 @@ void MenuActions::proofAtAction() {
         DEBUG_PRINTLN(mktime(&endTime));
         return mktime(&endTime);
     };
-    _coolingScreen->prepare(timeCalculator, _proofingController, menu); // Pass menu screen
-    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
+    _coolingController->prepare(timeCalculator, _proofingController, menu); // Pass menu screen
+    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime);
 }
 
 void MenuActions::adjustHotTargetTemp() {

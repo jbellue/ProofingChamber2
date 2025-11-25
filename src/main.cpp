@@ -6,7 +6,6 @@
 #include "MenuItems.h"
 #include "screens/controllers/AdjustTimeController.h"
 #include "screens/AdjustValue.h"
-#include "screens/CoolingScreen.h"
 #include "screens/Initialization.h"
 #include "screens/Menu.h"
 #include "screens/controllers/ProofingController.h"
@@ -17,6 +16,7 @@
 #include "screens/controllers/RebootController.h"
 #include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/WiFiResetController.h"
+#include "screens/controllers/CoolingController.h"
 #include "ScreensManager.h"
 #include "Storage.h"
 #include "TemperatureController.h"
@@ -51,7 +51,7 @@ services::RebootService rebootService;
 // Screen pointers (created in setup)
 RebootController* reboot = nullptr;
 Initialization* initialization = nullptr;
-CoolingScreen* coolingScreen = nullptr;
+CoolingController* coolingController = nullptr;
 WiFiResetController* wifiResetController = nullptr;
 
 MenuActions* menuActions = nullptr;
@@ -90,10 +90,10 @@ void setup() {
 
     reboot = new RebootController(&appContext);
     initialization = new Initialization(&appContext);
-    coolingScreen = new CoolingScreen(&appContext);
+    coolingController = new CoolingController(&appContext);
     wifiResetController = new WiFiResetController(&appContext);
 
-    menuActions = new MenuActions(&appContext, adjustValue, adjustTimeController, proofingController, coolingScreen, wifiResetController, setTimezoneController, reboot);
+    menuActions = new MenuActions(&appContext, adjustValue, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot);
     menu = new Menu(&appContext, menuActions);
 
     initialization->setNextScreen(menu);

@@ -6,12 +6,14 @@
 #include "SimpleTime.h"
 #include "../views/AdjustTimeView.h"
 
+#include "CoolingController.h"
+
 class AdjustTimeController : public Screen {
 public:
     AdjustTimeController(AppContext* ctx);
-    void begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
+    void begin(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
     void beginImpl() override;
-    void prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
+    void prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
     bool update(bool forceRedraw = false) override;
     struct tm getTime() const;
 private:
@@ -21,7 +23,7 @@ private:
         Ok,
         Cancel
     } _selectedItem;
-    void beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime);
+    void beginImpl(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
     const char* _title;
     SimpleTime _startingTime;
     SimpleTime _currentTime;
@@ -29,7 +31,7 @@ private:
     AppContext* _ctx;
     InputManager* _inputManager;
     AdjustTimeView* _view;
-    Screen* _coolingScreen;
+    CoolingController* _coolingController;
     Screen* _menuScreen;
     SimpleTime getAdjustedTime(bool isHours, bool increment) const;
     bool isTimeValid(const SimpleTime& t) const;

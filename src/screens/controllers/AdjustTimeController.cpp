@@ -2,14 +2,14 @@
 #include "DebugUtils.h"
 
 AdjustTimeController::AdjustTimeController(AppContext* ctx)
-    : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _valueY(0), _coolingScreen(nullptr), _menuScreen(nullptr) {}
+    : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _valueY(0), _coolingController(nullptr), _menuScreen(nullptr) {}
 
-void AdjustTimeController::begin(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
+void AdjustTimeController::begin(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime) {
     DEBUG_PRINTLN("AdjustTimeController::begin called");
-    beginImpl(title, coolingScreen, menuScreen, startTime);
+    beginImpl(title, coolingController, menuScreen, startTime);
 }
 
-void AdjustTimeController::beginImpl(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
+void AdjustTimeController::beginImpl(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime) {
     _title = title;
     if (_ctx) {
         if (!_inputManager) _inputManager = _ctx->input;
@@ -19,7 +19,7 @@ void AdjustTimeController::beginImpl(const char* title, Screen* coolingScreen, S
     _startingTime = startTime;
     _currentTime = startTime;
     _selectedItem = SelectedItem::Hours;
-    _coolingScreen = coolingScreen;
+    _coolingController = coolingController;
     _menuScreen = menuScreen;
     if (_view) {
         // Clear display before drawing title and rest of screen
@@ -37,12 +37,12 @@ void AdjustTimeController::beginImpl(const char* title, Screen* coolingScreen, S
 }
 
 void AdjustTimeController::beginImpl() {
-    beginImpl(_title, _coolingScreen, _menuScreen, _startingTime);
+    beginImpl(_title, _coolingController, _menuScreen, _startingTime);
 }
 
-void AdjustTimeController::prepare(const char* title, Screen* coolingScreen, Screen* menuScreen, const SimpleTime& startTime) {
+void AdjustTimeController::prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime) {
     _title = title;
-    _coolingScreen = coolingScreen;
+    _coolingController = coolingController;
     _menuScreen = menuScreen;
     _startingTime = startTime;
 }
@@ -104,7 +104,7 @@ bool AdjustTimeController::update(bool shouldRedraw) {
             _view->drawButtons(0);
             break;
         case SelectedItem::Ok:
-            setNextScreen(_coolingScreen);
+            setNextScreen(_coolingController);
             return false;
         case SelectedItem::Cancel:
             setNextScreen(_menuScreen);
