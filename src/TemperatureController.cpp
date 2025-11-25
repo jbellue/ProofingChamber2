@@ -11,6 +11,8 @@ TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPi
     , _targetTemp(0)
     , _lowerLimit(0)
     , _higherLimit(0)
+    , _isHeating(false)
+    , _isCooling(false)
 {
 }
 
@@ -21,8 +23,8 @@ void TemperatureController::setStorage(services::IStorage* storage) {
 void TemperatureController::begin() {
     pinMode(_heaterPin, OUTPUT);
     pinMode(_coolerPin, OUTPUT);
-    digitalWrite(_heaterPin, LOW);
-    digitalWrite(_coolerPin, LOW);
+    turnHeater(false);
+    turnCooler(false);
 }
 
 void TemperatureController::setMode(Mode mode) {
@@ -32,8 +34,8 @@ void TemperatureController::setMode(Mode mode) {
     loadTemperatureSettings();
     
     // Safety: turn off both relays when changing modes
-    digitalWrite(_heaterPin, LOW);
-    digitalWrite(_coolerPin, LOW);
+    turnHeater(false);
+    turnCooler(false);
 }
 
 void TemperatureController::loadTemperatureSettings() {
@@ -75,8 +77,8 @@ void TemperatureController::loadTemperatureSettings() {
 
 void TemperatureController::update(float currentTemp) {
     if (_currentMode == OFF) {
-        digitalWrite(_heaterPin, LOW);
-        digitalWrite(_coolerPin, LOW);
+        turnHeater(false);
+        turnCooler(false);
         return;
     }
 
@@ -98,21 +100,23 @@ void TemperatureController::updateRelays(float currentTemp) {
         case HEATING:
             if (currentTemp < _lowerLimit) {
                 DEBUG_PRINTLN("Turning the heater ON");
-                digitalWrite(_heaterPin, HIGH);  // Turn heater on
-                digitalWrite(_coolerPin, LOW);   // Make sure cooler is off
+                turnHeater(true);
+                turnCooler(false);
             } else if (currentTemp > _higherLimit) {
                 DEBUG_PRINTLN("Turning the heater OFF");
-                digitalWrite(_heaterPin, LOW);   // Turn heater off
+                turnHeater(false);
+                turnCooler(false);
             }
             break;
         case COOLING:
             if (currentTemp > _higherLimit) {
                 DEBUG_PRINTLN("Turning the cooler ON");
-                digitalWrite(_coolerPin, HIGH);  // Turn cooler on
-                digitalWrite(_heaterPin, LOW);   // Make sure heater is off
+                turnCooler(true);
+                turnHeater(false);
             } else if (currentTemp < _lowerLimit) {
                 DEBUG_PRINTLN("Turning the cooler OFF");
-                digitalWrite(_coolerPin, LOW);   // Turn cooler off
+                turnCooler(false);
+                turnHeater(false);
             }
             break;
         case OFF: // No action needed
@@ -122,4 +126,22 @@ void TemperatureController::updateRelays(float currentTemp) {
 
 TemperatureController::Mode TemperatureController::getMode() const {
     return _currentMode;
+}
+
+bool TemperatureController::isHeating() const {
+    return _isHeating;
+}
+
+bool TemperatureController::isCooling() const {
+    return _isCooling;
+}
+
+void TemperatureController::turnHeater(bool on) {
+    digitalWrite(_heaterPin, on ? HIGH : LOW);
+    _isHeating = on;
+}
+
+void TemperatureController::turnCooler(bool on) {
+    digitalWrite(_coolerPin, on ? HIGH : LOW);
+    _isCooling = on;
 }

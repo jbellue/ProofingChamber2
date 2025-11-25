@@ -19,6 +19,9 @@ public:
     void update(float currentTemp);
     Mode getMode() const;
 
+    bool isHeating() const;
+    bool isCooling() const;
+
 private:
     const uint8_t _heaterPin;
     const uint8_t _coolerPin;
@@ -28,6 +31,12 @@ private:
     int8_t _lowerLimit;
     int8_t _higherLimit;
 
+    bool _isHeating;
+    bool _isCooling;
+
     void loadTemperatureSettings();
     void updateRelays(const float currentTemp);
+
+    void turnHeater(bool on);
+    void turnCooler(bool on);
 };

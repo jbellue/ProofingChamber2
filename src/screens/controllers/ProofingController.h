@@ -27,6 +27,7 @@ private:
     float _previousTemp;
     float _currentTemp;
     bool _isIconOn;
+    bool _wasIconOn;
     Graph _temperatureGraph;
     TemperatureController* _temperatureController;
 

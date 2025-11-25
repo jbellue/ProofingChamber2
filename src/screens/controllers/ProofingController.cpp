@@ -7,7 +7,7 @@
 ProofingController::ProofingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
       _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0), _previousTemp(200.0),
-      _currentTemp(0.0), _isIconOn(false), _temperatureController(nullptr)
+      _currentTemp(0.0), _isIconOn(false), _wasIconOn(false), _temperatureController(nullptr)
 {
 }
 
@@ -33,6 +33,7 @@ void ProofingController::beginImpl() {
     _currentTemp = _inputManager->getTemperature();
     _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
     _isIconOn = true;
+    _wasIconOn = false;
     _previousDiffSeconds = -60; // Force a redraw on the first update
     _lastGraphUpdate = 0;       // Force a redraw on the first update
     _lastTemperatureUpdate = 0; // Force a redraw on the first update
@@ -71,13 +72,23 @@ bool ProofingController::update(bool shouldRedraw) {
         }
     }
 
+    // Update based on heating state
+    bool heatingNow = (_temperatureController && _temperatureController->isHeating());
+    _isIconOn = heatingNow;
+    if (_isIconOn != _wasIconOn) {
+        // Icon state changed, redraw immediately
+        if (_view) {
+            _view->drawIcons(_isIconOn);
+            _view->sendBuffer();
+        }
+        _wasIconOn = _isIconOn;
+    }
+
     if (difftime(now_time, _lastGraphUpdate) >= 10.0) {
         _temperatureGraph.commitAverage(_currentTemp);
         _lastGraphUpdate = now_time;
-        _isIconOn = !_isIconOn;
         if (_view) {
             _view->drawGraph(_temperatureGraph);
-            _view->drawIcons(_isIconOn);
         }
         shouldRedraw = true;
     }
