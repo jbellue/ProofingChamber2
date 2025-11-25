@@ -3,7 +3,7 @@
 
 class WiFiResetView : public IBaseView {
 public:
-    WiFiResetView(DisplayManager* display) : IBaseView(display) {}
+    explicit WiFiResetView(DisplayManager* display) : IBaseView(display) {}
     void showInitialPrompt();
     void showResetMessage();
 };

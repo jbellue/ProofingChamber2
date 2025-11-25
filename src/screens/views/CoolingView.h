@@ -1,19 +1,10 @@
 #pragma once
 
-#include "DisplayManager.h"
+#include "IBaseView.h"
 #include <ctime>
 
-class CoolingView {
+class CoolingView : public IBaseView {
 public:
-    CoolingView(DisplayManager* display);
-    ~CoolingView();
-    void clear();
-    void drawTitle(const char* title);
-    void drawButtons(const char* startLabel, const char* cancelLabel, int selectedButton);
+    explicit CoolingView(DisplayManager* display): IBaseView(display) {};
     void drawTime(const char* timeBuffer);
-    void sendBuffer();
-    int getDisplayWidth() const;
-    uint8_t getUTF8Width(const char* str) const;
-private:
-    DisplayManager* _display;
 };

@@ -3,6 +3,6 @@
 
 class SetTimezoneView : public IBaseView {
 public:
-    SetTimezoneView(DisplayManager* display) : IBaseView(display) {}
+    explicit SetTimezoneView(DisplayManager* display) : IBaseView(display) {}
     void showInitialPrompt();
 };
