@@ -2,12 +2,12 @@
 #include "MenuActions.h"
 #include "DebugUtils.h"
 
-MenuActions::MenuActions(AppContext* ctx, AdjustValue* adjustValue, 
+MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
         AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
         WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController) :
     _ctx(ctx),
     _rebootController(rebootController),
-    _adjustValue(adjustValue),
+    _adjustValueController(adjustValueController),
     _adjustTimeController(adjustTimeController),
     _proofingController(ProofingController),
     _coolingController(coolingController),
@@ -78,57 +78,57 @@ void MenuActions::proofAtAction() {
 }
 
 void MenuActions::adjustHotTargetTemp() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
 }
 
 void MenuActions::adjustHotLowerLimit() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void MenuActions::adjustHotHigherLimit() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void MenuActions::adjustColdTargetTemp() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void MenuActions::adjustColdLowerLimit() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Limite basse\n" "de froid", "/cold/lower_limit.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void MenuActions::adjustColdHigherLimit() {
-    if (!_ctx || !_ctx->screens || !_adjustValue) return;
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     Screen* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->prepare("Limite haute\n" "de froid", "/cold/higher_limit.txt");
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void MenuActions::resetWiFiAndReboot() {

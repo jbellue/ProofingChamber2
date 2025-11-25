@@ -2,7 +2,7 @@
 #define MENU_ACTIONS_H
 
 #include "ScreensManager.h"
-#include "screens/AdjustValue.h"
+#include "screens/controllers/AdjustValueController.h"
 #include "screens/controllers/AdjustTimeController.h"
 #include "screens/controllers/ProofingController.h"
 #include "screens/controllers/CoolingController.h"
@@ -13,7 +13,7 @@
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValue* adjustValue, AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot);
+    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -29,7 +29,7 @@ public:
 private:
     AppContext* _ctx;
     AdjustTimeController* _adjustTimeController;
-    AdjustValue* _adjustValue;
+    AdjustValueController* _adjustValueController;
     ProofingController* _proofingController;
     CoolingController* _coolingController;
     WiFiResetController* _wifiResetController;

@@ -4,15 +4,15 @@
 #include "InputManager.h"
 #include "MenuActions.h"
 #include "MenuItems.h"
-#include "screens/controllers/AdjustTimeController.h"
-#include "screens/AdjustValue.h"
 #include "screens/Initialization.h"
 #include "screens/Menu.h"
-#include "screens/controllers/ProofingController.h"
 #include "services/RebootService.h"
 #include "services/NetworkService.h"
 #include "services/StorageAdapter.h"
 #include "services/IStorage.h"
+#include "screens/controllers/ProofingController.h"
+#include "screens/controllers/AdjustTimeController.h"
+#include "screens/controllers/AdjustValueController.h"
 #include "screens/controllers/RebootController.h"
 #include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/WiFiResetController.h"
@@ -40,7 +40,7 @@ InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
 // Global AppContext instance (defined early so globals can receive its pointer)
 AppContext appContext;
 // Screen/service pointers — constructed in setup() to avoid static init order issues
-AdjustValue* adjustValue = nullptr;
+AdjustValueController* adjustValueController = nullptr;
 AdjustTimeController* adjustTimeController = nullptr;
 ProofingController* proofingController = nullptr;
 SetTimezoneController* setTimezoneController = nullptr;
@@ -83,7 +83,7 @@ void setup() {
     temperatureController.setStorage(appContext.storage);
 
     // Now create screens and menu objects — pass `&appContext` so they can bind in beginImpl
-    adjustValue = new AdjustValue(&appContext);
+    adjustValueController = new AdjustValueController(&appContext);
     adjustTimeController = new AdjustTimeController(&appContext);
     proofingController = new ProofingController(&appContext);
     setTimezoneController = new SetTimezoneController(&appContext);
@@ -93,7 +93,7 @@ void setup() {
     coolingController = new CoolingController(&appContext);
     wifiResetController = new WiFiResetController(&appContext);
 
-    menuActions = new MenuActions(&appContext, adjustValue, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot);
+    menuActions = new MenuActions(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot);
     menu = new Menu(&appContext, menuActions);
 
     initialization->setNextScreen(menu);
