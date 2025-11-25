@@ -13,10 +13,6 @@ class ProofingController : public Screen {
 public:
     explicit ProofingController(AppContext* ctx);
     ~ProofingController();
-
-    // `Screen::begin()` is a non-virtual template method in the base class.
-    // Implement `beginImpl()` to participate in the lifecycle; do not declare
-    // `begin()` with `override` here.
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
 
@@ -36,7 +32,4 @@ private:
 
     void drawTime();
     void drawTemperature();
-    void drawIcons();
-    void drawButtons();
-    void drawGraph();
 };
