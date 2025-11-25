@@ -94,12 +94,8 @@ void CoolingController::drawScreen() {
     } else {
         snprintf(timeBuffer, sizeof(timeBuffer), "(dans %ds)", remainingSeconds);
     }
-    drawTime(timeBuffer);
+    _view->drawTime(timeBuffer);
     _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
-}
-
-void CoolingController::drawTime(const char* timeBuffer) {
-    if (_view) _view->drawTime(timeBuffer);
 }
 
 

@@ -28,5 +28,4 @@ private:
     Screen* _proofingController;
     Screen* _menuScreen;
     void drawScreen();
-    void drawTime(const char* timeBuffer);
 };

@@ -22,6 +22,5 @@ private:
     bool _onCancelButton;
     AppContext* _ctx;
 
-    void drawScreen();
     void beginImpl() override;
 };

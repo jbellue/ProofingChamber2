@@ -76,5 +76,3 @@ bool AdjustValueController::update(bool shouldRedraw) {
     }
     return true;
 }
-
-// All display logic moved to AdjustValueView
