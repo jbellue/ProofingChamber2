@@ -51,5 +51,5 @@ bool RebootController::update(bool forceRedraw) {
 }
 
 void RebootController::drawScreen() {
-    if (_view) _view->drawButtons(_onCancelButton);
+    if (_view) _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
 }

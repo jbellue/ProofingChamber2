@@ -5,5 +5,4 @@ class RebootView : public IBaseView {
 public:
     explicit RebootView(DisplayManager* display) : IBaseView(display) {}
     void showTitle();
-    void drawButtons(bool onCancel);
 };

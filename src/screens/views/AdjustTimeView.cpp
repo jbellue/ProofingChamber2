@@ -1,13 +1,6 @@
 #include "AdjustTimeView.h"
 #include "../../icons.h"
 
-void AdjustTimeView::showTitle(const char* title) {
-    if (_display) {
-        _display->clear();
-        _display->drawTitle(title);
-    }
-}
-
 void AdjustTimeView::drawTime(const SimpleTime& time, uint8_t valueY) {
     _display->setFont(u8g2_font_ncenB18_tf);
     char timeBuffer[6];

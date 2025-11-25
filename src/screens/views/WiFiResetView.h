@@ -6,5 +6,4 @@ public:
     WiFiResetView(DisplayManager* display) : IBaseView(display) {}
     void showInitialPrompt();
     void showResetMessage();
-    void drawButtons(bool onCancelButton);
 };

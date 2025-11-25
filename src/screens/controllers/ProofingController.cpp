@@ -41,7 +41,7 @@ void ProofingController::beginImpl() {
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
         if (_view) {
             _view->clear();
-            _view->drawTitle();
+            _view->drawTitle("En pousse depuis");
         }
     drawButtons();
 }

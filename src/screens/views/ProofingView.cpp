@@ -2,12 +2,8 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 
-void ProofingView::drawTitle() {
-    _display->drawTitle("En pousse depuis");
-}
-
 void ProofingView::drawTime(const char* timeBuffer) {
-    _display->setFont(u8g2_font_ncenB18_tf);
+    setFont(u8g2_font_ncenB18_tf);
 
     const uint8_t timeWidth = _display->getStrWidth(timeBuffer);
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
@@ -22,11 +18,11 @@ void ProofingView::drawTime(const char* timeBuffer) {
 }
 
 void ProofingView::drawTemperature(const char* tempBuffer) {
-    _display->setFont(u8g2_font_t0_11_tf);
+    setFont(u8g2_font_t0_11_tf);
     const uint8_t tempWidth = _display->getUTF8Width("99.9°");
     const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
-    const uint8_t tempX = _display->getDisplayWidth() / 2;
-    const uint8_t tempY = 61;
+    const uint8_t tempX = _display->getDisplayWidth() - tempWidth;
+    const uint8_t tempY = 44;
 
     _display->setDrawColor(0);
     _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
@@ -50,7 +46,7 @@ void ProofingView::drawIcons(bool on) {
 }
 
 void ProofingView::drawButtons() {
-    _display->drawButton("Annuler", 0, true);
+    drawButton("Annuler", true);
 }
 
 void ProofingView::drawGraph(Graph& graph) {
