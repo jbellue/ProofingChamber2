@@ -7,7 +7,7 @@
 ProofingController::ProofingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
       _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0), _previousTemp(200.0),
-      _currentTemp(0.0), _isIconOn(false), _wasIconOn(false), _temperatureController(nullptr)
+      _currentTemp(0.0), _isIconOn(true), _wasIconOn(false), _temperatureController(nullptr)
 {
 }
 
@@ -32,8 +32,6 @@ void ProofingController::beginImpl() {
     if (_inputManager) _inputManager->slowTemperaturePolling(false);
     _currentTemp = _inputManager->getTemperature();
     _previousTemp = 200.0; // Initialize to a high value to ensure the first update is drawn
-    _isIconOn = true;
-    _wasIconOn = false;
     _previousDiffSeconds = -60; // Force a redraw on the first update
     _lastGraphUpdate = 0;       // Force a redraw on the first update
     _lastTemperatureUpdate = 0; // Force a redraw on the first update

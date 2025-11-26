@@ -2,7 +2,10 @@
 #include "DebugUtils.h"
 
 CoolingController::CoolingController(AppContext* ctx)
-    : _view(nullptr), _inputManager(nullptr), _temperatureController(nullptr), _ctx(ctx), _endTime(0), _lastUpdateTime(0), _previousTemp(200.0f), _onCancelButton(true), _proofingController(nullptr), _menuScreen(nullptr) {}
+    : _view(nullptr), _inputManager(nullptr), _temperatureController(nullptr),
+    _ctx(ctx), _endTime(0), _lastUpdateTime(0), _previousTemp(200.0f),
+    _onCancelButton(true), _isIconOn(true), _wasIconOn(false),
+    _proofingController(nullptr), _menuScreen(nullptr) {}
 
 void CoolingController::beginImpl() {
     if (_ctx) {
@@ -22,6 +25,8 @@ void CoolingController::beginImpl() {
     _onCancelButton = true;
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     if (_view) _view->clear();
+    _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
+    _currentTemp = _inputManager ? _inputManager->getTemperature() : 0.0f;
 }
 
 bool CoolingController::update(bool shouldRedraw) {
@@ -46,17 +51,52 @@ bool CoolingController::update(bool shouldRedraw) {
         if (nextScreen) nextScreen->begin();
         return false;
     }
-    if (difftime(now, _lastUpdateTime) >= 1) {
-        const float currentTemp = _inputManager ? _inputManager->getTemperature() : 0.0f;
-        DEBUG_PRINT("Current temperature: ");
-        DEBUG_PRINT(currentTemp);
-        DEBUG_PRINT(" - Previous: ");
-        DEBUG_PRINTLN(_previousTemp);
-        _lastUpdateTime = now;
-        if (abs(currentTemp - _previousTemp) > 0.1) {
+    if (_inputManager && difftime(now, _lastUpdateTime) >= 1) {
+        const float currentTemp = _inputManager->getTemperature();
+        if (abs(currentTemp - _previousTemp) > 0.2) {
+            _temperatureGraph.addValueToAverage(currentTemp);
             _previousTemp = currentTemp;
+            _currentTemp = currentTemp;
+            drawTemperature();
+            shouldRedraw = true;
             if (_temperatureController) _temperatureController->update(currentTemp);
         }
+        // Check if displayed time has changed
+        char newTimeBuffer[34] = {0};
+        int remainingSeconds = difftime(_endTime, now);
+        if (remainingSeconds < 60) {
+            snprintf(newTimeBuffer, sizeof(newTimeBuffer), "dans <1m");
+        } else if (remainingSeconds >= 3600) {
+            snprintf(newTimeBuffer, sizeof(newTimeBuffer), "dans %dh%02dm",
+                remainingSeconds / 3600, (remainingSeconds % 3600) / 60);
+        } else {
+            snprintf(newTimeBuffer, sizeof(newTimeBuffer), "dans %dm",
+                remainingSeconds / 60);
+        }
+        if (strcmp(newTimeBuffer, _lastDisplayedTime) != 0) {
+            strncpy(_lastDisplayedTime, newTimeBuffer, sizeof(_lastDisplayedTime));
+            shouldRedraw = true;
+        }
+        _lastUpdateTime = now;
+    }
+
+    // Update based on cooling state
+    bool coolingNow = (_temperatureController && _temperatureController->isCooling());
+    _isIconOn = coolingNow;
+    if (_isIconOn != _wasIconOn) {
+        DEBUG_PRINT("CoolingController: Icon state changed. Now: ");
+        DEBUG_PRINTLN(_isIconOn);
+        // Icon state changed, redraw immediately
+        if (_view) {
+            _view->drawIcons(_isIconOn);
+            _view->sendBuffer();
+        }
+        _wasIconOn = _isIconOn;
+    }
+
+    if (difftime(now, _lastUpdateTime) >= 10.0) {
+        _temperatureGraph.commitAverage(_currentTemp);
+        if(_view) _view->drawGraph(_temperatureGraph);
         shouldRedraw = true;
     }
 
@@ -81,23 +121,18 @@ void CoolingController::drawScreen() {
     snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
     _view->drawTitle(timeBuffer);
 
-    struct tm tm_now;
-    getLocalTime(&tm_now);
-    const time_t now = mktime(&tm_now);
-    const int remainingSeconds = difftime(_endTime, now);
-    if (remainingSeconds >= 3600) {
-        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dh%02dm)",
-            remainingSeconds / 3600, (remainingSeconds % 3600) / 60);
-    } else if (remainingSeconds >= 60) {
-        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %dm%02ds)",
-            remainingSeconds / 60, remainingSeconds % 60);
-    } else {
-        snprintf(timeBuffer, sizeof(timeBuffer), "(dans %ds)", remainingSeconds);
-    }
-    _view->drawTime(timeBuffer);
+    _view->drawTime(_lastDisplayedTime);
+    drawTemperature();
+    _view->drawGraph(_temperatureGraph);
     _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
+    _view->drawIcons(_isIconOn);
 }
 
+void CoolingController::drawTemperature() {
+    char tempBuffer[7] = {'\0'};
+    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", _currentTemp);
+    if (_view) _view->drawTemperature(tempBuffer);
+}
 
 void CoolingController::prepare(TimeCalculatorCallback callback, Screen* proofingController, Screen* menuScreen) {
     _timeCalculator = callback;

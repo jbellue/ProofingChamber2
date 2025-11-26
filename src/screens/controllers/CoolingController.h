@@ -16,6 +16,7 @@ public:
     void prepare(TimeCalculatorCallback callback, Screen* proofingController, Screen* menuScreen);
 
 private:
+    char _lastDisplayedTime[34] = {0};
     CoolingView* _view;
     InputManager* _inputManager;
     TemperatureController* _temperatureController;
@@ -24,8 +25,13 @@ private:
     time_t _lastUpdateTime;
     float _previousTemp;
     bool _onCancelButton;
+    bool _isIconOn;
+    bool _wasIconOn;
     TimeCalculatorCallback _timeCalculator;
     Screen* _proofingController;
     Screen* _menuScreen;
+    Graph _temperatureGraph;
+    float _currentTemp;
+    void drawTemperature();
     void drawScreen();
 };

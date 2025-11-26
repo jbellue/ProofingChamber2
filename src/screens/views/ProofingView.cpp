@@ -33,7 +33,7 @@ void ProofingView::drawTemperature(const char* tempBuffer) {
 
 void ProofingView::drawIcons(bool on) {
     const uint8_t proofIconSize = 10;
-    const uint8_t iconsX = _display->getDisplayWidth() - proofIconSize - 2;
+    const uint8_t iconsX = 2;
     const uint8_t iconY = 23;
 
     if (on) {
