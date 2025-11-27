@@ -7,8 +7,11 @@
 class CoolingView : public IBaseView {
 public:
     explicit CoolingView(DisplayManager* display): IBaseView(display) {};
-    void drawTime(const char* timeBuffer);
-    void drawTemperature(const char* tempBuffer);
-    void drawIcons(bool on);
+    bool drawTime(const int remainingSeconds);
+    void drawTemperature(const float currentTemp);
+    bool drawIcons(bool on, bool force = false);
     void drawGraph(Graph& graph);
+private:
+    int _lastRemainingSeconds = -1;
+    bool _lastIconState = false;
 };
