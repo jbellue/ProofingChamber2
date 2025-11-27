@@ -5,8 +5,8 @@
 class ProofingView : public IBaseView {
 public:
     explicit ProofingView(DisplayManager* display) : IBaseView(display) {}
-    void drawTime(const char* timeBuffer);
-    void drawTemperature(const char* tempBuffer);
+    void drawTime(const time_t diffSeconds);
+    void drawTemperature(const float currentTemp);
     void drawIcons(bool on);
     void drawGraph(Graph& graph);
     void drawButtons();

@@ -2,7 +2,17 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 
-void ProofingView::drawTime(const char* timeBuffer) {
+void ProofingView::drawTime(const time_t diffSeconds) {
+    const int total_minutes = diffSeconds / 60;
+    const int hours = total_minutes / 60;
+    const int minutes = total_minutes % 60;
+
+    char timeBuffer[8] = {'\0'};
+    if (hours > 0) {
+        snprintf(timeBuffer, sizeof(timeBuffer), "%dh%02dm", hours, minutes);
+    } else {
+        snprintf(timeBuffer, sizeof(timeBuffer), "%dm", minutes);
+    }
     setFont(u8g2_font_ncenB18_tf);
 
     const uint8_t timeWidth = _display->getStrWidth(timeBuffer);
@@ -17,7 +27,10 @@ void ProofingView::drawTime(const char* timeBuffer) {
     _display->drawUTF8(timeX, timeY, timeBuffer);
 }
 
-void ProofingView::drawTemperature(const char* tempBuffer) {
+void ProofingView::drawTemperature(const float currentTemp) {
+    char tempBuffer[7] = {'\0'};
+    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", currentTemp);
+
     setFont(u8g2_font_t0_11_tf);
     const uint8_t tempWidth = _display->getUTF8Width("99.9°");
     const uint8_t tempHeight = _display->getAscent() - _display->getDescent();

@@ -30,7 +30,4 @@ private:
     bool _wasIconOn;
     Graph _temperatureGraph;
     TemperatureController* _temperatureController;
-
-    void drawTime();
-    void drawTemperature();
 };

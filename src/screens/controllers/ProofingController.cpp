@@ -64,7 +64,7 @@ bool ProofingController::update(bool shouldRedraw) {
         if (abs(_currentTemp - _previousTemp) > 0.1) {
             _temperatureGraph.addValueToAverage(_currentTemp);
             _previousTemp = _currentTemp;
-            drawTemperature();
+            _view->drawTemperature(_currentTemp);
             shouldRedraw = true;
             if (_temperatureController) _temperatureController->update(_currentTemp);
         }
@@ -93,7 +93,7 @@ bool ProofingController::update(bool shouldRedraw) {
 
     if (diff_seconds - _previousDiffSeconds >= 60) {
         _previousDiffSeconds = diff_seconds;
-        drawTime();
+        _view->drawTime(_previousDiffSeconds);
         shouldRedraw = true;
     }
 
@@ -101,25 +101,4 @@ bool ProofingController::update(bool shouldRedraw) {
         _view->sendBuffer();
     }
     return true;
-}
-
-void ProofingController::drawTime() {
-    const int total_minutes = _previousDiffSeconds / 60;
-    const int hours = total_minutes / 60;
-    const int minutes = total_minutes % 60;
-
-    char timeBuffer[8] = {'\0'};
-    if (hours > 0) {
-        snprintf(timeBuffer, sizeof(timeBuffer), "%dh%02dm", hours, minutes);
-    } else {
-        snprintf(timeBuffer, sizeof(timeBuffer), "%dm", minutes);
-    }
-    DEBUG_PRINTLN(timeBuffer);
-    if (_view) _view->drawTime(timeBuffer);
-}
-
-void ProofingController::drawTemperature() {
-    char tempBuffer[7] = {'\0'};
-    snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", _currentTemp);
-    if (_view) _view->drawTemperature(tempBuffer);
 }
