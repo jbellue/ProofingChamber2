@@ -25,6 +25,8 @@
 #define DS18B20_PIN       0
 #define COOLING_RELAY_PIN 1
 #define HEATING_RELAY_PIN 2
+#define COOLING_LED_PIN   5
+#define PROOFING_LED_PIN  6
 #define ENCODER_CLK       3
 #define ENCODER_DT        4
 #define ENCODER_SW        10
@@ -33,7 +35,7 @@
 DisplayManager displayManager(U8G2_R0);
 // Storage adapter and temperature controller depend on storage
 services::StorageAdapter storageAdapter;
-TemperatureController temperatureController(HEATING_RELAY_PIN, COOLING_RELAY_PIN);
+TemperatureController temperatureController(HEATING_RELAY_PIN, COOLING_RELAY_PIN, PROOFING_LED_PIN, COOLING_LED_PIN);
 
 ScreensManager screensManager;
 InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
@@ -69,6 +71,10 @@ void setup() {
     displayManager.begin();
     inputManager.begin();
     temperatureController.begin();
+
+    // Initialize LED pins as outputs
+    pinMode(COOLING_LED_PIN, OUTPUT);
+    pinMode(PROOFING_LED_PIN, OUTPUT);
 
     // Populate global AppContext so components can access shared services
     appContext.display = &displayManager;

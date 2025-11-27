@@ -11,7 +11,7 @@ public:
         OFF
     };
 
-    TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin);
+    TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin, const uint8_t proofingLedPin, const uint8_t coolingLedPin);
     void setStorage(services::IStorage* storage);
 
     void begin();
@@ -25,6 +25,8 @@ public:
 private:
     const uint8_t _heaterPin;
     const uint8_t _coolerPin;
+    const uint8_t _proofingLedPin;
+    const uint8_t _coolingLedPin;
     Mode _currentMode;
 
     int8_t _targetTemp;

@@ -4,9 +4,11 @@
 
 static services::IStorage* _globalStorage = nullptr; // fallback pointer set by constructor or setter
 
-TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin) 
+TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin, uint8_t proofingLedPin, uint8_t coolingLedPin)
     : _heaterPin(heaterPin)
     , _coolerPin(coolerPin)
+    , _proofingLedPin(proofingLedPin)
+    , _coolingLedPin(coolingLedPin)
     , _currentMode(OFF)
     , _targetTemp(0)
     , _lowerLimit(0)
@@ -23,6 +25,8 @@ void TemperatureController::setStorage(services::IStorage* storage) {
 void TemperatureController::begin() {
     pinMode(_heaterPin, OUTPUT);
     pinMode(_coolerPin, OUTPUT);
+    pinMode(_proofingLedPin, OUTPUT);
+    pinMode(_coolingLedPin, OUTPUT);
     turnHeater(false);
     turnCooler(false);
 }
@@ -32,10 +36,26 @@ void TemperatureController::setMode(Mode mode) {
     
     _currentMode = mode;
     loadTemperatureSettings();
-    
+
     // Safety: turn off both relays when changing modes
     turnHeater(false);
     turnCooler(false);
+
+    // Control LEDs based on mode
+    switch (_currentMode) {
+        case HEATING:
+            digitalWrite(_proofingLedPin, HIGH);
+            digitalWrite(_coolingLedPin, LOW);
+            break;
+        case COOLING:
+            digitalWrite(_proofingLedPin, LOW);
+            digitalWrite(_coolingLedPin, HIGH);
+            break;
+        case OFF:
+            digitalWrite(_proofingLedPin, LOW);
+            digitalWrite(_coolingLedPin, LOW);
+            break;
+    }
 }
 
 void TemperatureController::loadTemperatureSettings() {
