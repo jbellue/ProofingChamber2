@@ -20,7 +20,6 @@ void CoolingController::beginImpl() {
     _endTime = _timeCalculator ? _timeCalculator() : 0;
     _lastUpdateTime = 0;
     _lastGraphUpdate = 0;
-    _previousTemp = 200.0f;
     _onCancelButton = true;
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
@@ -41,14 +40,13 @@ bool CoolingController::update(bool shouldRedraw) {
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
 
-    bool isButtonPressed = _inputManager ? _inputManager->isButtonPressed() : false;
     if (shouldRedraw) {
         _endTime = _timeCalculator ? _timeCalculator() : _endTime;
     }
     bool timesUp = now >= _endTime;
-    if (isButtonPressed || timesUp) {
-        if (_inputManager) _inputManager->slowTemperaturePolling(true);
-        if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
+    if (_inputManager->isButtonPressed() || timesUp) {
+        _inputManager->slowTemperaturePolling(true);
+        _temperatureController->setMode(TemperatureController::OFF);
         bool goingToProofScreen = !_onCancelButton || timesUp;
         Screen* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
         setNextScreen(nextScreen);
@@ -58,20 +56,16 @@ bool CoolingController::update(bool shouldRedraw) {
         if (nextScreen) nextScreen->begin();
         return false;
     }
-    if (_inputManager && difftime(now, _lastUpdateTime) >= 1) {
+    if (difftime(now, _lastUpdateTime) >= 1) {
         _currentTemp = _inputManager->getTemperature();
-        if (abs(_currentTemp - _previousTemp) >= 0.1) {
-            _temperatureGraph.addValueToAverage(_currentTemp);
-            _previousTemp = _currentTemp;
-            _view->drawTemperature(_currentTemp);
-            shouldRedraw = true;
-            if (_temperatureController) _temperatureController->update(_currentTemp);
-        }
-        shouldRedraw &= _view->drawTime(difftime(_endTime, now));
+        _temperatureGraph.addValueToAverage(_currentTemp);
+        shouldRedraw |= _view->drawTemperature(_currentTemp);
+        _temperatureController->update(_currentTemp);
+        shouldRedraw |= _view->drawTime(difftime(_endTime, now));
         _lastUpdateTime = now;
     }
 
-    shouldRedraw &= _view->drawIcons((_temperatureController && _temperatureController->isCooling()));
+    shouldRedraw |= _view->drawIcons(_temperatureController->isCooling());
 
     if (difftime(now, _lastGraphUpdate) >= 10.0) {
         _temperatureGraph.commitAverage(_currentTemp);

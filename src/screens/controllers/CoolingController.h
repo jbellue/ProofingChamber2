@@ -23,7 +23,6 @@ private:
     time_t _endTime;
     time_t _lastUpdateTime;
     time_t _lastGraphUpdate;
-    float _previousTemp;
     bool _onCancelButton;
     TimeCalculatorCallback _timeCalculator;
     Screen* _proofingController;
