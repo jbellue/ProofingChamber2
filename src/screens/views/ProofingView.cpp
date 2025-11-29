@@ -2,7 +2,11 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 
-void ProofingView::drawTime(const time_t diffSeconds) {
+bool ProofingView::drawTime(const time_t diffSeconds) {
+    if (diffSeconds - _lastTimeDrawn < 60) {
+        return false; // No change, skip redraw
+    }
+    _lastTimeDrawn = diffSeconds;
     const int total_minutes = diffSeconds / 60;
     const int hours = total_minutes / 60;
     const int minutes = total_minutes % 60;
@@ -25,9 +29,14 @@ void ProofingView::drawTime(const time_t diffSeconds) {
 
     _display->setDrawColor(1);
     _display->drawUTF8(timeX, timeY, timeBuffer);
+    return true;
 }
 
-void ProofingView::drawTemperature(const float currentTemp) {
+bool ProofingView::drawTemperature(const float currentTemp) {
+    if (abs(currentTemp - _lastTempDrawn) < 0.1) {
+        return false; // No significant change, skip redraw
+    }
+    _lastTempDrawn = currentTemp;
     char tempBuffer[7] = {'\0'};
     snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", currentTemp);
 
@@ -42,20 +51,26 @@ void ProofingView::drawTemperature(const float currentTemp) {
     _display->setDrawColor(1);
 
     _display->drawUTF8(tempX, tempY, tempBuffer);
+    return true;
 }
 
-void ProofingView::drawIcons(bool on) {
+bool ProofingView::drawIcons(IconState iconState) {
+    if (iconState == _lastIconState) {
+        return false; // No change, skip redraw
+    }
+    _lastIconState = iconState;
     const uint8_t proofIconSize = 10;
     const uint8_t iconsX = 2;
     const uint8_t iconY = 23;
 
-    if (on) {
+    if (iconState == IconState::On) {
         _display->drawXBMP(iconsX, iconY, proofIconSize, proofIconSize, iconProof);
     } else {
         _display->setDrawColor(0);
         _display->drawBox(iconsX, iconY, proofIconSize, proofIconSize);
         _display->setDrawColor(1);
     }
+    return true;
 }
 
 void ProofingView::drawButtons() {
@@ -65,4 +80,10 @@ void ProofingView::drawButtons() {
 void ProofingView::drawGraph(Graph& graph) {
     _display->setDrawColor(1);
     graph.draw(_display->getDisplay(), _display->getWidth() - 30, 48);
+}
+
+void ProofingView::reset() {
+    _lastTempDrawn = -257.0;
+    _lastIconState = IconState::Unset;
+    _lastTimeDrawn = -1000;
 }

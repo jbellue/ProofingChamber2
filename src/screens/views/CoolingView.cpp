@@ -49,15 +49,15 @@ bool CoolingView::drawTemperature(const float currentTemp) {
     return true;
 }
 
-bool CoolingView::drawIcons(bool on, bool force) {
-    if (!force && _lastIconState == on) {
+bool CoolingView::drawIcons(IconState iconState) {
+    if (iconState == _lastIconState) {
         return false; // No change, skip redraw
     }
-    _lastIconState = on;
+    _lastIconState = iconState;
     const uint8_t coolIconSize = 10;
     const uint8_t iconsX = _display->getDisplayWidth() - GRAPH_POSITION_FROM_LEFT - coolIconSize - 2;
     const uint8_t iconY = 36;
-    if (on) {
+    if (iconState == IconState::On) {
         _display->drawXBMP(iconsX, iconY, coolIconSize, coolIconSize, iconCool);
     } else {
         _display->setDrawColor(0);
@@ -86,4 +86,10 @@ void CoolingView::formatTimeString(char* buffer, const size_t bufferSize, const 
         snprintf(buffer, bufferSize, "%s%dm%s", prefix,
             remainingSeconds / 60, suffix);
     }
+}
+
+void CoolingView::reset() {
+    _lastRemainingSeconds = -1;
+    _lastIconState = IconState::Unset;
+    _lastTemperature = -273.15; // Reset to ensure redraw
 }

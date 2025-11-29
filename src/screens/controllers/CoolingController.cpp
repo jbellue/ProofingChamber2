@@ -22,7 +22,6 @@ void CoolingController::beginImpl() {
     _onCancelButton = true;
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    _currentTemp = _inputManager ? _inputManager->getTemperature() : 0.0f;
     _view->clear();
     const tm* tm_end = localtime(&_endTime);
     char timeBuffer[34] = {'\0'};
@@ -51,25 +50,25 @@ bool CoolingController::update(bool shouldRedraw) {
             _proofingController->setNextScreen(_menuScreen);
         }
         if (nextScreen) nextScreen->begin();
+        _view->reset();
         return false;
     }
     if (difftime(now, _lastUpdateTime) >= 1) {
-        _currentTemp = _inputManager->getTemperature();
-        _temperatureGraph.addValueToAverage(_currentTemp);
-        shouldRedraw |= _view->drawTemperature(_currentTemp);
-        _temperatureController->update(_currentTemp);
+        const float currentTemp = _inputManager->getTemperature();
+        _temperatureGraph.addValueToAverage(currentTemp);
+        shouldRedraw |= _view->drawTemperature(currentTemp);
+        _temperatureController->update(currentTemp);
         shouldRedraw |= _view->drawTime(difftime(_endTime, now));
         _lastUpdateTime = now;
+        if (difftime(now, _lastGraphUpdate) >= 10.0) {
+            _temperatureGraph.commitAverage(currentTemp);
+            _lastGraphUpdate = now;
+            _view->drawGraph(_temperatureGraph);
+            shouldRedraw = true;
+        }
     }
 
-    shouldRedraw |= _view->drawIcons(_temperatureController->isCooling());
-
-    if (difftime(now, _lastGraphUpdate) >= 10.0) {
-        _temperatureGraph.commitAverage(_currentTemp);
-        _lastGraphUpdate = now;
-        _view->drawGraph(_temperatureGraph);
-        shouldRedraw = true;
-    }
+    shouldRedraw |= _view->drawIcons(_temperatureController->isCooling() ? IconState::On : IconState::Off);
 
     auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
     if (encoderDirection != InputManager::EncoderDirection::None) {
