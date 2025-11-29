@@ -27,6 +27,7 @@ void ProofingController::beginImpl() {
     _view->drawButtons();
     _view->drawTemperature(_inputManager->getTemperature());
     _view->drawTime(0);
+    _view->drawGraph(_temperatureGraph);
 }
 
 bool ProofingController::update(bool shouldRedraw) {
@@ -42,10 +43,11 @@ bool ProofingController::update(bool shouldRedraw) {
     const time_t now_time = mktime(&now);
 
     if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
+        _lastTemperatureUpdate = now_time;
         const float currentTemp = _inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
-        if (_temperatureController) _temperatureController->update(currentTemp);
+        _temperatureController->update(currentTemp);
 
         if (difftime(now_time, _lastGraphUpdate) >= 10) {
             _temperatureGraph.commitAverage(currentTemp);
