@@ -32,7 +32,7 @@ void AdjustValueController::beginImpl(const char* title, const char* path) {
     }
     // Late-bind view and input
     if (_ctx) {
-        if (!_view && _ctx->display) _view = new AdjustValueView(_ctx->display);
+        _view = _ctx->adjustValueView;
         if (!_inputManager) _inputManager = _ctx->input;
     }
     if (_storage) {
@@ -43,11 +43,9 @@ void AdjustValueController::beginImpl(const char* title, const char* path) {
     if (_inputManager) _inputManager->resetEncoderPosition();
 
     // Update the view immediately
-    if (_view) {
-        _view->clear();
-        _valueY = _ctx->display->drawTitle(title);
-        _view->drawButton("OK", true);
-    }
+    _view->clear();
+    _valueY = _ctx->display->drawTitle(title);
+    _view->drawButton("OK", true);
 }
 
 bool AdjustValueController::update(bool shouldRedraw) {
@@ -68,10 +66,10 @@ bool AdjustValueController::update(bool shouldRedraw) {
         } else if (encoderDirection == InputManager::EncoderDirection::CounterClockwise) {
             _currentValue -= 1;
         }
-        if (_view) _view->drawValue(_currentValue, _valueY);
+        _view->drawValue(_currentValue, _valueY);
         shouldRedraw = true;
     }
-    if (shouldRedraw && _view) {
+    if (shouldRedraw) {
         _view->sendBuffer();
     }
     return true;

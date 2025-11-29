@@ -1,5 +1,6 @@
 #include "CoolingController.h"
 #include "DebugUtils.h"
+#include "../views/CoolingView.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _temperatureController(nullptr),
@@ -9,9 +10,7 @@ void CoolingController::beginImpl() {
     if (_ctx) {
         if (!_inputManager) _inputManager = _ctx->input;
         if (!_temperatureController) _temperatureController = _ctx->tempController;
-        if (!_view && _ctx->display) {
-            _view = new CoolingView(_ctx->display);
-        }
+        if (!_view) _view = _ctx->coolingView;
     }
     if (_inputManager) {
         _inputManager->resetEncoderPosition();
@@ -24,15 +23,13 @@ void CoolingController::beginImpl() {
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _currentTemp = _inputManager ? _inputManager->getTemperature() : 0.0f;
-    if (_view) {
-        _view->clear();
-        const tm* tm_end = localtime(&_endTime);
-        char timeBuffer[34] = {'\0'};
-        snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
-        _view->drawTitle(timeBuffer);
-        _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
-        _view->drawGraph(_temperatureGraph);
-    }
+    _view->clear();
+    const tm* tm_end = localtime(&_endTime);
+    char timeBuffer[34] = {'\0'};
+    snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
+    _view->drawTitle(timeBuffer);
+    _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
+    _view->drawGraph(_temperatureGraph);
 }
 
 bool CoolingController::update(bool shouldRedraw) {

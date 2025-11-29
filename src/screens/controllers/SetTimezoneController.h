@@ -8,7 +8,6 @@
 class SetTimezoneController : public Screen {
 public:
     SetTimezoneController(AppContext* ctx);
-    void begin();
     bool update(bool forceRedraw = false) override;
 private:
     AppContext* _ctx;

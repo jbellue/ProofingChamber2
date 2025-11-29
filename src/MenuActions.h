@@ -17,6 +17,10 @@ public:
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
+    
+    // Static callback functions for time calculations
+    static time_t calculateProofInEndTime();
+    static time_t calculateProofAtEndTime();
     void adjustHotTargetTemp();
     void adjustHotLowerLimit();
     void adjustHotHigherLimit();
@@ -26,6 +30,11 @@ public:
     void resetWiFiAndReboot();
     void reboot();
     void adjustTimezone();
+    
+    // Static variables for callback context
+    static SimpleTime s_proofInTime;
+    static SimpleTime s_proofAtTime;
+    
 private:
     AppContext* _ctx;
     AdjustTimeController* _adjustTimeController;

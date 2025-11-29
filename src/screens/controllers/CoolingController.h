@@ -8,7 +8,7 @@
 
 class CoolingController : public Screen {
 public:
-    using TimeCalculatorCallback = std::function<time_t()>;
+    using TimeCalculatorCallback = time_t (*)();
 
     CoolingController(AppContext* ctx);
     void beginImpl() override;

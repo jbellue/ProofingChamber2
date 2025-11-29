@@ -1,6 +1,11 @@
 #include "SimpleTime.h"
 #include "MenuActions.h"
 #include "DebugUtils.h"
+#include "screens/controllers/AdjustTimeController.h"
+
+// Static member definitions
+SimpleTime MenuActions::s_proofInTime(0, 0, 0);
+SimpleTime MenuActions::s_proofAtTime(0, 0, 0);
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
         AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
@@ -29,22 +34,10 @@ void MenuActions::proofInAction() {
     if (!menu) return;
     menu->setNextScreen(_adjustTimeController);
 
-    // Lambda calculates end time based on user input from AdjustTime
-    auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTimeController->getTime();
-        const time_t delayInSeconds = timeinfo.tm_mday * 24 * 60 * 60 + timeinfo.tm_hour * 60 * 60 + timeinfo.tm_min * 60;
-        struct tm now;
-        getLocalTime(&now);
-        const time_t now_time = mktime(&now);
-        const time_t endTime = now_time + delayInSeconds;
-        DEBUG_PRINT("end time in:");
-        DEBUG_PRINTLN(endTime);
-        return endTime;
-    };
     // Prepare screens for deferred begin via ScreensManager
-    _coolingController->prepare(timeCalculator, _proofingController, menu);
+    _coolingController->prepare(&calculateProofInEndTime, _proofingController, menu);
     SimpleTime startTime(0, 0, 0);
-    _adjustTimeController->prepare("Pousser dans...", _coolingController, menu, startTime);
+    _adjustTimeController->prepare("Pousser dans...", _coolingController, menu, startTime, TimeMode::ProofIn);
 }
 
 void MenuActions::proofAtAction() {
@@ -56,25 +49,13 @@ void MenuActions::proofAtAction() {
     SimpleTime startTime(0, 0, 0);
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime);
+        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime, TimeMode::ProofAt);
     }
     startTime.hours = timeinfo.tm_hour;
     startTime.minutes = timeinfo.tm_min;
-    // Lambda calculates end time based on user input from AdjustTime
-    auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTimeController->getTime();
-        struct tm endTime;
-        getLocalTime(&endTime);
-        endTime.tm_mday += timeinfo.tm_mday;
-        endTime.tm_hour = timeinfo.tm_hour;
-        endTime.tm_min = timeinfo.tm_min;
-        endTime.tm_sec = 0;
-        DEBUG_PRINT("end time in:");
-        DEBUG_PRINTLN(mktime(&endTime));
-        return mktime(&endTime);
-    };
-    _coolingController->prepare(timeCalculator, _proofingController, menu); // Pass menu screen
-    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime);
+    
+    _coolingController->prepare(&calculateProofAtEndTime, _proofingController, menu);
+    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime, TimeMode::ProofAt);
 }
 
 void MenuActions::adjustHotTargetTemp() {
@@ -153,4 +134,27 @@ void MenuActions::adjustTimezone() {
     if (!menu) return;
     menu->setNextScreen(_setTimezoneController);
     _setTimezoneController->setNextScreen(menu);
+}
+
+// Static callback functions for time calculations
+time_t MenuActions::calculateProofInEndTime() {
+    // Convert stored time to seconds delay from now
+    struct tm now;
+    getLocalTime(&now);
+    time_t now_time = mktime(&now);
+    
+    // Calculate delay in seconds (simplified version)
+    time_t delayInSeconds = s_proofInTime.hours * 3600 + s_proofInTime.minutes * 60;
+    return now_time + delayInSeconds;
+}
+
+time_t MenuActions::calculateProofAtEndTime() {
+    // Convert stored time to target time_t
+    struct tm targetTime;
+    getLocalTime(&targetTime);
+    targetTime.tm_hour = s_proofAtTime.hours;
+    targetTime.tm_min = s_proofAtTime.minutes;
+    targetTime.tm_sec = 0;
+    
+    return mktime(&targetTime);
 }

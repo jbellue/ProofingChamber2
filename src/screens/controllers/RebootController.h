@@ -12,7 +12,6 @@ struct InputManager;
 class RebootController : public Screen {
 public:
     RebootController(AppContext* ctx);
-    ~RebootController();
     bool update(bool forceRedraw = false) override;
 
 private:

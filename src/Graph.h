@@ -27,8 +27,6 @@ public:
     void clear();
 
 private:
-    static uint8_t _buffer[(MAX_GRAPH_WIDTH * MAX_GRAPH_HEIGHT) / 8]; // Static buffer
-
     uint8_t _width, _height;        // Current dimensions
     bool _drawAxes;                 // Draw axis or not
     float _minValue, _maxValue;     // Value range

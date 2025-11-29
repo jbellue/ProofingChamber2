@@ -8,12 +8,16 @@
 
 #include "CoolingController.h"
 
+enum class TimeMode {
+    ProofIn,
+    ProofAt
+};
+
 class AdjustTimeController : public Screen {
 public:
     AdjustTimeController(AppContext* ctx);
-    void begin(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
     void beginImpl() override;
-    void prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
+    void prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime, TimeMode mode);
     bool update(bool forceRedraw = false) override;
     struct tm getTime() const;
 private:
@@ -23,8 +27,8 @@ private:
         Ok,
         Cancel
     } _selectedItem;
-    void beginImpl(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime);
     const char* _title;
+    TimeMode _timeMode;
     SimpleTime _startingTime;
     SimpleTime _currentTime;
     uint8_t _valueY;

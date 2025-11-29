@@ -12,7 +12,6 @@ struct TemperatureController;
 class ProofingController : public Screen {
 public:
     explicit ProofingController(AppContext* ctx);
-    ~ProofingController();
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
 

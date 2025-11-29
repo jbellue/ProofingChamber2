@@ -5,24 +5,16 @@
 RebootController::RebootController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _rebootService(nullptr), _onCancelButton(true), _ctx(ctx) {}
 
-RebootController::~RebootController() {
-    if (_view) {
-        delete _view;
-        _view = nullptr;
-    }
-}
 
 void RebootController::beginImpl() {
     if (_ctx) {
         _inputManager = _ctx->input;
         _rebootService = _ctx->rebootService;
-        if (!_view && _ctx->display) {
-            _view = new RebootView(_ctx->display);
-        }
+        _view = _ctx->rebootView;
     }
     _onCancelButton = true;
     if (_inputManager) _inputManager->resetEncoderPosition();
-    if (_view) _view->showTitle();
+    _view->showTitle();
 }
 
 bool RebootController::update(bool forceRedraw) {
@@ -45,7 +37,7 @@ bool RebootController::update(bool forceRedraw) {
         }
     }
     if (redraw) {
-        if (_view) _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
+        _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
     }
     return true;
 }

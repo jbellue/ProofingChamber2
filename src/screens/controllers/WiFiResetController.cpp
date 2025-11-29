@@ -1,4 +1,5 @@
 #include "WiFiResetController.h"
+#include "../views/WiFiResetView.h"
 
 WiFiResetController::WiFiResetController(AppContext* ctx)
     : _ctx(ctx), _inputManager(nullptr), _networkService(nullptr), _rebootService(nullptr), _view(nullptr), _onCancelButton(true) {}
@@ -12,11 +13,13 @@ void WiFiResetController::beginImpl() {
         if (!_inputManager) _inputManager = _ctx->input;
         if (!_networkService) _networkService = _ctx->networkService;
         if (!_rebootService) _rebootService = _ctx->rebootService;
-        if (!_view) _view = new WiFiResetView(_ctx->display);
+        if (!_view) {
+            _view = _ctx->wifiResetView;
+        }
     }
     _onCancelButton = true;
     if (_inputManager) _inputManager->resetEncoderPosition();
-    if (_view) _view->showInitialPrompt();
+    _view->showInitialPrompt();
 }
 
 bool WiFiResetController::update(bool forceRedraw) {
@@ -26,7 +29,7 @@ bool WiFiResetController::update(bool forceRedraw) {
         _onCancelButton = !_onCancelButton;
         redraw = true;
     }
-    if (redraw && _view) {
+    if (redraw) {
         _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
         _view->sendBuffer();
     }
@@ -37,9 +40,7 @@ bool WiFiResetController::update(bool forceRedraw) {
         if (_networkService) {
             _networkService->resetSettings();
         }
-        if (_view) {
-            _view->showResetMessage();
-        }
+        _view->showResetMessage();
         delay(2000);
         if (_rebootService) {
             _rebootService->reboot();

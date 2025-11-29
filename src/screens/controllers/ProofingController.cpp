@@ -8,24 +8,12 @@ ProofingController::ProofingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
       _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0), _previousTemp(200.0),
       _currentTemp(0.0), _isIconOn(true), _wasIconOn(false), _temperatureController(nullptr)
-{
-}
+{}
 
-ProofingController::~ProofingController() {
-    if (_view) {
-        delete _view;
-        _view = nullptr;
-    }
-}
 void ProofingController::beginImpl() {
-    // Late-bind context pointers. `appContext` should be populated in setup().
-    if (_ctx) {
-        _inputManager = _ctx->input;
-        _temperatureController = _ctx->tempController;
-        if (!_view && _ctx->display) {
-            _view = new ProofingView(_ctx->display);
-        }
-    }
+    _inputManager = _ctx->input;
+    _temperatureController = _ctx->tempController;
+    _view = _ctx->proofingView;
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
@@ -38,20 +26,16 @@ void ProofingController::beginImpl() {
 
     if (_temperatureController) _temperatureController->setMode(TemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    if (_view) {
-        _view->clear();
-        _view->drawTitle("En pousse depuis");
-        _view->drawButtons();
-    }
+    _view->clear();
+    _view->drawTitle("En pousse depuis");
+    _view->drawButtons();
 }
 
 bool ProofingController::update(bool shouldRedraw) {
-    if (_inputManager) {
-        if (_inputManager->isButtonPressed()) {
-            _inputManager->slowTemperaturePolling(true);
-            if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
-            return false;
-        }
+    if (_inputManager->isButtonPressed()) {
+        _inputManager->slowTemperaturePolling(true);
+        if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
+        return false;
     }
 
     struct tm now;
@@ -75,19 +59,15 @@ bool ProofingController::update(bool shouldRedraw) {
     _isIconOn = heatingNow;
     if (_isIconOn != _wasIconOn) {
         // Icon state changed, redraw immediately
-        if (_view) {
-            _view->drawIcons(_isIconOn);
-            _view->sendBuffer();
-        }
+        _view->drawIcons(_isIconOn);
+        _view->sendBuffer();
         _wasIconOn = _isIconOn;
     }
 
     if (difftime(now_time, _lastGraphUpdate) >= 10.0) {
         _temperatureGraph.commitAverage(_currentTemp);
         _lastGraphUpdate = now_time;
-        if (_view) {
-            _view->drawGraph(_temperatureGraph);
-        }
+        _view->drawGraph(_temperatureGraph);
         shouldRedraw = true;
     }
 
@@ -97,7 +77,7 @@ bool ProofingController::update(bool shouldRedraw) {
         shouldRedraw = true;
     }
 
-    if (shouldRedraw && _view) {
+    if (shouldRedraw) {
         _view->sendBuffer();
     }
     return true;

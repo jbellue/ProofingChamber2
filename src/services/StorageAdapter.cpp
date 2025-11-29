@@ -15,8 +15,8 @@ float StorageAdapter::readFloat(const char* path, float defaultValue) {
     return Storage::readFloatFromFile(path, defaultValue);
 }
 
-String StorageAdapter::readString(const char* path, const String& defaultValue) {
-    return Storage::readStringFromFile(path, defaultValue);
+bool StorageAdapter::readString(const char* path, char* buffer, size_t bufferSize, const char* defaultValue) {
+    return Storage::readStringFromFile(path, buffer, bufferSize, defaultValue);
 }
 
 bool StorageAdapter::writeInt(const char* path, int value) {
@@ -27,7 +27,7 @@ bool StorageAdapter::writeFloat(const char* path, float value) {
     return Storage::writeFloatToFile(path, value);
 }
 
-bool StorageAdapter::writeString(const char* path, const String& value) {
+bool StorageAdapter::writeString(const char* path, const char* value) {
     return Storage::writeStringToFile(path, value);
 }
 

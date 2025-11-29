@@ -15,7 +15,7 @@ public:
         const char* name;               // Name of the menu item (stored in PROGMEM)
         const uint8_t* icon;            // Icon for the menu item (nullptr if no icon)
         MenuItem* subMenu;              // Pointer to submenu (nullptr if no submenu)
-        std::function<void()> action;   // Action as a std::function
+        void (MenuActions::*action)();  // Action as method pointer (nullptr if no action)
     };
 
     Menu(AppContext* ctx, MenuActions* menuActions);

@@ -1,8 +1,5 @@
 #include "Graph.h"
 
-// Static buffer definition (zero-initialized)
-uint8_t Graph::_buffer[(MAX_GRAPH_WIDTH * MAX_GRAPH_HEIGHT) / 8] = {0};
-
 void Graph::configure(const int w, const int h, const float minValue, const float maxValue, bool drawAxes) {
     _width = min(w, MAX_GRAPH_WIDTH);
     _height = min(h, MAX_GRAPH_HEIGHT);
@@ -10,7 +7,11 @@ void Graph::configure(const int w, const int h, const float minValue, const floa
     _maxValue = maxValue;
     _currentIndex = 0;
     _drawAxes = drawAxes;
-    memset(_values, -274.0, sizeof(_values));
+    
+    // Initialize values array with invalid temperature marker
+    for (uint8_t i = 0; i < MAX_GRAPH_WIDTH; i++) {
+        _values[i] = -274.0f;
+    }
 }
 
 void Graph::addValueToAverage(const float value) {
@@ -64,8 +65,10 @@ void Graph::draw(U8G2* display, const uint8_t xPos, uint8_t yPos) {
 }
 
 void Graph::clear() {
-    memset(_buffer, 0, sizeof(_values));
-    memset(_values, 0, sizeof(_values));
+    // Initialize _values array with invalid temperature marker
+    for (uint8_t i = 0; i < MAX_GRAPH_WIDTH; i++) {
+        _values[i] = -274.0f;
+    }
     _currentIndex = 0;
     _sumForAverage = 0;
     _countForAverage = 0;

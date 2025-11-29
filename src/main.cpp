@@ -17,6 +17,13 @@
 #include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/WiFiResetController.h"
 #include "screens/controllers/CoolingController.h"
+#include "screens/views/AdjustValueView.h"
+#include "screens/views/AdjustTimeView.h"
+#include "screens/views/CoolingView.h"
+#include "screens/views/ProofingView.h"
+#include "screens/views/RebootView.h"
+#include "screens/views/SetTimezoneView.h"
+#include "screens/views/WiFiResetView.h"
 #include "ScreensManager.h"
 #include "Storage.h"
 #include "TemperatureController.h"
@@ -59,6 +66,15 @@ WiFiResetController* wifiResetController = nullptr;
 MenuActions* menuActions = nullptr;
 Menu* menu = nullptr;
 
+// Static view instances (allocated on stack)
+static AdjustValueView adjustValueView(&displayManager);
+static AdjustTimeView adjustTimeView(&displayManager);
+static CoolingView coolingView(&displayManager);
+static ProofingView proofingView(&displayManager);
+static RebootView rebootView(&displayManager);
+static SetTimezoneView setTimezoneView(&displayManager);
+static WiFiResetView wifiResetView(&displayManager);
+
 void setup() {
 #if DEBUG
     // Initialize serial communication
@@ -82,8 +98,17 @@ void setup() {
     appContext.screens = &screensManager;
     appContext.tempController = &temperatureController;
     appContext.rebootService = &rebootService;
-        appContext.networkService = &networkService;
-        appContext.storage = &storageAdapter;
+    appContext.networkService = &networkService;
+    appContext.storage = &storageAdapter;
+    
+    // Add view pointers to AppContext
+    appContext.adjustValueView = &adjustValueView;
+    appContext.adjustTimeView = &adjustTimeView;
+    appContext.coolingView = &coolingView;
+    appContext.proofingView = &proofingView;
+    appContext.rebootView = &rebootView;
+    appContext.setTimezoneView = &setTimezoneView;
+    appContext.wifiResetView = &wifiResetView;
 
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);

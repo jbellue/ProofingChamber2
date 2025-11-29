@@ -95,8 +95,8 @@ bool Menu::handleMenuSelection() {
         _menuIndex = 0;
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
-    } else if (selectedItem->action != nullptr) {
-        selectedItem->action();
+    } else if (selectedItem->action != nullptr && _menuActions != nullptr) {
+        (_menuActions->*(selectedItem->action))();
         DEBUG_PRINTLN("Action executed");
         return false;
     }
