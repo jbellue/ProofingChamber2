@@ -152,9 +152,11 @@ time_t MenuActions::calculateProofAtEndTime() {
     // Convert stored time to target time_t
     struct tm targetTime;
     getLocalTime(&targetTime);
+
+    targetTime.tm_mday += s_proofAtTime.days;
     targetTime.tm_hour = s_proofAtTime.hours;
     targetTime.tm_min = s_proofAtTime.minutes;
     targetTime.tm_sec = 0;
-    
+    // Normalize date in case of overflow
     return mktime(&targetTime);
 }
