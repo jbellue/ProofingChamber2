@@ -17,13 +17,12 @@ void RebootController::beginImpl() {
     _view->showTitle();
 }
 
-bool RebootController::update(bool forceRedraw) {
-    bool redraw = forceRedraw;
+bool RebootController::update(bool shouldRedraw) {
     if (_inputManager) {
         const auto encoderDirection = _inputManager->getEncoderDirection();
         if (encoderDirection != InputManager::EncoderDirection::None) {
             _onCancelButton = !_onCancelButton;
-            redraw = true;
+            shouldRedraw = true;
         }
         if (_inputManager->isButtonPressed()) {
             if (_onCancelButton) {
@@ -36,7 +35,7 @@ bool RebootController::update(bool forceRedraw) {
             delay(2000);
         }
     }
-    if (redraw) {
+    if (shouldRedraw) {
         _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
     }
     return true;

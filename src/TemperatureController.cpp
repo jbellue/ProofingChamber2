@@ -106,16 +106,6 @@ void TemperatureController::update(float currentTemp) {
 }
 
 void TemperatureController::updateRelays(float currentTemp) {
-    DEBUG_PRINT("Mode: ");
-    DEBUG_PRINT(_currentMode == HEATING ? "HEATING" : "COOLING");
-    DEBUG_PRINT(" - Current temperature: ");
-    DEBUG_PRINT(currentTemp);
-    DEBUG_PRINT(" - Target: ");
-    DEBUG_PRINT(_targetTemp);
-    DEBUG_PRINT(" - Lower: ");
-    DEBUG_PRINT(_lowerLimit);
-    DEBUG_PRINT(" - Higher: ");
-    DEBUG_PRINTLN(_higherLimit);
     switch (_currentMode) {
         case HEATING:
             if (currentTemp < _lowerLimit) {

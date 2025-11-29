@@ -17,9 +17,8 @@ void SetTimezoneController::beginImpl() {
     _view->showInitialPrompt();
 }
 
-bool SetTimezoneController::update(bool forceRedraw) {
-    bool redraw = forceRedraw;
-    if (redraw) {
+bool SetTimezoneController::update(bool shouldRedraw) {
+    if (shouldRedraw) {
         _view->drawButton("OK", true);
         _view->sendBuffer();
     }
