@@ -10,22 +10,12 @@ AdjustValueController::AdjustValueController(AppContext* ctx) :
     _ctx(ctx)
 {}
 
-void AdjustValueController::begin(const char* title, const char* path) {
-    beginImpl(title, path);
-}
-
 void AdjustValueController::prepare(const char* title, const char* path) {
     _title = title;
     _path = path;
 }
 
 void AdjustValueController::beginImpl() {
-    beginImpl(_title, _path);
-}
-
-void AdjustValueController::beginImpl(const char* title, const char* path) {
-    _title = title;
-    _path = path;
     // Obtain storage from the AppContext at begin time (ctx is populated in setup)
     if (_ctx && _ctx->storage) {
         _storage = _ctx->storage;
@@ -36,16 +26,13 @@ void AdjustValueController::beginImpl(const char* title, const char* path) {
         if (!_inputManager) _inputManager = _ctx->input;
     }
     if (_storage) {
-        _currentValue = _storage->readInt(path, 0); // Load initial value
+        _currentValue = _storage->readInt(_path, 0); // Load initial value
     } else {
         _currentValue = 0;
     }
     if (_inputManager) _inputManager->resetEncoderPosition();
 
-    // Update the view immediately
-    _view->clear();
-    _valueY = _ctx->display->drawTitle(title);
-    _view->drawButtons();
+    _valueY = _view->start(_title, _currentValue);
 }
 
 bool AdjustValueController::update(bool shouldRedraw) {
@@ -66,8 +53,7 @@ bool AdjustValueController::update(bool shouldRedraw) {
         } else if (encoderDirection == InputManager::EncoderDirection::CounterClockwise) {
             _currentValue -= 1;
         }
-        _view->drawValue(_currentValue, _valueY);
-        shouldRedraw = true;
+        shouldRedraw |= _view->drawValue(_currentValue, _valueY);
     }
     if (shouldRedraw) {
         _view->sendBuffer();

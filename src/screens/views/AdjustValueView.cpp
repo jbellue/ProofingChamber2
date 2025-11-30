@@ -1,7 +1,10 @@
 #include "AdjustValueView.h"
 
-void AdjustValueView::drawValue(int value, uint8_t valueY) {
-    if (!_display) return;
+bool AdjustValueView::drawValue(int value, uint8_t valueY) {
+    if (value == _lastValueDrawn) {
+        return false; // No change, skip redraw
+    }
+    _lastValueDrawn = value;
     _display->setFont(u8g2_font_ncenB18_tf);
     char buffer[6] = {'\0'};
     const uint8_t writtenChars = sprintf(buffer, "%d", value);
@@ -14,9 +17,24 @@ void AdjustValueView::drawValue(int value, uint8_t valueY) {
     _display->drawBox(0, valueY - ascent, _display->getDisplayWidth(), ascent);
     _display->setDrawColor(1);
     _display->drawStr(valueX, valueY, buffer);
+    return true;
 }
 
 void AdjustValueView::drawButtons() {
     const char* buttons[] = {"OK"};
     IBaseView::drawButtons(buttons, 1, 0);
+}
+
+uint8_t AdjustValueView::start(const char* title, const int value) {
+    reset();
+    clear();
+    const uint8_t valueY = _display->drawTitle(title);
+    drawValue(value, valueY);
+    drawButtons();
+    sendBuffer();
+    return valueY;
+}
+
+void AdjustValueView::reset() {
+    _lastValueDrawn = INT32_MIN;
 }
