@@ -16,7 +16,7 @@ bool CoolingView::drawTime(const int remainingSeconds) {
         return false; // No change, skip redraw
     }
     _lastRemainingSeconds = remainingSeconds;
-    char timeBuffer[34] = {0}; // "(dans 999h59m)"
+    char timeBuffer[17] = {0}; // "(dans 999h59m)"
     formatTimeString(timeBuffer, sizeof(timeBuffer), remainingSeconds);
     _display->setFont(u8g2_font_t0_11_tf);
 
@@ -99,6 +99,7 @@ void CoolingView::reset() {
     _lastRemainingSeconds = -1;
     _lastIconState = IconState::Unset;
     _lastTemperature = -273.15; // Reset to ensure redraw
+    _timeWidth = _display->getDisplayWidth(); // Reset to full width for first draw
 }
 
 void CoolingView::drawButtons(bool onCancelSelected) {
