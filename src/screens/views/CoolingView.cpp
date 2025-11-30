@@ -3,6 +3,14 @@
 
 #define GRAPH_POSITION_FROM_LEFT 30
 
+void CoolingView::start(const time_t endTime, bool onCancelSelected, Graph& graph) {
+    reset();
+    clear();
+    drawTitle(endTime);
+    drawButtons(onCancelSelected);
+    drawGraph(graph);
+}
+
 bool CoolingView::drawTime(const int remainingSeconds) {
     if(_lastRemainingSeconds == remainingSeconds) {
         return false; // No change, skip redraw

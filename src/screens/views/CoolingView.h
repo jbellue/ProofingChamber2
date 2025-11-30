@@ -12,13 +12,14 @@ public:
     bool drawTemperature(const float currentTemp);
     bool drawIcons(IconState iconState);
     void drawButtons(bool onCancelSelected);
-    void drawTitle(const time_t endTime);
-    void reset();
     void drawGraph(Graph& graph);
+    void start(const time_t endTime, bool onCancelSelected, Graph& graph);
 private:
     int _lastRemainingSeconds = -1;
     IconState _lastIconState = IconState::Unset;
     float _lastTemperature = -273.15; // Initialize with a value below absolute zero to ensure first draw
     uint8_t _timeWidth; // Width of the time string for clearing
     void formatTimeString(char* buffer, const size_t bufferSize, const int remainingSeconds);
+    void reset();
+    void drawTitle(const time_t endTime);
 };

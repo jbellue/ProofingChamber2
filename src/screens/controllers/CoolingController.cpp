@@ -22,10 +22,7 @@ void CoolingController::beginImpl() {
     _onCancelButton = true;
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    _view->clear();
-    _view->drawTitle(_endTime);
-    _view->drawButtons(_onCancelButton);
-    _view->drawGraph(_temperatureGraph);
+    _view->start(_endTime, _onCancelButton, _temperatureGraph);
 }
 
 bool CoolingController::update(bool shouldRedraw) {
@@ -47,7 +44,6 @@ bool CoolingController::update(bool shouldRedraw) {
             _proofingController->setNextScreen(_menuScreen);
         }
         if (nextScreen) nextScreen->begin();
-        _view->reset();
         return false;
     }
     if (difftime(now, _lastUpdateTime) >= 1) {
