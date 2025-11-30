@@ -97,3 +97,10 @@ void CoolingView::drawButtons(bool onCancelSelected) {
     const char* buttons[] = {"Démarrer", "Annuler"};
     IBaseView::drawButtons(buttons, 2, onCancelSelected ? 1 : 0);
 }
+
+void CoolingView::drawTitle(const time_t endTime) {
+    const tm* tm_end = localtime(&endTime);
+    char timeBuffer[34] = {'\0'};
+    snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
+    IBaseView::drawTitle(timeBuffer);
+}

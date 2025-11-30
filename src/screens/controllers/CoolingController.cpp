@@ -23,10 +23,7 @@ void CoolingController::beginImpl() {
     if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _view->clear();
-    const tm* tm_end = localtime(&_endTime);
-    char timeBuffer[34] = {'\0'};
-    snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
-    _view->drawTitle(timeBuffer);
+    _view->drawTitle(_endTime);
     _view->drawButtons(_onCancelButton);
     _view->drawGraph(_temperatureGraph);
 }
