@@ -22,14 +22,7 @@ void ProofingController::beginImpl() {
 
     if (_temperatureController) _temperatureController->setMode(TemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    _view->reset();
-    _view->clear();
-    _view->drawTitle("En pousse depuis");
-    const char* buttons[] = {"Annuler"};
-    _view->drawButtons(buttons, 1, 0);
-    _view->drawTemperature(_inputManager->getTemperature());
-    _view->drawTime(0);
-    _view->drawGraph(_temperatureGraph);
+    _view->start(_inputManager->getTemperature(), _temperatureGraph);
 }
 
 bool ProofingController::update(bool shouldRedraw) {

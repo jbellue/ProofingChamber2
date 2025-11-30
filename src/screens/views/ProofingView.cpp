@@ -2,6 +2,17 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 
+void ProofingView::start(float currentTemp, Graph& graph) {
+    reset();
+    clear();
+    drawTitle("En pousse depuis");
+    const char* buttons[] = {"Annuler"};
+    drawButtons(buttons, 1, 0);
+    drawTemperature(currentTemp);
+    drawTime(0);
+    drawGraph(graph);
+}
+
 bool ProofingView::drawTime(const time_t diffSeconds) {
     if (diffSeconds - _lastTimeDrawn < 60) {
         return false; // No change, skip redraw

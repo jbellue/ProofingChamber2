@@ -11,6 +11,7 @@ public:
     bool drawIcons(IconState iconState);
     void drawGraph(Graph& graph);
     void reset();
+    void start(float currentTemp, Graph& graph);
 private:
     float _lastTempDrawn = -257.0;
     IconState _lastIconState = IconState::Unset;
