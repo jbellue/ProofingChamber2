@@ -73,9 +73,6 @@ bool ProofingView::drawIcons(IconState iconState) {
     return true;
 }
 
-void ProofingView::drawButtons() {
-    drawButton("Annuler", true);
-}
 
 void ProofingView::drawGraph(Graph& graph) {
     _display->setDrawColor(1);

@@ -32,9 +32,7 @@ public:
     void print(const char* str);
 
     uint8_t drawTitle(const char* title, const uint8_t y = 10);
-    void drawButton(const char* text, bool selected = true);
-    void drawButton(const char* text, const uint8_t x, bool selected = true);
-    void drawButtons(const char* leftText, const char* rightText, int8_t selectedButton = -1);
+    void drawButtons(const char* buttonTexts[], uint8_t buttonCount, int8_t selectedButton = -1);
     U8G2* getDisplay() { return &_display; }
 private:
     U8G2_SH1106_128X64_NONAME_F_HW_I2C _display;

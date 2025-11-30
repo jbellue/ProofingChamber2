@@ -10,7 +10,6 @@ public:
     bool drawTemperature(const float currentTemp);
     bool drawIcons(IconState iconState);
     void drawGraph(Graph& graph);
-    void drawButtons();
     void reset();
 private:
     float _lastTempDrawn = -257.0;

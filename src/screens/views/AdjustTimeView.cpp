@@ -1,5 +1,4 @@
 #include "AdjustTimeView.h"
-#include "../../icons.h"
 
 void AdjustTimeView::drawTime(const SimpleTime& time, uint8_t valueY) {
     _display->setFont(u8g2_font_ncenB18_tf);
@@ -38,6 +37,7 @@ void AdjustTimeView::drawHighlight(uint8_t selectedItem, uint8_t valueY) {
     }
 }
 
-void AdjustTimeView::drawButtons(uint8_t highlightedButton) {
-    _display->drawButtons("Démarrer", "Annuler", highlightedButton);
+void AdjustTimeView::drawButtons(const int8_t selectedButton) {
+    const char* buttons[] = {"Démarrer", "Annuler"};
+    IBaseView::drawButtons(buttons, 2, selectedButton);
 }

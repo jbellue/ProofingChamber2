@@ -27,7 +27,7 @@ void CoolingController::beginImpl() {
     char timeBuffer[34] = {'\0'};
     snprintf(timeBuffer, sizeof(timeBuffer), "D\xC3\xA9marrage de la\npousse \xC3\xA0 %d:%02d", tm_end->tm_hour, tm_end->tm_min);
     _view->drawTitle(timeBuffer);
-    _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
+    _view->drawButtons(_onCancelButton);
     _view->drawGraph(_temperatureGraph);
 }
 
@@ -73,7 +73,7 @@ bool CoolingController::update(bool shouldRedraw) {
     auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
     if (encoderDirection != InputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
-        _view->drawButtons("D\xC3\xA9marrer", "Annuler", _onCancelButton ? 1 : 0);
+        _view->drawButtons(_onCancelButton);
         shouldRedraw = true;
     }
 

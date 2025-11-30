@@ -30,7 +30,8 @@ bool WiFiResetController::update(bool forceRedraw) {
         redraw = true;
     }
     if (redraw) {
-        _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
+        const char* buttons[] = {"Confirmer", "Annuler"};
+        _view->drawButtons(buttons, 2, _onCancelButton ? 1 : 0);
         _view->sendBuffer();
     }
     if (_inputManager && _inputManager->isButtonPressed()) {

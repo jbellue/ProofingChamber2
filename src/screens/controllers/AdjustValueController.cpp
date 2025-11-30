@@ -45,7 +45,8 @@ void AdjustValueController::beginImpl(const char* title, const char* path) {
     // Update the view immediately
     _view->clear();
     _valueY = _ctx->display->drawTitle(title);
-    _view->drawButton("OK", true);
+    const char* buttons[] = {"OK"};
+    _view->drawButtons(buttons, 1, 0);
 }
 
 bool AdjustValueController::update(bool shouldRedraw) {

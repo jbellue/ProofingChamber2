@@ -11,6 +11,7 @@ public:
     bool drawTime(const int remainingSeconds);
     bool drawTemperature(const float currentTemp);
     bool drawIcons(IconState iconState);
+    void drawButtons(bool onCancelSelected);
     void reset();
     void drawGraph(Graph& graph);
 private:

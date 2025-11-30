@@ -36,7 +36,8 @@ bool RebootController::update(bool shouldRedraw) {
         }
     }
     if (shouldRedraw) {
-        _view->drawButtons("Confirmer", "Annuler", _onCancelButton ? 1 : 0);
+        const char* buttons[] = {"Confirmer", "Annuler"};
+        _view->drawButtons(buttons, 2, _onCancelButton ? 1 : 0);
     }
     return true;
 }

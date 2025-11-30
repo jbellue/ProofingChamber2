@@ -1,6 +1,5 @@
 #include "CoolingView.h"
 #include "../../DebugUtils.h"
-#include "../../icons.h"
 
 #define GRAPH_POSITION_FROM_LEFT 30
 
@@ -92,4 +91,9 @@ void CoolingView::reset() {
     _lastRemainingSeconds = -1;
     _lastIconState = IconState::Unset;
     _lastTemperature = -273.15; // Reset to ensure redraw
+}
+
+void CoolingView::drawButtons(bool onCancelSelected) {
+    const char* buttons[] = {"Démarrer", "Annuler"};
+    IBaseView::drawButtons(buttons, 2, onCancelSelected ? 1 : 0);
 }

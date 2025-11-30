@@ -1,5 +1,4 @@
 #include "SetTimezoneView.h"
-#include "../../icons.h"
 
 void SetTimezoneView::showInitialPrompt() {
     if (_display) {

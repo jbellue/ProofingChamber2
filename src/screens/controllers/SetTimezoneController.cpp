@@ -19,7 +19,8 @@ void SetTimezoneController::beginImpl() {
 
 bool SetTimezoneController::update(bool shouldRedraw) {
     if (shouldRedraw) {
-        _view->drawButton("OK", true);
+        const char* buttons[] = {"OK"};
+        _view->drawButtons(buttons, 1, 0);
         _view->sendBuffer();
     }
     return !(_inputManager && _inputManager->isButtonPressed());

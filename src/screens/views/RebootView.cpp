@@ -1,5 +1,4 @@
 #include "RebootView.h"
-#include "../../icons.h"
 
 void RebootView::showTitle() {
     clear();
