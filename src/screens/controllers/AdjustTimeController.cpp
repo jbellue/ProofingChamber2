@@ -4,7 +4,7 @@
 #include "../../MenuActions.h"
 
 AdjustTimeController::AdjustTimeController(AppContext* ctx)
-    : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _valueY(0), _coolingController(nullptr), _menuScreen(nullptr) {}
+    : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _titleHeight(0), _coolingController(nullptr), _menuScreen(nullptr) {}
 
 
 void AdjustTimeController::prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime, TimeMode mode) {
@@ -28,16 +28,7 @@ void AdjustTimeController::beginImpl() {
     _selectedItem = SelectedItem::Hours;
 
     // Clear display before drawing title and rest of screen
-    if (_ctx && _ctx->display) {
-        _ctx->display->clear();
-        _valueY = _ctx->display->drawTitle(_title);
-    } else {
-        _valueY = 20;
-    }
-    _view->drawHighlight(static_cast<uint8_t>(_selectedItem), _valueY);
-    _view->drawTime(_currentTime, _valueY);
-    _view->drawButtons(-1);
-    _view->sendBuffer();
+    _titleHeight = _view->start(_title, _currentTime, static_cast<uint8_t>(_selectedItem), -1);
 }
 
 bool AdjustTimeController::isTimeValid(const SimpleTime& t) const {
@@ -71,7 +62,7 @@ bool AdjustTimeController::update(bool shouldRedraw) {
                 );
                 if (isTimeValid(newTime)) {
                     _currentTime = newTime;
-                    _view->drawTime(_currentTime, _valueY);
+                    _view->drawTime(_currentTime, _titleHeight);
                 }
                 break;
             }
@@ -109,7 +100,7 @@ bool AdjustTimeController::update(bool shouldRedraw) {
             setNextScreen(_menuScreen);
             return false;
         }
-        _view->drawHighlight(static_cast<uint8_t>(_selectedItem), _valueY);
+        _view->drawHighlight(static_cast<uint8_t>(_selectedItem), _titleHeight);
         shouldRedraw = true;
     }
     if (shouldRedraw) {

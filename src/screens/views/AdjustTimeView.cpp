@@ -41,3 +41,13 @@ void AdjustTimeView::drawButtons(const int8_t selectedButton) {
     const char* buttons[] = {"Démarrer", "Annuler"};
     IBaseView::drawButtons(buttons, 2, selectedButton);
 }
+
+uint8_t AdjustTimeView::start(const char* title, const SimpleTime& time, uint8_t selectedItem, int8_t selectedButton) {
+    clear();
+    uint8_t titleHeight = _display->drawTitle(title);
+    drawHighlight(selectedItem, titleHeight);
+    drawTime(time, titleHeight);
+    drawButtons(selectedButton);
+    sendBuffer();
+    return titleHeight;
+}

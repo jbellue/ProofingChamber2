@@ -31,7 +31,7 @@ private:
     TimeMode _timeMode;
     SimpleTime _startingTime;
     SimpleTime _currentTime;
-    uint8_t _valueY;
+    uint8_t _titleHeight;
     AppContext* _ctx;
     InputManager* _inputManager;
     AdjustTimeView* _view;
