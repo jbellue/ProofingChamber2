@@ -15,29 +15,25 @@ void RebootController::beginImpl() {
     _onCancelButton = true;
     if (_inputManager) _inputManager->resetEncoderPosition();
     _view->start();
+    _view->sendBuffer();
 }
 
 bool RebootController::update(bool shouldRedraw) {
-    if (_inputManager) {
-        const auto encoderDirection = _inputManager->getEncoderDirection();
-        if (encoderDirection != InputManager::EncoderDirection::None) {
-            _onCancelButton = !_onCancelButton;
-            shouldRedraw = true;
-        }
-        if (_inputManager->isButtonPressed()) {
-            if (_onCancelButton) {
-                return false;
-            }
-            if (_rebootService) {
-                DEBUG_PRINTLN("RebootController: invoking reboot service");
-                _rebootService->reboot();
-            }
-            delay(2000);
-        }
+    const auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != InputManager::EncoderDirection::None) {
+        _onCancelButton = !_onCancelButton;
+        _view->drawButtons(_onCancelButton);
+        _view->sendBuffer();
     }
-    if (shouldRedraw) {
-        const char* buttons[] = {"Confirmer", "Annuler"};
-        _view->drawButtons(buttons, 2, _onCancelButton ? 1 : 0);
+    if (_inputManager->isButtonPressed()) {
+        if (_onCancelButton) {
+            return false;
+        }
+        if (_rebootService) {
+            DEBUG_PRINTLN("RebootController: invoking reboot service");
+            _rebootService->reboot();
+        }
+        delay(2000);
     }
     return true;
 }
