@@ -15,3 +15,8 @@ void AdjustValueView::drawValue(int value, uint8_t valueY) {
     _display->setDrawColor(1);
     _display->drawStr(valueX, valueY, buffer);
 }
+
+void AdjustValueView::drawButtons() {
+    const char* buttons[] = {"OK"};
+    IBaseView::drawButtons(buttons, 1, 0);
+}
