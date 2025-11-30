@@ -141,11 +141,12 @@ time_t MenuActions::calculateProofInEndTime() {
     // Convert stored time to seconds delay from now
     struct tm now;
     getLocalTime(&now);
-    time_t now_time = mktime(&now);
-    
-    // Calculate delay in seconds (simplified version)
-    time_t delayInSeconds = s_proofInTime.hours * 3600 + s_proofInTime.minutes * 60;
-    return now_time + delayInSeconds;
+    time_t nowTime = mktime(&now);
+    time_t delayInSeconds =
+        s_proofInTime.days * 86400 +
+        s_proofInTime.hours * 3600 +
+        s_proofInTime.minutes * 60;
+    return nowTime + delayInSeconds;
 }
 
 time_t MenuActions::calculateProofAtEndTime() {
