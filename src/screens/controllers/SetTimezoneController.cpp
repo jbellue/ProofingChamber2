@@ -14,14 +14,9 @@ void SetTimezoneController::beginImpl() {
         }
     }
     if (_inputManager) _inputManager->resetEncoderPosition();
-    _view->showInitialPrompt();
+    _view->start();
 }
 
 bool SetTimezoneController::update(bool shouldRedraw) {
-    if (shouldRedraw) {
-        const char* buttons[] = {"OK"};
-        _view->drawButtons(buttons, 1, 0);
-        _view->sendBuffer();
-    }
     return !(_inputManager && _inputManager->isButtonPressed());
 }

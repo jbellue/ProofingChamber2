@@ -14,7 +14,7 @@ void RebootController::beginImpl() {
     }
     _onCancelButton = true;
     if (_inputManager) _inputManager->resetEncoderPosition();
-    _view->showTitle();
+    _view->start();
 }
 
 bool RebootController::update(bool shouldRedraw) {

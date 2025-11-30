@@ -19,7 +19,7 @@ void WiFiResetController::beginImpl() {
     }
     _onCancelButton = true;
     if (_inputManager) _inputManager->resetEncoderPosition();
-    _view->showInitialPrompt();
+    _view->start();
 }
 
 bool WiFiResetController::update(bool forceRedraw) {

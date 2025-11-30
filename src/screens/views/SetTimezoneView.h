@@ -4,5 +4,5 @@
 class SetTimezoneView : public IBaseView {
 public:
     explicit SetTimezoneView(DisplayManager* display) : IBaseView(display) {}
-    void showInitialPrompt();
+    void start();
 };
