@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Screen.h"
+#include "../BaseController.h"
 #include "AppContextDecl.h"
 #include "IInputManager.h"
 #include "SimpleTime.h"
@@ -13,11 +13,11 @@ enum class TimeMode {
     ProofAt
 };
 
-class AdjustTimeController : public Screen {
+class AdjustTimeController : public BaseController {
 public:
     AdjustTimeController(AppContext* ctx);
     void beginImpl() override;
-    void prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime, TimeMode mode);
+    void prepare(const char* title, CoolingController* coolingController, BaseController* menuScreen, const SimpleTime& startTime, TimeMode mode);
     bool update(bool forceRedraw = false) override;
     struct tm getTime() const;
 private:
@@ -32,11 +32,9 @@ private:
     SimpleTime _startingTime;
     SimpleTime _currentTime;
     uint8_t _titleHeight;
-    AppContext* _ctx;
-    IInputManager* _inputManager;
     AdjustTimeView* _view;
     CoolingController* _coolingController;
-    Screen* _menuScreen;
+    BaseController* _menuScreen;
     SimpleTime getAdjustedTime(bool isHours, bool increment) const;
     bool isTimeValid(const SimpleTime& t) const;
     bool handleEncoderInput(IInputManager::EncoderDirection direction);

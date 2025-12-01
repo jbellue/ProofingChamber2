@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Screen.h"
+#include "BaseController.h"
 #include "IDisplayManager.h"
 #include "AppContextDecl.h"
 
-class Initialization : public Screen {
+class Initialization : public BaseController {
 public:
     Initialization(AppContext* ctx);
     void begin();
@@ -13,7 +13,6 @@ public:
 private:
     IDisplayManager* _display;
     services::INetworkService* _networkService;
-    AppContext* _ctx;
     void drawScreen();
     void beginImpl() override;
 };

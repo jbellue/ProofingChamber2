@@ -6,29 +6,33 @@
 #include "../../SafePtr.h"
 
 ProofingController::ProofingController(AppContext* ctx)
-    : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
+    : BaseController(ctx), _view(nullptr), _startTime(0),
       _lastTemperatureUpdate(0), _lastGraphUpdate(0), _previousDiffSeconds(0),
       _temperatureController(nullptr)
 {}
 
 void ProofingController::beginImpl() {
-    _inputManager = SafePtr::resolve(_ctx->input);
-    _temperatureController = SafePtr::resolve(_ctx->tempController);
-    _view = _ctx->proofingView;
+    initializeInputManager();
+    
+    AppContext* ctx = getContext();
+    _temperatureController = SafePtr::resolve(ctx->tempController);
+    _view = ctx->proofingView;
+    
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
-    _inputManager->slowTemperaturePolling(false);
+    getInputManager()->slowTemperaturePolling(false);
     _previousDiffSeconds = -60; // Force a redraw on the first update
 
     _temperatureController->setMode(ITemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
-    _view->start(_inputManager->getTemperature(), _temperatureGraph);
+    _view->start(getInputManager()->getTemperature(), _temperatureGraph);
 }
 
 bool ProofingController::update(bool shouldRedraw) {
-    if (_inputManager->isButtonPressed()) {
-        _inputManager->slowTemperaturePolling(true);
+    IInputManager* inputManager = getInputManager();
+    if (inputManager->isButtonPressed()) {
+        inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(ITemperatureController::OFF);
         _view->reset();
         return false;
@@ -40,7 +44,7 @@ bool ProofingController::update(bool shouldRedraw) {
 
     if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
         _lastTemperatureUpdate = now_time;
-        const float currentTemp = _inputManager->getTemperature();
+        const float currentTemp = inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
         _temperatureController->update(currentTemp);

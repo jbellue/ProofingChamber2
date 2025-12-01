@@ -22,7 +22,7 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueCont
 
 void MenuActions::proofNowAction() {
     if (!_ctx || !_ctx->screens || !_proofingController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_proofingController);
     _proofingController->setNextScreen(menu);
@@ -30,7 +30,7 @@ void MenuActions::proofNowAction() {
 
 void MenuActions::proofInAction() {
     if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustTimeController);
 
@@ -42,7 +42,7 @@ void MenuActions::proofInAction() {
 
 void MenuActions::proofAtAction() {
     if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustTimeController);
     struct tm timeinfo;
@@ -60,7 +60,7 @@ void MenuActions::proofAtAction() {
 
 void MenuActions::adjustHotTargetTemp() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -69,7 +69,7 @@ void MenuActions::adjustHotTargetTemp() {
 
 void MenuActions::adjustHotLowerLimit() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -78,7 +78,7 @@ void MenuActions::adjustHotLowerLimit() {
 
 void MenuActions::adjustHotHigherLimit() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -87,7 +87,7 @@ void MenuActions::adjustHotHigherLimit() {
 
 void MenuActions::adjustColdTargetTemp() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -96,7 +96,7 @@ void MenuActions::adjustColdTargetTemp() {
 
 void MenuActions::adjustColdLowerLimit() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -105,7 +105,7 @@ void MenuActions::adjustColdLowerLimit() {
 
 void MenuActions::adjustColdHigherLimit() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
@@ -114,7 +114,7 @@ void MenuActions::adjustColdHigherLimit() {
 
 void MenuActions::resetWiFiAndReboot() {
     if (!_ctx || !_ctx->screens || !_wifiResetController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_wifiResetController);
     _wifiResetController->setNextScreen(menu);
@@ -122,7 +122,7 @@ void MenuActions::resetWiFiAndReboot() {
 
 void MenuActions::reboot() {
     if (!_ctx || !_ctx->screens || !_rebootController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_rebootController);
     _rebootController->setNextScreen(menu);
@@ -130,7 +130,7 @@ void MenuActions::reboot() {
 
 void MenuActions::adjustTimezone() {
     if (!_ctx || !_ctx->screens || !_setTimezoneController) return;
-    Screen* menu = _ctx->screens->getActiveScreen();
+    BaseController* menu = _ctx->screens->getActiveScreen();
     if (!menu) return;
     menu->setNextScreen(_setTimezoneController);
     _setTimezoneController->setNextScreen(menu);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Screen.h"
+#include "../BaseController.h"
 #include "AppContextDecl.h"
 #include "../../Graph.h"
 
@@ -9,7 +9,7 @@ class ProofingView;
 class IInputManager;
 class ITemperatureController;
 
-class ProofingController : public Screen {
+class ProofingController : public BaseController {
 public:
     explicit ProofingController(AppContext* ctx);
     void beginImpl() override;
@@ -17,8 +17,6 @@ public:
 
 private:
     ProofingView* _view;
-    IInputManager* _inputManager;
-    AppContext* _ctx;
     time_t _startTime;
     time_t _lastTemperatureUpdate;
     time_t _lastGraphUpdate;

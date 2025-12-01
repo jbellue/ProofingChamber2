@@ -4,17 +4,19 @@
 #include "SafePtr.h"
 
 CoolingController::CoolingController(AppContext* ctx)
-    : _view(nullptr), _inputManager(nullptr), _temperatureController(nullptr),
-    _ctx(ctx), _proofingController(nullptr), _menuScreen(nullptr) {}
+    : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
+    _proofingController(nullptr), _menuScreen(nullptr) {}
 
 void CoolingController::beginImpl() {
-    if (_ctx) {
-        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
-        if (!_temperatureController) _temperatureController = SafePtr::resolve(_ctx->tempController);
-        if (!_view) _view = _ctx->coolingView;
+    initializeInputManager();
+    
+    AppContext* ctx = getContext();
+    if (ctx) {
+        if (!_temperatureController) _temperatureController = SafePtr::resolve(ctx->tempController);
+        if (!_view) _view = ctx->coolingView;
     }
-    _inputManager->resetEncoderPosition();
-    _inputManager->slowTemperaturePolling(false);
+    
+    getInputManager()->slowTemperaturePolling(false);
     _endTime = _timeCalculator ? _timeCalculator() : 0;
     _lastUpdateTime = 0;
     _lastGraphUpdate = 0;
@@ -25,6 +27,7 @@ void CoolingController::beginImpl() {
 }
 
 bool CoolingController::update(bool shouldRedraw) {
+    IInputManager* inputManager = getInputManager();
     struct tm tm_now;
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
@@ -33,11 +36,11 @@ bool CoolingController::update(bool shouldRedraw) {
         _endTime = _timeCalculator ? _timeCalculator() : _endTime;
     }
     bool timesUp = now >= _endTime;
-    if (_inputManager->isButtonPressed() || timesUp) {
-        _inputManager->slowTemperaturePolling(true);
+    if (inputManager->isButtonPressed() || timesUp) {
+        inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(ITemperatureController::OFF);
         bool goingToProofScreen = !_onCancelButton || timesUp;
-        Screen* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
+        BaseController* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
         setNextScreen(nextScreen);
         if (goingToProofScreen && _proofingController) {
             _proofingController->setNextScreen(_menuScreen);
@@ -46,7 +49,7 @@ bool CoolingController::update(bool shouldRedraw) {
         return false;
     }
     if (difftime(now, _lastUpdateTime) >= 1) {
-        const float currentTemp = _inputManager->getTemperature();
+        const float currentTemp = inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
         _temperatureController->update(currentTemp);
@@ -62,7 +65,7 @@ bool CoolingController::update(bool shouldRedraw) {
 
     shouldRedraw |= _view->drawIcons(_temperatureController->isCooling() ? IconState::On : IconState::Off);
 
-    auto encoderDirection = _inputManager->getEncoderDirection();
+    auto encoderDirection = inputManager->getEncoderDirection();
     if (encoderDirection != IInputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
         _view->drawButtons(_onCancelButton);
@@ -76,7 +79,7 @@ bool CoolingController::update(bool shouldRedraw) {
 }
 
 
-void CoolingController::prepare(TimeCalculatorCallback callback, Screen* proofingController, Screen* menuScreen) {
+void CoolingController::prepare(TimeCalculatorCallback callback, BaseController* proofingController, BaseController* menuScreen) {
     _timeCalculator = callback;
     _proofingController = proofingController;
     _menuScreen = menuScreen;

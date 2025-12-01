@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Screen.h"
+#include "../BaseController.h"
 #include "IDisplayManager.h"
 #include "IInputManager.h"
 #include "services/IStorage.h"
@@ -8,7 +8,7 @@
 #include "../views/AdjustValueView.h"
 #include "AppContextDecl.h"
 
-class AdjustValueController : public Screen {
+class AdjustValueController : public BaseController {
 public:
     AdjustValueController(AppContext* ctx);
     void beginImpl() override;
@@ -20,7 +20,5 @@ private:
     uint8_t _valueY;
     int _currentValue;
     AdjustValueView* _view;
-    IInputManager* _inputManager;
     services::IStorage* _storage;
-    AppContext* _ctx;
 };

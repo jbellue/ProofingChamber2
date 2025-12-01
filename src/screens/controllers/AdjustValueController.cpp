@@ -2,13 +2,11 @@
 #include "../views/AdjustValueView.h"
 #include "DebugUtils.h"
 #include "icons.h"
-#include "SafePtr.h"
 
 AdjustValueController::AdjustValueController(AppContext* ctx) :
+    BaseController(ctx),
     _view(nullptr),
-    _inputManager(nullptr),
-    _storage(nullptr),
-    _ctx(ctx)
+    _storage(nullptr)
 {}
 
 void AdjustValueController::prepare(const char* title, const char* path) {
@@ -17,28 +15,27 @@ void AdjustValueController::prepare(const char* title, const char* path) {
 }
 
 void AdjustValueController::beginImpl() {
-    // Obtain storage from the AppContext at begin time (ctx is populated in setup)
-    if (_ctx && _ctx->storage) {
-        _storage = _ctx->storage;
+    initializeInputManager();
+    
+    AppContext* ctx = getContext();
+    if (ctx) {
+        _storage = ctx->storage;
+        _view = ctx->adjustValueView;
     }
-    // Late-bind view and input
-    if (_ctx) {
-        _view = _ctx->adjustValueView;
-        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
-    }
+    
     if (_storage) {
-        _currentValue = _storage->readInt(_path, 0); // Load initial value
+        _currentValue = _storage->readInt(_path, 0);
     } else {
         _currentValue = 0;
     }
-    _inputManager->resetEncoderPosition();
 
     _valueY = _view->start(_title, _currentValue);
 }
 
 bool AdjustValueController::update(bool shouldRedraw) {
+    IInputManager* inputManager = getInputManager();
     // Handle encoder button press to confirm and save
-    if (_inputManager->isButtonPressed()) {
+    if (inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
         if (_storage) {
             _storage->writeInt(_path, _currentValue);
@@ -47,7 +44,7 @@ bool AdjustValueController::update(bool shouldRedraw) {
         return false;
     }
     // Handle encoder rotation
-    const auto encoderDirection = _inputManager->getEncoderDirection();
+    const auto encoderDirection = inputManager->getEncoderDirection();
     if (shouldRedraw || encoderDirection != IInputManager::EncoderDirection::None) {
         if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _currentValue += 1;

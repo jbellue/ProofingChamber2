@@ -1,15 +1,15 @@
 #pragma once
 
-#include "screens/Screen.h"
+#include "screens/BaseController.h"
 
 class ScreensManager {
 public:
     ScreensManager();
-    void setActiveScreen(Screen* screen);
+    void setActiveScreen(BaseController* screen);
     void update();
     bool isScreenActive() const;
-    Screen* getActiveScreen() const { return activeScreen; }
+    BaseController* getActiveScreen() const { return activeScreen; }
 
 private:
-    Screen* activeScreen;
+    BaseController* activeScreen;
 };

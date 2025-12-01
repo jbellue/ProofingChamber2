@@ -3,7 +3,7 @@
 
 ScreensManager::ScreensManager() : activeScreen(nullptr) {}
 
-void ScreensManager::setActiveScreen(Screen* screen) {
+void ScreensManager::setActiveScreen(BaseController* screen) {
     activeScreen = screen;
     if (activeScreen) {
         activeScreen->begin();

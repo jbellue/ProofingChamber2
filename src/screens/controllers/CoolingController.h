@@ -1,32 +1,30 @@
 #pragma once
 #include "AppContextDecl.h"
-#include "../Screen.h"
+#include "../BaseController.h"
 #include "../views/CoolingView.h"
 #include "IInputManager.h"
 #include "ITemperatureController.h"
 #include <ctime>
 
-class CoolingController : public Screen {
+class CoolingController : public BaseController {
 public:
     using TimeCalculatorCallback = time_t (*)();
 
     CoolingController(AppContext* ctx);
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
-    void prepare(TimeCalculatorCallback callback, Screen* proofingController, Screen* menuScreen);
+    void prepare(TimeCalculatorCallback callback, BaseController* proofingController, BaseController* menuScreen);
 
 private:
     CoolingView* _view;
-    IInputManager* _inputManager;
     ITemperatureController* _temperatureController;
-    AppContext* _ctx;
     time_t _endTime;
     time_t _lastUpdateTime;
     time_t _lastGraphUpdate;
     bool _onCancelButton;
     TimeCalculatorCallback _timeCalculator;
-    Screen* _proofingController;
-    Screen* _menuScreen;
+    BaseController* _proofingController;
+    BaseController* _menuScreen;
     Graph _temperatureGraph;
     float _currentTemp;
 };

@@ -3,20 +3,21 @@
 #include "SafePtr.h"
 
 SetTimezoneController::SetTimezoneController(AppContext* ctx)
-    : _ctx(ctx), _inputManager(nullptr), _view(nullptr) {}
+    : BaseController(ctx), _view(nullptr) {}
 
 
 void SetTimezoneController::beginImpl() {
-    if (_ctx) {
-        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
+    initializeInputManager();
+    AppContext* ctx = getContext();
+    if (ctx) {
         if (!_view) {
-            _view = _ctx->setTimezoneView;
+            _view = ctx->setTimezoneView;
         }
     }
-    _inputManager->resetEncoderPosition();
     _view->start();
 }
 
 bool SetTimezoneController::update(bool shouldRedraw) {
-    return !(_inputManager->isButtonPressed());
+    IInputManager* inputManager = getInputManager();
+    return !(inputManager->isButtonPressed());
 }

@@ -3,29 +3,30 @@
 #include "SafePtr.h"
 
 WiFiResetController::WiFiResetController(AppContext* ctx)
-    : _ctx(ctx), _inputManager(nullptr), _networkService(nullptr), _rebootService(nullptr), _view(nullptr), _onCancelButton(true) {}
+    : BaseController(ctx), _networkService(nullptr), _rebootService(nullptr), _view(nullptr), _onCancelButton(true) {}
 
 void WiFiResetController::begin() {
     beginImpl();
 }
 
 void WiFiResetController::beginImpl() {
-    if (_ctx) {
-        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
-        if (!_networkService) _networkService = _ctx->networkService;
-        if (!_rebootService) _rebootService = _ctx->rebootService;
+    initializeInputManager();
+    AppContext* ctx = getContext();
+    if (ctx) {
+        if (!_networkService) _networkService = ctx->networkService;
+        if (!_rebootService) _rebootService = ctx->rebootService;
         if (!_view) {
-            _view = _ctx->wifiResetView;
+            _view = ctx->wifiResetView;
         }
     }
     _onCancelButton = true;
-    _inputManager->resetEncoderPosition();
     _view->start();
 }
 
 bool WiFiResetController::update(bool forceRedraw) {
+    IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
-    const auto encoderDirection = _inputManager->getEncoderDirection();
+    const auto encoderDirection = inputManager->getEncoderDirection();
     if (encoderDirection != IInputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
         redraw = true;
@@ -35,7 +36,7 @@ bool WiFiResetController::update(bool forceRedraw) {
         _view->drawButtons(buttons, 2, _onCancelButton ? 1 : 0);
         _view->sendBuffer();
     }
-    if (_inputManager->isButtonPressed()) {
+    if (inputManager->isButtonPressed()) {
         if (_onCancelButton) {
             return false;
         }

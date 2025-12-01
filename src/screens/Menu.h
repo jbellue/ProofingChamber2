@@ -2,14 +2,14 @@
 
 #include <Arduino.h>
 #include <functional>
-#include "screens/Screen.h"
+#include "screens/BaseController.h"
 #include "IDisplayManager.h"
 #include "IInputManager.h"
 #include "ScreensManager.h"
 #include "MenuActions.h"
 #include "AppContextDecl.h"
 
-class Menu : public Screen {
+class Menu : public BaseController {
 public:
     struct MenuItem {
         const char* name;               // Name of the menu item (stored in PROGMEM)
@@ -29,8 +29,6 @@ private:
 
     MenuActions* _menuActions;
     IDisplayManager* _display;
-    IInputManager* _inputManager;
-    AppContext* _ctx;
 
     // Helper functions
     void drawMenu();

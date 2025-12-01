@@ -2,13 +2,12 @@
 #include "../views/AdjustTimeView.h"
 #include "DebugUtils.h"
 #include "../../MenuActions.h"
-#include "SafePtr.h"
 
 AdjustTimeController::AdjustTimeController(AppContext* ctx)
-    : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _titleHeight(0), _coolingController(nullptr), _menuScreen(nullptr) {}
+    : BaseController(ctx), _view(nullptr), _selectedItem(SelectedItem::Hours), _titleHeight(0), _coolingController(nullptr), _menuScreen(nullptr) {}
 
 
-void AdjustTimeController::prepare(const char* title, CoolingController* coolingController, Screen* menuScreen, const SimpleTime& startTime, TimeMode mode) {
+void AdjustTimeController::prepare(const char* title, CoolingController* coolingController, BaseController* menuScreen, const SimpleTime& startTime, TimeMode mode) {
     _title = title;
     _coolingController = coolingController;
     _menuScreen = menuScreen;
@@ -19,13 +18,12 @@ void AdjustTimeController::prepare(const char* title, CoolingController* cooling
 
 void AdjustTimeController::beginImpl() {
     DEBUG_PRINTLN("AdjustTimeController::beginImpl called");
-    if (_ctx) {
-        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
-        if (!_view) {
-            _view = _ctx->adjustTimeView;
-        }
+    initializeInputManager();
+    
+    AppContext* ctx = getContext();
+    if (ctx) {
+        _view = ctx->adjustTimeView;
     }
-    _inputManager->resetEncoderPosition();
     _selectedItem = SelectedItem::Hours;
 
     // Clear display before drawing title and rest of screen
@@ -77,16 +75,17 @@ bool AdjustTimeController::handleEncoderInput(IInputManager::EncoderDirection di
         _view->drawButtons(0);
         break;
     }
-    return false;
+    return true;
 }
 bool AdjustTimeController::update(bool shouldRedraw) {
-    shouldRedraw |= handleEncoderInput(_inputManager->getEncoderDirection());
-    if (_inputManager->isButtonPressed()) {
+    IInputManager* inputManager = getInputManager();
+    shouldRedraw |= handleEncoderInput(inputManager->getEncoderDirection());
+    if (inputManager->isButtonPressed()) {
         switch (_selectedItem)
         {
-        case SelectedItem::Hours:
-            _selectedItem = SelectedItem::Minutes;
-            break;
+            case SelectedItem::Hours:
+                _selectedItem = SelectedItem::Minutes;
+                break;
         case SelectedItem::Minutes:
             _selectedItem = SelectedItem::Ok;
             _view->drawButtons(0);

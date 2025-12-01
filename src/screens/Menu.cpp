@@ -3,16 +3,15 @@
 #include "MenuItems.h"
 #include "screens/controllers/ProofingController.h"
 #include "icons.h"
-#include "screens/Screen.h"
+#include "screens/BaseController.h"
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
+    BaseController(ctx),
     _menuActions(menuActions),
     _display(nullptr),
-    _inputManager(nullptr),
     _currentMenu(nullptr),
-    _menuIndex(0),
-    _ctx(ctx)
+    _menuIndex(0)
 {}
 
 void Menu::begin() {
@@ -26,20 +25,21 @@ void Menu::beginImpl() {
         _currentMenu = mainMenu;
         _menuIndex = 0;
     }
+    initializeInputManager();
     // Late-bind context pointers
-    if (_ctx) {
-        if (!_inputManager) _inputManager = _ctx->input;
-        if (!_display) _display = _ctx->display;
+    AppContext* ctx = getContext();
+    if (ctx) {
+        if (!_display) _display = ctx->display;
     }
-    if (_inputManager) _inputManager->resetEncoderPosition();
     if (_display) _display->clear();
 }
 
 // Update the menu
 bool Menu::update(bool forceRedraw) {
+    IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    const auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
+    const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
     if (encoderDirection != IInputManager::EncoderDirection::None) {
         if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % getCurrentMenuSize();
@@ -53,7 +53,7 @@ bool Menu::update(bool forceRedraw) {
     }
 
     // Handle encoder button press
-    if (_inputManager && _inputManager->isButtonPressed()) {
+    if (inputManager && inputManager->isButtonPressed()) {
         return handleMenuSelection();
     }
     return true;
