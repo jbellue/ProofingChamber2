@@ -48,23 +48,31 @@ ScreensManager screensManager;
 InputManager inputManager(ENCODER_CLK, ENCODER_DT, ENCODER_SW, DS18B20_PIN);
 // Global AppContext instance (defined early so globals can receive its pointer)
 AppContext appContext;
-// Screen/service pointers — constructed in setup() to avoid static init order issues
-AdjustValueController* adjustValueController = nullptr;
-AdjustTimeController* adjustTimeController = nullptr;
-ProofingController* proofingController = nullptr;
-SetTimezoneController* setTimezoneController = nullptr;
+
+// Static controller instances (stack allocated)
+static AdjustValueController adjustValueControllerInstance(&appContext);
+static AdjustTimeController adjustTimeControllerInstance(&appContext);
+static ProofingController proofingControllerInstance(&appContext);
+static SetTimezoneController setTimezoneControllerInstance(&appContext);
+static RebootController rebootInstance(&appContext);
+static CoolingController coolingControllerInstance(&appContext);
+static WiFiResetController wifiResetControllerInstance(&appContext);
+
+AdjustValueController* adjustValueController = &adjustValueControllerInstance;
+AdjustTimeController* adjustTimeController = &adjustTimeControllerInstance;
+ProofingController* proofingController = &proofingControllerInstance;
+SetTimezoneController* setTimezoneController = &setTimezoneControllerInstance;
+RebootController* reboot = &rebootInstance;
+CoolingController* coolingController = &coolingControllerInstance;
+WiFiResetController* wifiResetController = &wifiResetControllerInstance;
+Initialization* initialization = nullptr; // Created in setup after network service
+
+MenuActions* menuActions = nullptr; // Created in setup
+Menu* menu = nullptr; // Created in setup
+
 // Network and reboot services
 services::NetworkService networkService;
 services::RebootService rebootService;
-
-// Screen pointers (created in setup)
-RebootController* reboot = nullptr;
-Initialization* initialization = nullptr;
-CoolingController* coolingController = nullptr;
-WiFiResetController* wifiResetController = nullptr;
-
-MenuActions* menuActions = nullptr;
-Menu* menu = nullptr;
 
 // Static view instances (allocated on stack)
 static AdjustValueView adjustValueView(&displayManager);
@@ -113,19 +121,15 @@ void setup() {
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);
 
-    // Now create screens and menu objects — pass `&appContext` so they can bind in beginImpl
-    adjustValueController = new AdjustValueController(&appContext);
-    adjustTimeController = new AdjustTimeController(&appContext);
-    proofingController = new ProofingController(&appContext);
-    setTimezoneController = new SetTimezoneController(&appContext);
-
-    reboot = new RebootController(&appContext);
-    initialization = new Initialization(&appContext);
-    coolingController = new CoolingController(&appContext);
-    wifiResetController = new WiFiResetController(&appContext);
-
-    menuActions = new MenuActions(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot);
-    menu = new Menu(&appContext, menuActions);
+    // Create remaining objects that depend on appContext being fully initialized
+    static Initialization initializationInstance(&appContext);
+    initialization = &initializationInstance;
+    
+    static MenuActions menuActionsInstance(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot);
+    menuActions = &menuActionsInstance;
+    
+    static Menu menuInstance(&appContext, menuActions);
+    menu = &menuInstance;
 
     initialization->setNextScreen(menu);
     screensManager.setActiveScreen(initialization);
