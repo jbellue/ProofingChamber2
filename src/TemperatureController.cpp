@@ -114,6 +114,19 @@ void TemperatureController::update(float currentTemp) {
     updateRelays(currentTemp);
 }
 
+/**
+ * @brief Updates the heating/cooling relays based on current temperature and mode.
+ * 
+ * This method implements hysteresis control using lower and higher temperature limits.
+ * The hysteresis prevents rapid relay switching by creating a temperature range:
+ * - In HEATING mode: heater turns ON below lower limit, OFF above higher limit
+ * - In COOLING mode: cooler turns ON above higher limit, OFF below lower limit
+ * 
+ * The gap between lower and higher limits provides the hysteresis band that
+ * maintains temperature stability and protects relay lifespan.
+ * 
+ * @param currentTemp The current temperature reading to compare against limits
+ */
 void TemperatureController::updateRelays(float currentTemp) {
     switch (_currentMode) {
         case HEATING:
