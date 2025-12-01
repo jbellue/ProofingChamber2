@@ -50,40 +50,43 @@ SimpleTime AdjustTimeController::getAdjustedTime(bool isHours, bool increment) c
     return newTime;
 }
 
-bool AdjustTimeController::update(bool shouldRedraw) {
-    const auto encoderDirection = _inputManager->getEncoderDirection();
-    if (encoderDirection != IInputManager::EncoderDirection::None) {
-        switch (_selectedItem)
-        {
-            case SelectedItem::Hours:
-            case SelectedItem::Minutes: {
-                SimpleTime newTime = getAdjustedTime(
-                    _selectedItem == SelectedItem::Hours,
-                    encoderDirection == IInputManager::EncoderDirection::Clockwise
-                );
-                if (isTimeValid(newTime)) {
-                    _currentTime = newTime;
-                    _view->drawTime(_currentTime, _titleHeight);
-                }
-                break;
-            }
-        case SelectedItem::Ok:
-            _selectedItem = SelectedItem::Cancel;
-            _view->drawButtons(1);
-            break;
-        case SelectedItem::Cancel:
-            _selectedItem = SelectedItem::Ok;
-            _view->drawButtons(0);
-            break;
-        }
-        shouldRedraw = true;
+bool AdjustTimeController::handleEncoderInput(IInputManager::EncoderDirection direction) {
+    if (direction == IInputManager::EncoderDirection::None) {
+        return false;
     }
+    switch (_selectedItem)
+    {
+    case SelectedItem::Hours:
+    case SelectedItem::Minutes: {
+        SimpleTime newTime = getAdjustedTime(
+            _selectedItem == SelectedItem::Hours,
+            direction == IInputManager::EncoderDirection::Clockwise
+        );
+        if (isTimeValid(newTime)) {
+            _currentTime = newTime;
+            _view->drawTime(_currentTime, _titleHeight);
+        }
+        break;
+    }
+    case SelectedItem::Ok:
+        _selectedItem = SelectedItem::Cancel;
+        _view->drawButtons(1);
+        break;
+    case SelectedItem::Cancel:
+        _selectedItem = SelectedItem::Ok;
+        _view->drawButtons(0);
+        break;
+    }
+    return false;
+}
+bool AdjustTimeController::update(bool shouldRedraw) {
+    shouldRedraw |= handleEncoderInput(_inputManager->getEncoderDirection());
     if (_inputManager->isButtonPressed()) {
         switch (_selectedItem)
         {
-            case SelectedItem::Hours:
-                _selectedItem = SelectedItem::Minutes;
-                break;
+        case SelectedItem::Hours:
+            _selectedItem = SelectedItem::Minutes;
+            break;
         case SelectedItem::Minutes:
             _selectedItem = SelectedItem::Ok;
             _view->drawButtons(0);

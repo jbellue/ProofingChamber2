@@ -39,4 +39,5 @@ private:
     Screen* _menuScreen;
     SimpleTime getAdjustedTime(bool isHours, bool increment) const;
     bool isTimeValid(const SimpleTime& t) const;
+    bool handleEncoderInput(IInputManager::EncoderDirection direction);
 };
