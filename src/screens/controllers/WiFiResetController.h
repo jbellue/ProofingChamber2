@@ -4,7 +4,7 @@
 #include "AppContextDecl.h"
 #include "../../services/INetworkService.h"
 #include "../../services/IRebootService.h"
-#include "InputManager.h"
+#include "IInputManager.h"
 #include "../views/WiFiResetView.h"
 
 class WiFiResetController : public Screen {
@@ -14,7 +14,7 @@ public:
     bool update(bool forceRedraw = false) override;
 private:
     AppContext* _ctx;
-    InputManager* _inputManager;
+    IInputManager* _inputManager;
     services::INetworkService* _networkService;
     services::IRebootService* _rebootService;
     WiFiResetView* _view;

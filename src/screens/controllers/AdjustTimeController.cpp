@@ -2,6 +2,7 @@
 #include "../views/AdjustTimeView.h"
 #include "DebugUtils.h"
 #include "../../MenuActions.h"
+#include "SafePtr.h"
 
 AdjustTimeController::AdjustTimeController(AppContext* ctx)
     : _ctx(ctx), _inputManager(nullptr), _view(nullptr), _selectedItem(SelectedItem::Hours), _titleHeight(0), _coolingController(nullptr), _menuScreen(nullptr) {}
@@ -19,12 +20,12 @@ void AdjustTimeController::prepare(const char* title, CoolingController* cooling
 void AdjustTimeController::beginImpl() {
     DEBUG_PRINTLN("AdjustTimeController::beginImpl called");
     if (_ctx) {
-        if (!_inputManager) _inputManager = _ctx->input;
+        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
         if (!_view) {
             _view = _ctx->adjustTimeView;
         }
     }
-    if (_inputManager) _inputManager->resetEncoderPosition();
+    _inputManager->resetEncoderPosition();
     _selectedItem = SelectedItem::Hours;
 
     // Clear display before drawing title and rest of screen
@@ -51,14 +52,14 @@ SimpleTime AdjustTimeController::getAdjustedTime(bool isHours, bool increment) c
 
 bool AdjustTimeController::update(bool shouldRedraw) {
     const auto encoderDirection = _inputManager->getEncoderDirection();
-    if (encoderDirection != InputManager::EncoderDirection::None) {
+    if (encoderDirection != IInputManager::EncoderDirection::None) {
         switch (_selectedItem)
         {
             case SelectedItem::Hours:
             case SelectedItem::Minutes: {
                 SimpleTime newTime = getAdjustedTime(
                     _selectedItem == SelectedItem::Hours,
-                    encoderDirection == InputManager::EncoderDirection::Clockwise
+                    encoderDirection == IInputManager::EncoderDirection::Clockwise
                 );
                 if (isTimeValid(newTime)) {
                     _currentTime = newTime;
@@ -77,7 +78,7 @@ bool AdjustTimeController::update(bool shouldRedraw) {
         }
         shouldRedraw = true;
     }
-    if (_inputManager && _inputManager->isButtonPressed()) {
+    if (_inputManager->isButtonPressed()) {
         switch (_selectedItem)
         {
             case SelectedItem::Hours:

@@ -1,10 +1,10 @@
 // Lightweight dependency container for wiring shared components and services
 #pragma once
 
-struct DisplayManager;
-struct InputManager;
+class IDisplayManager;
+class IInputManager;
+class ITemperatureController;
 struct ScreensManager;
-struct TemperatureController;
 // Forward declarations for view types
 class AdjustValueView;
 class AdjustTimeView;
@@ -20,10 +20,10 @@ namespace services {
 }
 
 struct AppContext {
-    DisplayManager* display = nullptr;
-    InputManager* input = nullptr;
+    IDisplayManager* display = nullptr;
+    IInputManager* input = nullptr;
     ScreensManager* screens = nullptr;
-    TemperatureController* tempController = nullptr;
+    ITemperatureController* tempController = nullptr;
     services::IRebootService* rebootService = nullptr;
     services::INetworkService* networkService = nullptr;
     services::IStorage* storage = nullptr;

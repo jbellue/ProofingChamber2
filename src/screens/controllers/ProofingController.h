@@ -6,8 +6,8 @@
 
 // Forward
 class ProofingView;
-struct InputManager;
-struct TemperatureController;
+class IInputManager;
+class ITemperatureController;
 
 class ProofingController : public Screen {
 public:
@@ -17,12 +17,12 @@ public:
 
 private:
     ProofingView* _view;
-    InputManager* _inputManager;
+    IInputManager* _inputManager;
     AppContext* _ctx;
     time_t _startTime;
     time_t _lastTemperatureUpdate;
     time_t _lastGraphUpdate;
     time_t _previousDiffSeconds;
     Graph _temperatureGraph;
-    TemperatureController* _temperatureController;
+    ITemperatureController* _temperatureController;
 };

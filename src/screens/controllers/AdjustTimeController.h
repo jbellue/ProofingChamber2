@@ -2,7 +2,7 @@
 
 #include "../Screen.h"
 #include "AppContextDecl.h"
-#include "InputManager.h"
+#include "IInputManager.h"
 #include "SimpleTime.h"
 #include "../views/AdjustTimeView.h"
 
@@ -33,7 +33,7 @@ private:
     SimpleTime _currentTime;
     uint8_t _titleHeight;
     AppContext* _ctx;
-    InputManager* _inputManager;
+    IInputManager* _inputManager;
     AdjustTimeView* _view;
     CoolingController* _coolingController;
     Screen* _menuScreen;

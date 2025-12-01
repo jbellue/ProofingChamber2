@@ -10,7 +10,7 @@ InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t
 void InputManager::resetEncoderPosition() {
     _encoder.setPosition(0);
     _lastEncoderPosition = 0;
-    _lastDirection = EncoderDirection::None;
+    _lastDirection = IInputManager::EncoderDirection::None;
 }
 
 void InputManager::begin() {
@@ -31,8 +31,8 @@ void InputManager::update() {
     const int64_t newPosition = _encoder.getPosition();
     if (newPosition != _lastEncoderPosition) {
         _lastDirection = (newPosition > _lastEncoderPosition) ?
-            EncoderDirection::Clockwise :
-            EncoderDirection::CounterClockwise;
+            IInputManager::EncoderDirection::Clockwise :
+            IInputManager::EncoderDirection::CounterClockwise;
         _lastEncoderPosition = newPosition;
     }
 
@@ -54,9 +54,9 @@ void InputManager::update() {
     _ds18b20Manager.update();
 }
 
-InputManager::EncoderDirection InputManager::getEncoderDirection() {
-    const EncoderDirection direction = _lastDirection;
-    _lastDirection = EncoderDirection::None;
+IInputManager::EncoderDirection InputManager::getEncoderDirection() {
+    const IInputManager::EncoderDirection direction = _lastDirection;
+    _lastDirection = IInputManager::EncoderDirection::None;
     return direction;
 }
 

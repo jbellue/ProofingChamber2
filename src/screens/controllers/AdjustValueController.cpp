@@ -2,6 +2,7 @@
 #include "../views/AdjustValueView.h"
 #include "DebugUtils.h"
 #include "icons.h"
+#include "SafePtr.h"
 
 AdjustValueController::AdjustValueController(AppContext* ctx) :
     _view(nullptr),
@@ -23,21 +24,21 @@ void AdjustValueController::beginImpl() {
     // Late-bind view and input
     if (_ctx) {
         _view = _ctx->adjustValueView;
-        if (!_inputManager) _inputManager = _ctx->input;
+        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
     }
     if (_storage) {
         _currentValue = _storage->readInt(_path, 0); // Load initial value
     } else {
         _currentValue = 0;
     }
-    if (_inputManager) _inputManager->resetEncoderPosition();
+    _inputManager->resetEncoderPosition();
 
     _valueY = _view->start(_title, _currentValue);
 }
 
 bool AdjustValueController::update(bool shouldRedraw) {
     // Handle encoder button press to confirm and save
-    if (_inputManager && _inputManager->isButtonPressed()) {
+    if (_inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
         if (_storage) {
             _storage->writeInt(_path, _currentValue);
@@ -47,10 +48,10 @@ bool AdjustValueController::update(bool shouldRedraw) {
     }
     // Handle encoder rotation
     const auto encoderDirection = _inputManager->getEncoderDirection();
-    if (shouldRedraw || encoderDirection != InputManager::EncoderDirection::None) {
-        if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
+    if (shouldRedraw || encoderDirection != IInputManager::EncoderDirection::None) {
+        if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _currentValue += 1;
-        } else if (encoderDirection == InputManager::EncoderDirection::CounterClockwise) {
+        } else if (encoderDirection == IInputManager::EncoderDirection::CounterClockwise) {
             _currentValue -= 1;
         }
         shouldRedraw |= _view->drawValue(_currentValue, _valueY);

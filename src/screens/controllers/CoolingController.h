@@ -2,8 +2,8 @@
 #include "AppContextDecl.h"
 #include "../Screen.h"
 #include "../views/CoolingView.h"
-#include "InputManager.h"
-#include "TemperatureController.h"
+#include "IInputManager.h"
+#include "ITemperatureController.h"
 #include <ctime>
 
 class CoolingController : public Screen {
@@ -17,8 +17,8 @@ public:
 
 private:
     CoolingView* _view;
-    InputManager* _inputManager;
-    TemperatureController* _temperatureController;
+    IInputManager* _inputManager;
+    ITemperatureController* _temperatureController;
     AppContext* _ctx;
     time_t _endTime;
     time_t _lastUpdateTime;

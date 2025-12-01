@@ -2,25 +2,20 @@
 
 #include <Arduino.h>
 #include "services/IStorage.h"
+#include "ITemperatureController.h"
 
-class TemperatureController {
+class TemperatureController : public ITemperatureController {
 public:
-    enum Mode {
-        HEATING,
-        COOLING,
-        OFF
-    };
-
     TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin, const uint8_t proofingLedPin, const uint8_t coolingLedPin);
     void setStorage(services::IStorage* storage);
 
-    void begin();
-    void setMode(Mode mode);
-    void update(float currentTemp);
-    Mode getMode() const;
+    void begin() override;
+    void setMode(Mode mode) override;
+    void update(float currentTemp) override;
+    Mode getMode() const override;
 
-    bool isHeating() const;
-    bool isCooling() const;
+    bool isHeating() const override;
+    bool isCooling() const override;
 
 private:
     const uint8_t _heaterPin;

@@ -5,9 +5,9 @@
 #include "../../services/IRebootService.h"
 
 // Forward declarations
-struct DisplayManager;
+class IDisplayManager;
 class RebootView;
-struct InputManager;
+class IInputManager;
 
 class RebootController : public Screen {
 public:
@@ -16,7 +16,7 @@ public:
 
 private:
     RebootView* _view;
-    InputManager* _inputManager;
+    IInputManager* _inputManager;
     services::IRebootService* _rebootService;
     bool _onCancelButton;
     AppContext* _ctx;

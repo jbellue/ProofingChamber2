@@ -2,7 +2,8 @@
 #include "../../DebugUtils.h"
 #include "../../icons.h"
 #include "../views/ProofingView.h"
-#include "../../TemperatureController.h"
+#include "../../ITemperatureController.h"
+#include "../../SafePtr.h"
 
 ProofingController::ProofingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _ctx(ctx), _startTime(0),
@@ -11,16 +12,16 @@ ProofingController::ProofingController(AppContext* ctx)
 {}
 
 void ProofingController::beginImpl() {
-    _inputManager = _ctx->input;
-    _temperatureController = _ctx->tempController;
+    _inputManager = SafePtr::resolve(_ctx->input);
+    _temperatureController = SafePtr::resolve(_ctx->tempController);
     _view = _ctx->proofingView;
     struct tm startTime;
     getLocalTime(&startTime);
     _startTime = mktime(&startTime);
-    if (_inputManager) _inputManager->slowTemperaturePolling(false);
+    _inputManager->slowTemperaturePolling(false);
     _previousDiffSeconds = -60; // Force a redraw on the first update
 
-    if (_temperatureController) _temperatureController->setMode(TemperatureController::HEATING);
+    _temperatureController->setMode(ITemperatureController::HEATING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _view->start(_inputManager->getTemperature(), _temperatureGraph);
 }
@@ -28,7 +29,7 @@ void ProofingController::beginImpl() {
 bool ProofingController::update(bool shouldRedraw) {
     if (_inputManager->isButtonPressed()) {
         _inputManager->slowTemperaturePolling(true);
-        if (_temperatureController) _temperatureController->setMode(TemperatureController::OFF);
+        _temperatureController->setMode(ITemperatureController::OFF);
         _view->reset();
         return false;
     }

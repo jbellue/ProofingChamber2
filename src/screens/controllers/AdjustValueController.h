@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../Screen.h"
-#include "DisplayManager.h"
-#include "InputManager.h"
+#include "IDisplayManager.h"
+#include "IInputManager.h"
 #include "services/IStorage.h"
 
 #include "../views/AdjustValueView.h"
@@ -20,7 +20,7 @@ private:
     uint8_t _valueY;
     int _currentValue;
     AdjustValueView* _view;
-    InputManager* _inputManager;
+    IInputManager* _inputManager;
     services::IStorage* _storage;
     AppContext* _ctx;
 };

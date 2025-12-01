@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <functional>
 #include "screens/Screen.h"
-#include "DisplayManager.h"
-#include "InputManager.h"
+#include "IDisplayManager.h"
+#include "IInputManager.h"
 #include "ScreensManager.h"
 #include "MenuActions.h"
 #include "AppContextDecl.h"
@@ -28,8 +28,8 @@ private:
     uint8_t _menuIndex = 0;
 
     MenuActions* _menuActions;
-    DisplayManager* _display;
-    InputManager* _inputManager;
+    IDisplayManager* _display;
+    IInputManager* _inputManager;
     AppContext* _ctx;
 
     // Helper functions

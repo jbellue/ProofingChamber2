@@ -39,9 +39,9 @@ void Menu::beginImpl() {
 bool Menu::update(bool forceRedraw) {
     bool redraw = forceRedraw;
     // Handle encoder rotation
-    const auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
-    if (encoderDirection != InputManager::EncoderDirection::None) {
-        if (encoderDirection == InputManager::EncoderDirection::Clockwise) {
+    const auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
+    if (encoderDirection != IInputManager::EncoderDirection::None) {
+        if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % getCurrentMenuSize();
         } else {
             _menuIndex = (_menuIndex - 1 + getCurrentMenuSize()) % getCurrentMenuSize();

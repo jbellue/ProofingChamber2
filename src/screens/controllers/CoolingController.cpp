@@ -1,6 +1,7 @@
 #include "CoolingController.h"
 #include "DebugUtils.h"
 #include "../views/CoolingView.h"
+#include "SafePtr.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : _view(nullptr), _inputManager(nullptr), _temperatureController(nullptr),
@@ -8,19 +9,17 @@ CoolingController::CoolingController(AppContext* ctx)
 
 void CoolingController::beginImpl() {
     if (_ctx) {
-        if (!_inputManager) _inputManager = _ctx->input;
-        if (!_temperatureController) _temperatureController = _ctx->tempController;
+        if (!_inputManager) _inputManager = SafePtr::resolve(_ctx->input);
+        if (!_temperatureController) _temperatureController = SafePtr::resolve(_ctx->tempController);
         if (!_view) _view = _ctx->coolingView;
     }
-    if (_inputManager) {
-        _inputManager->resetEncoderPosition();
-        _inputManager->slowTemperaturePolling(false);
-    }
+    _inputManager->resetEncoderPosition();
+    _inputManager->slowTemperaturePolling(false);
     _endTime = _timeCalculator ? _timeCalculator() : 0;
     _lastUpdateTime = 0;
     _lastGraphUpdate = 0;
     _onCancelButton = true;
-    if (_temperatureController) _temperatureController->setMode(TemperatureController::COOLING);
+    _temperatureController->setMode(ITemperatureController::COOLING);
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _view->start(_endTime, _onCancelButton, _temperatureGraph);
 }
@@ -36,7 +35,7 @@ bool CoolingController::update(bool shouldRedraw) {
     bool timesUp = now >= _endTime;
     if (_inputManager->isButtonPressed() || timesUp) {
         _inputManager->slowTemperaturePolling(true);
-        _temperatureController->setMode(TemperatureController::OFF);
+        _temperatureController->setMode(ITemperatureController::OFF);
         bool goingToProofScreen = !_onCancelButton || timesUp;
         Screen* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
         setNextScreen(nextScreen);
@@ -63,8 +62,8 @@ bool CoolingController::update(bool shouldRedraw) {
 
     shouldRedraw |= _view->drawIcons(_temperatureController->isCooling() ? IconState::On : IconState::Off);
 
-    auto encoderDirection = _inputManager ? _inputManager->getEncoderDirection() : InputManager::EncoderDirection::None;
-    if (encoderDirection != InputManager::EncoderDirection::None) {
+    auto encoderDirection = _inputManager->getEncoderDirection();
+    if (encoderDirection != IInputManager::EncoderDirection::None) {
         _onCancelButton = !_onCancelButton;
         _view->drawButtons(_onCancelButton);
         shouldRedraw = true;

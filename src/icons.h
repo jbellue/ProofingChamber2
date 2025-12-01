@@ -1,6 +1,7 @@
 #ifndef ICONS_H
 #define ICONS_H
 #include <stdint.h>
+#include <U8g2lib.h>
 
 enum class IconState {
     Unset,

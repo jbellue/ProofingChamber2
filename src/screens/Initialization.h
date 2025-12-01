@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Screen.h"
-#include "DisplayManager.h"
+#include "IDisplayManager.h"
 #include "AppContextDecl.h"
 
 class Initialization : public Screen {
@@ -11,7 +11,7 @@ public:
     bool update(bool forceRedraw = false) override;
 
 private:
-    DisplayManager* _display;
+    IDisplayManager* _display;
     services::INetworkService* _networkService;
     AppContext* _ctx;
     void drawScreen();
