@@ -2,14 +2,13 @@
 #include "DebugUtils.h"
 #include "services/IStorage.h"
 
-static services::IStorage* _globalStorage = nullptr; // fallback pointer set by constructor or setter
-
 TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin, uint8_t proofingLedPin, uint8_t coolingLedPin)
     : _heaterPin(heaterPin)
     , _coolerPin(coolerPin)
     , _proofingLedPin(proofingLedPin)
     , _coolingLedPin(coolingLedPin)
     , _currentMode(OFF)
+    , _storage(nullptr)
     , _targetTemp(0)
     , _lowerLimit(0)
     , _higherLimit(0)
@@ -19,7 +18,17 @@ TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPi
 }
 
 void TemperatureController::setStorage(services::IStorage* storage) {
-    _globalStorage = storage;
+    _storage = storage;
+}
+
+void TemperatureController::setDefaultLimits(int8_t target, int8_t lower, int8_t higher) {
+    _targetTemp = target;
+    _lowerLimit = lower;
+    _higherLimit = higher;
+    DEBUG_PRINTLN("Using default temperature limits");
+    DEBUG_PRINT("Target: "); DEBUG_PRINTLN(_targetTemp);
+    DEBUG_PRINT("Lower: "); DEBUG_PRINTLN(_lowerLimit);
+    DEBUG_PRINT("Higher: "); DEBUG_PRINTLN(_higherLimit);
 }
 
 void TemperatureController::begin() {
@@ -79,10 +88,10 @@ void TemperatureController::loadTemperatureSettings() {
             return; // No need to load settings when off
     }
 
-    if (_globalStorage) {
-        _targetTemp = _globalStorage->readInt(targetFile);
-        _lowerLimit = _globalStorage->readInt(lowerFile);
-        _higherLimit = _globalStorage->readInt(higherFile);
+    if (_storage) {
+        _targetTemp = _storage->readInt(targetFile);
+        _lowerLimit = _storage->readInt(lowerFile);
+        _higherLimit = _storage->readInt(higherFile);
     }
 
     DEBUG_PRINT("Mode: ");

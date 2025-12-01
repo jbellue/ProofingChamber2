@@ -8,6 +8,7 @@ class TemperatureController : public ITemperatureController {
 public:
     TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin, const uint8_t proofingLedPin, const uint8_t coolingLedPin);
     void setStorage(services::IStorage* storage);
+    void setDefaultLimits(int8_t target, int8_t lower, int8_t higher);
 
     void begin() override;
     void setMode(Mode mode) override;
@@ -23,6 +24,7 @@ private:
     const uint8_t _proofingLedPin;
     const uint8_t _coolingLedPin;
     Mode _currentMode;
+    services::IStorage* _storage;
 
     int8_t _targetTemp;
     int8_t _lowerLimit;

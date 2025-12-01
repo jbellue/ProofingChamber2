@@ -89,8 +89,9 @@ void setup() {
     Serial.begin(115200);
 #endif
     if (!storageAdapter.begin()) {
-        // Handle initialization failure
-        DEBUG_PRINTLN("Storage initialization failed");
+        DEBUG_PRINTLN("Storage initialization failed - using safe defaults");
+        // Set safe default temperatures (moderate room temperature range)
+        temperatureController.setDefaultLimits(25, 23, 27);
     }
     displayManager.begin();
     inputManager.begin();
