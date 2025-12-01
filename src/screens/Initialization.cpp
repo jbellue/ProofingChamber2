@@ -49,9 +49,14 @@ void Initialization::drawScreen() {
         _networkService->configureNtp(timezone, "pool.ntp.org", "time.nist.gov");
     }
     DEBUG_PRINT("Waiting for NTP time sync");
-    while (!_networkService || !_networkService->isTimeSyncReady(1000000000)) { // Wait until the time is synced
+    const unsigned long timeout = millis() + 30000; // 30 sec timeout
+    while (!_networkService->isTimeSyncReady(1000000000)) {
+        if (millis() > timeout) {
+            DEBUG_PRINTLN("NTP timeout - continuing anyway");
+            break;
+        }
+        yield(); // Feed watchdog
         delay(500);
-        DEBUG_PRINT(".");
         _display->print(".");
         _display->sendBuffer();
     }
