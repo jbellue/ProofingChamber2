@@ -57,7 +57,7 @@ bool ProofingController::update(bool shouldRedraw) {
         }
     }
 
-    shouldRedraw |= _view->drawIcons(_temperatureController->isHeating() ? IconState::On : IconState::Off);
+    shouldRedraw |= _view->drawIcons(OptionalBool(_temperatureController->isHeating()));
     shouldRedraw |= _view->drawTime(difftime(now_time, _startTime));
 
     if (shouldRedraw) {

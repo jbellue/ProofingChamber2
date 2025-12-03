@@ -63,7 +63,7 @@ bool CoolingController::update(bool shouldRedraw) {
         }
     }
 
-    shouldRedraw |= _view->drawIcons(_temperatureController->isCooling() ? IconState::On : IconState::Off);
+    shouldRedraw |= _view->drawIcons(OptionalBool(_temperatureController->isCooling()));
 
     auto encoderDirection = inputManager->getEncoderDirection();
     if (encoderDirection != IInputManager::EncoderDirection::None) {

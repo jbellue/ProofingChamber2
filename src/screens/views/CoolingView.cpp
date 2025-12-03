@@ -1,5 +1,6 @@
 #include "CoolingView.h"
 #include "../../DebugUtils.h"
+#include "../../icons.h"
 
 #define GRAPH_POSITION_FROM_LEFT 30
 
@@ -35,7 +36,6 @@ bool CoolingView::drawTime(const int remainingSeconds) {
 }
 
 bool CoolingView::drawTemperature(const float currentTemp) {
-
     if (abs(_lastTemperature - currentTemp) < 0.1) {
         return false; // No significant change, skip redraw
     }
@@ -56,7 +56,7 @@ bool CoolingView::drawTemperature(const float currentTemp) {
     return true;
 }
 
-bool CoolingView::drawIcons(IconState iconState) {
+bool CoolingView::drawIcons(OptionalBool iconState) {
     if (iconState == _lastIconState) {
         return false; // No change, skip redraw
     }
@@ -64,7 +64,7 @@ bool CoolingView::drawIcons(IconState iconState) {
     const uint8_t coolIconSize = 10;
     const uint8_t iconsX = _display->getDisplayWidth() - GRAPH_POSITION_FROM_LEFT - coolIconSize - 2;
     const uint8_t iconY = 36;
-    if (iconState == IconState::On) {
+    if (iconState.getValue()) {
         _display->drawXBMP(iconsX, iconY, coolIconSize, coolIconSize, iconCool);
     } else {
         _display->setDrawColor(0);
@@ -97,7 +97,7 @@ void CoolingView::formatTimeString(char* buffer, const size_t bufferSize, const 
 
 void CoolingView::reset() {
     _lastRemainingSeconds = -1;
-    _lastIconState = IconState::Unset;
+    _lastIconState = OptionalBool();
     _lastTemperature = -273.15; // Reset to ensure redraw
     _timeWidth = _display->getDisplayWidth(); // Reset to full width for first draw
 }

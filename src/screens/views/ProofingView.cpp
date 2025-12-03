@@ -65,7 +65,7 @@ bool ProofingView::drawTemperature(const float currentTemp) {
     return true;
 }
 
-bool ProofingView::drawIcons(IconState iconState) {
+bool ProofingView::drawIcons(OptionalBool iconState) {
     if (iconState == _lastIconState) {
         return false; // No change, skip redraw
     }
@@ -74,7 +74,7 @@ bool ProofingView::drawIcons(IconState iconState) {
     const uint8_t iconsX = 2;
     const uint8_t iconY = 23;
 
-    if (iconState == IconState::On) {
+    if (iconState.getValue()) {
         _display->drawXBMP(iconsX, iconY, proofIconSize, proofIconSize, iconProof);
     } else {
         _display->setDrawColor(0);
@@ -92,6 +92,6 @@ void ProofingView::drawGraph(Graph& graph) {
 
 void ProofingView::reset() {
     _lastTempDrawn = -257.0;
-    _lastIconState = IconState::Unset;
+    _lastIconState = OptionalBool();
     _lastTimeDrawn = -1000;
 }
