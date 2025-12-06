@@ -1,13 +1,14 @@
 #include "DataDisplayView.h"
 
 void DataDisplayView::start() {
+    reset();
     clear();
     drawTitle();
     drawButtons();
 }
 
 void DataDisplayView::drawTitle() {
-    const char* title = "Debug des senseurs";
+    const char* title = "Debug";
     IBaseView::drawTitle(title);
 }
 void DataDisplayView::drawButtons() {
@@ -30,8 +31,8 @@ bool DataDisplayView::drawTemperature(float temperatureC) {
     _display->setFont(u8g2_font_t0_11_tf);
     const uint8_t tempWidth = _display->getUTF8Width("99.9°C");
     const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
-    const uint8_t tempX = 2;
-    const uint8_t tempY = 22;
+    const uint8_t tempX = (_display->getDisplayWidth() - tempWidth) / 2;
+    const uint8_t tempY = 42;
 
     _display->setDrawColor(0);
     _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
@@ -53,8 +54,8 @@ bool DataDisplayView::drawTime(const tm &now) {
     _display->setFont(u8g2_font_t0_11_tf);
     const uint8_t timeWidth = _display->getUTF8Width(timeBuffer);
     const uint8_t timeHeight = _display->getAscent() - _display->getDescent();
-    const uint8_t timeX = _display->getDisplayWidth() - timeWidth - 2;
-    const uint8_t timeY = 22;
+    const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
+    const uint8_t timeY = 26;
 
     _display->setDrawColor(0);
     _display->drawBox(timeX, timeY - _display->getAscent(), timeWidth, timeHeight);
