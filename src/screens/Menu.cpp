@@ -63,23 +63,27 @@ bool Menu::update(bool forceRedraw) {
     return true;
 }
 
-//TODO fix to pixel size so it looks always good
+// Draws a small filled arrow (up or down) using horizontal lines for pixel-perfect symmetry
+void Menu::drawTriangle(const bool up, const uint8_t centerX, const uint8_t topY, const uint8_t height) {
+    for (uint8_t row = 0; row < height; ++row) {
+        const uint8_t y = up ? (topY + row)          // grow downward for up arrow
+                              : (topY + (height - 1 - row)); // grow upward for down arrow
+        const uint8_t startX = centerX - row;
+        const uint8_t width = row * 2 + 1;
+        _display->drawHLine(startX, y, width);
+    }
+}
+
 void Menu::drawNavigationHints(const uint8_t visibleEnd) {
-    const uint8_t SCROLL_ARROW_UP_Y = 3;
-    const uint8_t SCROLL_ARROW_UP_Y2 = 7;
-    const uint8_t SCROLL_ARROW_DOWN_Y = 61;
-    const uint8_t SCROLL_ARROW_DOWN_Y2 = 57;
-    const uint8_t SCROLL_ARROW_X = 124;
-    const uint8_t SCROLL_ARROW_LEFT_X = 120;
-    const uint8_t SCROLL_ARROW_RIGHT_X = 128;
+    const uint8_t arrowXPosition = _display->getDisplayWidth() - SCROLL_ARROW_X_OFFSET;
 
     if (_scrollOffset > 0) {
         // Up arrow at top
-        _display->drawTriangle(SCROLL_ARROW_X, SCROLL_ARROW_UP_Y, SCROLL_ARROW_LEFT_X, SCROLL_ARROW_UP_Y2, SCROLL_ARROW_RIGHT_X, SCROLL_ARROW_UP_Y2);
+        drawTriangle(true, arrowXPosition, SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
     }
     if (visibleEnd < _currentMenuSize) {
         // Down arrow at bottom
-        _display->drawTriangle(SCROLL_ARROW_X, SCROLL_ARROW_DOWN_Y, SCROLL_ARROW_LEFT_X, SCROLL_ARROW_DOWN_Y2, SCROLL_ARROW_RIGHT_X, SCROLL_ARROW_DOWN_Y2);
+        drawTriangle(false, arrowXPosition, _display->getDisplayHeight() - TRIANGLE_HEIGHT - SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
     }
 }
 
