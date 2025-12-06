@@ -9,7 +9,7 @@ SimpleTime MenuActions::s_proofAtTime(0, 0, 0);
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
         AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
-        WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController) :
+        WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController, DataDisplayController* dataDisplayController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValueController(adjustValueController),
@@ -17,7 +17,8 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueCont
     _proofingController(ProofingController),
     _coolingController(coolingController),
     _wifiResetController(wifiResetController),
-    _setTimezoneController(setTimezoneController)
+    _setTimezoneController(setTimezoneController),
+    _dataDisplayController(dataDisplayController)
 {}
 
 void MenuActions::proofNowAction() {
@@ -134,6 +135,14 @@ void MenuActions::adjustTimezone() {
     if (!menu) return;
     menu->setNextScreen(_setTimezoneController);
     _setTimezoneController->setNextScreen(menu);
+}
+
+void MenuActions::showDataDisplay() {
+    if (!_ctx || !_ctx->screens || !_dataDisplayController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_dataDisplayController);
+    _dataDisplayController->setNextScreen(menu);
 }
 
 // Static callback functions for time calculations

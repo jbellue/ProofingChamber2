@@ -20,6 +20,7 @@ public:
     uint8_t getDisplayWidth() override;
     uint8_t getDisplayHeight() override;
     uint8_t getWidth() override;
+    void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2) override;
     void sendBuffer() override;
     void clearBuffer() override;
     void setFont(const uint8_t* font) override;

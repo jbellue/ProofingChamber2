@@ -9,11 +9,12 @@
 #include "screens/controllers/WiFiResetController.h"
 #include "screens/controllers/RebootController.h"
 #include "screens/controllers/SetTimezoneController.h"
+#include "screens/controllers/DataDisplayController.h"
 #include "AppContextDecl.h"
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot);
+    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* proofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot, DataDisplayController* dataDisplayController);
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -30,6 +31,7 @@ public:
     void resetWiFiAndReboot();
     void reboot();
     void adjustTimezone();
+    void showDataDisplay();
     
     // Static variables for callback context
     static SimpleTime s_proofInTime;
@@ -44,6 +46,7 @@ private:
     WiFiResetController* _wifiResetController;
     SetTimezoneController* _setTimezoneController;
     RebootController* _rebootController;
+    DataDisplayController* _dataDisplayController;
 };
 
 #endif

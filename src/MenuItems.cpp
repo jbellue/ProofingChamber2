@@ -26,6 +26,7 @@ Menu::MenuItem settingsMenu[] = {
 };
 
 Menu::MenuItem moreSettingsMenu[] = {
+    {"Senseurs",          iconCool,  nullptr,      &MenuActions::showDataDisplay},
     {"Reset du WiFi",     iconWiFi,  nullptr,      &MenuActions::resetWiFiAndReboot},
     {"Fuseau horaire",    iconClock, nullptr,      &MenuActions::adjustTimezone},
     {"Red\xC3\xA9marrer", iconReset, nullptr,      &MenuActions::reboot},

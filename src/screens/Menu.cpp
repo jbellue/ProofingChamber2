@@ -11,7 +11,8 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _menuActions(menuActions),
     _display(nullptr),
     _currentMenu(nullptr),
-    _menuIndex(0)
+    _menuIndex(0),
+    _scrollOffset(0)
 {}
 
 void Menu::begin() {
@@ -24,6 +25,8 @@ void Menu::beginImpl() {
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
         _menuIndex = 0;
+        _scrollOffset = 0;
+        _currentMenuSize = getCurrentMenuSize();
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -42,10 +45,11 @@ bool Menu::update(bool forceRedraw) {
     const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
     if (encoderDirection != IInputManager::EncoderDirection::None) {
         if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
-            _menuIndex = (_menuIndex + 1) % getCurrentMenuSize();
+            _menuIndex = (_menuIndex + 1) % _currentMenuSize;
         } else {
-            _menuIndex = (_menuIndex - 1 + getCurrentMenuSize()) % getCurrentMenuSize();
+            _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
         }
+        updateScrollOffset();
         redraw = true;
     }
     if (redraw) {
@@ -59,6 +63,25 @@ bool Menu::update(bool forceRedraw) {
     return true;
 }
 
+//TODO fix to pixel size so it looks always good
+void Menu::drawNavigationHints(const uint8_t visibleEnd) {
+    const uint8_t SCROLL_ARROW_UP_Y = 3;
+    const uint8_t SCROLL_ARROW_UP_Y2 = 7;
+    const uint8_t SCROLL_ARROW_DOWN_Y = 61;
+    const uint8_t SCROLL_ARROW_DOWN_Y2 = 57;
+    const uint8_t SCROLL_ARROW_X = 124;
+    const uint8_t SCROLL_ARROW_LEFT_X = 120;
+    const uint8_t SCROLL_ARROW_RIGHT_X = 128;
+
+    if (_scrollOffset > 0) {
+        // Up arrow at top
+        _display->drawTriangle(SCROLL_ARROW_X, SCROLL_ARROW_UP_Y, SCROLL_ARROW_LEFT_X, SCROLL_ARROW_UP_Y2, SCROLL_ARROW_RIGHT_X, SCROLL_ARROW_UP_Y2);
+    }
+    if (visibleEnd < _currentMenuSize) {
+        // Down arrow at bottom
+        _display->drawTriangle(SCROLL_ARROW_X, SCROLL_ARROW_DOWN_Y, SCROLL_ARROW_LEFT_X, SCROLL_ARROW_DOWN_Y2, SCROLL_ARROW_RIGHT_X, SCROLL_ARROW_DOWN_Y2);
+    }
+}
 
 // Helper functions
 void Menu::drawMenu() {
@@ -68,17 +91,26 @@ void Menu::drawMenu() {
     _display->setDrawColor(1);
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
-    for (uint8_t i = 0; _currentMenu[i].name != nullptr; i++) {
-        const uint8_t yPos = (i + 1) * 16 - 3;
-        _display->drawUTF8(16, yPos, _currentMenu[i].name);
+
+    const uint8_t visibleEnd = min((uint8_t)(_scrollOffset + MAX_VISIBLE_ITEMS), _currentMenuSize);
+
+    // Draw visible menu items
+    for (uint8_t i = _scrollOffset; i < visibleEnd; i++) {
+        const uint8_t displayIndex = i - _scrollOffset;
+        const uint8_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+        _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
         if (_currentMenu[i].icon != nullptr) {
-            _display->drawXBMP(3, yPos - 9, 10, 10, _currentMenu[i].icon);
+            _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
         }
         if (i == _menuIndex) {
             _display->setDrawColor(2);
-            _display->drawRBox(0, yPos - 12, 128, 15, 1);
+            _display->drawRBox(MENU_SELECTION_X_OFFSET, yPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
+            _display->setDrawColor(1);
         }
     }
+
+    drawNavigationHints(visibleEnd);
+
     _display->sendBuffer();
 }
 
@@ -88,11 +120,29 @@ uint8_t Menu::getCurrentMenuSize() const {
     return size;
 }
 
+void Menu::updateScrollOffset() {
+    if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
+        _scrollOffset = 0;
+        return;
+    }
+    
+    // Scroll down if selected item is below visible area
+    if (_menuIndex >= _scrollOffset + MAX_VISIBLE_ITEMS) {
+        _scrollOffset = _menuIndex - MAX_VISIBLE_ITEMS + 1;
+    }
+    // Scroll up if selected item is above visible area
+    else if (_menuIndex < _scrollOffset) {
+        _scrollOffset = _menuIndex;
+    }
+}
+
 bool Menu::handleMenuSelection() {
     MenuItem* selectedItem = &_currentMenu[_menuIndex];
     if (selectedItem->subMenu != nullptr) {
         _currentMenu = selectedItem->subMenu;
         _menuIndex = 0;
+        _scrollOffset = 0;
+        _currentMenuSize = getCurrentMenuSize();
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr && _menuActions != nullptr) {

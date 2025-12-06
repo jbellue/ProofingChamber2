@@ -20,6 +20,7 @@ public:
     virtual uint8_t getDisplayWidth() = 0;
     virtual uint8_t getDisplayHeight() = 0;
     virtual uint8_t getWidth() = 0;
+    virtual void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2) = 0;
     virtual void sendBuffer() = 0;
     virtual void clearBuffer() = 0;
     virtual void setFont(const uint8_t* font) = 0;

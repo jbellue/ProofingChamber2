@@ -13,6 +13,7 @@ class ProofingView;
 class RebootView;
 class SetTimezoneView;
 class WiFiResetView;
+class DataDisplayView;
 namespace services { struct INetworkService; struct IStorage; }
 
 namespace services {
@@ -36,4 +37,5 @@ struct AppContext {
     RebootView* rebootView = nullptr;
     SetTimezoneView* setTimezoneView = nullptr;
     WiFiResetView* wifiResetView = nullptr;
+    DataDisplayView* dataDisplayView = nullptr;
 };

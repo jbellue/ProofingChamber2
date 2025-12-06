@@ -33,6 +33,10 @@ void DisplayManager::drawRBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_
     _display.drawRBox(x, y, w, h, r);
 }
 
+void DisplayManager::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
+    _display.drawTriangle(x0, y0, x1, y1, x2, y2);
+}
+
 void DisplayManager::setDrawColor(uint8_t color) {
     _display.setDrawColor(color);
 }
@@ -107,6 +111,7 @@ uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
 
+    // TODO: verify this...
     // Split the title into lines based on EOL or CR
     char titleCopy[100]; // Copy the title to a mutable buffer
     strncpy(titleCopy, title, sizeof(titleCopy));

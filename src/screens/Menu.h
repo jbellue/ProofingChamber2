@@ -26,6 +26,21 @@ public:
 private:
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
+    uint8_t _scrollOffset = 0;
+    uint8_t _currentMenuSize = 0;
+
+    static const uint8_t MAX_VISIBLE_ITEMS = 4;
+    static const uint8_t MENU_ITEM_HEIGHT = 16;
+    static const int8_t MENU_ITEM_Y_OFFSET = -3;
+    static const uint8_t MENU_ICON_X_OFFSET = 3;
+    static const int8_t MENU_ICON_Y_OFFSET = -9;
+    static const uint8_t MENU_ICON_WIDTH = 10;
+    static const uint8_t MENU_ICON_HEIGHT = 10;
+    static const uint8_t MENU_TEXT_X_OFFSET = 16;
+    static const uint8_t MENU_SELECTION_X_OFFSET = 0;
+    static const int8_t MENU_SELECTION_Y_OFFSET = -12;
+    static const uint8_t MENU_SELECTION_HEIGHT = 15;
+    static const uint8_t MENU_SELECTION_RADIUS = 1;
 
     MenuActions* _menuActions;
     IDisplayManager* _display;
@@ -34,4 +49,7 @@ private:
     void drawMenu();
     uint8_t getCurrentMenuSize() const;
     bool handleMenuSelection();
+    void updateScrollOffset();
+
+    void drawNavigationHints(const uint8_t visibleEnd);
 };

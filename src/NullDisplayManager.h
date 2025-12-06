@@ -71,6 +71,10 @@ public:
         // Silent no-op
     }
 
+    void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2) override {
+        // Silent no-op
+    }
+    
     void clearBuffer() override {
         // Silent no-op
     }
