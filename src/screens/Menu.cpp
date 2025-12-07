@@ -12,7 +12,11 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _display(nullptr),
     _currentMenu(nullptr),
     _menuIndex(0),
-    _scrollOffset(0)
+    _scrollOffset(0),
+    _selectionYPos(0),
+    _targetYPos(0),
+    _animationStartYPos(0),
+    _animationStartTime(0)
 {}
 
 void Menu::begin() {
@@ -27,6 +31,10 @@ void Menu::beginImpl() {
         _menuIndex = 0;
         _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
+        _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+        _targetYPos = _selectionYPos;
+        _animationStartYPos = _selectionYPos;
+        _animationStartTime = 0;
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -41,6 +49,8 @@ void Menu::beginImpl() {
 bool Menu::update(bool forceRedraw) {
     IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
+
+    const unsigned long now = millis();
     // Handle encoder rotation
     const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
     if (encoderDirection != IInputManager::EncoderDirection::None) {
@@ -50,8 +60,29 @@ bool Menu::update(bool forceRedraw) {
             _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
         }
         updateScrollOffset();
+        
+        // Calculate target Y position for selected item
+        const uint8_t displayIndex = _menuIndex - _scrollOffset;
+        _targetYPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+        _animationStartYPos = _selectionYPos;
+        _animationStartTime = now;
+
         redraw = true;
     }
+
+    if (_animationStartTime != 0) {
+        redraw = true;
+        const unsigned long elapsed = now - _animationStartTime;
+        if (elapsed >= ANIMATION_DURATION_MS) {
+            _selectionYPos = _targetYPos;
+            _animationStartTime = 0;
+        } else {
+            // Linear interpolation: start + (delta * elapsed / duration)
+            const uint8_t delta = _targetYPos - _animationStartYPos;
+            _selectionYPos = _animationStartYPos + (delta * (uint32_t)elapsed) / ANIMATION_DURATION_MS;
+        }
+    }
+
     if (redraw) {
         drawMenu();
     }
@@ -106,12 +137,12 @@ void Menu::drawMenu() {
         if (_currentMenu[i].icon != nullptr) {
             _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
         }
-        if (i == _menuIndex) {
-            _display->setDrawColor(2);
-            _display->drawRBox(MENU_SELECTION_X_OFFSET, yPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
-            _display->setDrawColor(1);
-        }
     }
+    
+    // Draw selection highlight at animated position
+    _display->setDrawColor(2);
+    _display->drawRBox(MENU_SELECTION_X_OFFSET, _selectionYPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
+    _display->setDrawColor(1);
 
     drawNavigationHints(visibleEnd);
 
@@ -147,6 +178,10 @@ bool Menu::handleMenuSelection() {
         _menuIndex = 0;
         _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
+        _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+        _targetYPos = _selectionYPos;
+        _animationStartYPos = _selectionYPos;
+        _animationStartTime = 0;
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr && _menuActions != nullptr) {
