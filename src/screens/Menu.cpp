@@ -1,6 +1,7 @@
 #include "DebugUtils.h"
 #include "Menu.h"
 #include "MenuItems.h"
+#include "SafePtr.h"
 #include "screens/controllers/ProofingController.h"
 #include "icons.h"
 #include "screens/BaseController.h"
@@ -40,9 +41,9 @@ void Menu::beginImpl() {
     // Late-bind context pointers
     AppContext* ctx = getContext();
     if (ctx) {
-        if (!_display) _display = ctx->display;
+        if (!_display) _display = SafePtr::resolve(ctx->display);
     }
-    if (_display) _display->clear();
+    _display->clear();
 }
 
 // Update the menu
