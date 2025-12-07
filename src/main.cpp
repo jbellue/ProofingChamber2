@@ -96,7 +96,7 @@ void setup() {
     if (!storageAdapter.begin()) {
         DEBUG_PRINTLN("Storage initialization failed - using safe defaults");
         // Set safe default temperatures (moderate room temperature range)
-        temperatureController.setDefaultLimits(25, 23, 27);
+        temperatureController.setDefaultLimits(23, 27);
     }
     displayManager.begin();
     inputManager.begin();

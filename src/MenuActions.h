@@ -22,10 +22,8 @@ public:
     // Static callback functions for time calculations
     static time_t calculateProofInEndTime();
     static time_t calculateProofAtEndTime();
-    void adjustHotTargetTemp();
     void adjustHotLowerLimit();
     void adjustHotHigherLimit();
-    void adjustColdTargetTemp();
     void adjustColdLowerLimit();
     void adjustColdHigherLimit();
     void resetWiFiAndReboot();

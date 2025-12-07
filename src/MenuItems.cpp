@@ -35,7 +35,6 @@ Menu::MenuItem moreSettingsMenu[] = {
 };
 
 Menu::MenuItem hotMenu[] = {
-    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      &MenuActions::adjustHotTargetTemp},
     {"Limite basse",                       iconColdSettings, nullptr,      &MenuActions::adjustHotLowerLimit},
     {"Limite haute",                       iconHotSettings,  nullptr,      &MenuActions::adjustHotHigherLimit},
     {"Retour",                             iconBack,         settingsMenu, nullptr},
@@ -43,7 +42,6 @@ Menu::MenuItem hotMenu[] = {
 };
 
 Menu::MenuItem coldMenu[] = {
-    {"Temp\xC3\xA9rature vis\xC3\xA9" "e", iconTarget,       nullptr,      &MenuActions::adjustColdTargetTemp},
     {"Limite basse",                       iconColdSettings, nullptr,      &MenuActions::adjustColdLowerLimit},
     {"Limite haute",                       iconHotSettings,  nullptr,      &MenuActions::adjustColdHigherLimit},
     {"Retour",                             iconBack,         settingsMenu, nullptr},

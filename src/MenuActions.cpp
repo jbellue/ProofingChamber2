@@ -59,15 +59,6 @@ void MenuActions::proofAtAction() {
     _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime, TimeMode::ProofAt);
 }
 
-void MenuActions::adjustHotTargetTemp() {
-    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    BaseController* menu = _ctx->screens->getActiveScreen();
-    if (!menu) return;
-    menu->setNextScreen(_adjustValueController);
-    _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
-}
-
 void MenuActions::adjustHotLowerLimit() {
     if (!_ctx || !_ctx->screens || !_adjustValueController) return;
     BaseController* menu = _ctx->screens->getActiveScreen();
@@ -84,15 +75,6 @@ void MenuActions::adjustHotHigherLimit() {
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
     _adjustValueController->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
-}
-
-void MenuActions::adjustColdTargetTemp() {
-    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
-    BaseController* menu = _ctx->screens->getActiveScreen();
-    if (!menu) return;
-    menu->setNextScreen(_adjustValueController);
-    _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
 }
 
 void MenuActions::adjustColdLowerLimit() {

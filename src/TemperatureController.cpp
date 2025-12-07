@@ -9,7 +9,6 @@ TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPi
     , _coolingLedPin(coolingLedPin)
     , _currentMode(OFF)
     , _storage(nullptr)
-    , _targetTemp(0)
     , _lowerLimit(0)
     , _higherLimit(0)
     , _isHeating(false)
@@ -21,12 +20,10 @@ void TemperatureController::setStorage(services::IStorage* storage) {
     _storage = storage;
 }
 
-void TemperatureController::setDefaultLimits(int8_t target, int8_t lower, int8_t higher) {
-    _targetTemp = target;
+void TemperatureController::setDefaultLimits(int8_t lower, int8_t higher) {
     _lowerLimit = lower;
     _higherLimit = higher;
     DEBUG_PRINTLN("Using default temperature limits");
-    DEBUG_PRINT("Target: "); DEBUG_PRINTLN(_targetTemp);
     DEBUG_PRINT("Lower: "); DEBUG_PRINTLN(_lowerLimit);
     DEBUG_PRINT("Higher: "); DEBUG_PRINTLN(_higherLimit);
 }
@@ -68,19 +65,16 @@ void TemperatureController::setMode(Mode mode) {
 }
 
 void TemperatureController::loadTemperatureSettings() {
-    const char* targetFile;
     const char* lowerFile;
     const char* higherFile;
 
     switch (_currentMode)
     {
         case HEATING:
-            targetFile = "/hot/target_temp.txt";
             lowerFile = "/hot/lower_limit.txt";
             higherFile = "/hot/higher_limit.txt";
             break;
         case COOLING:
-            targetFile = "/cold/target_temp.txt";
             lowerFile = "/cold/lower_limit.txt";
             higherFile = "/cold/higher_limit.txt";
             break;
@@ -89,15 +83,12 @@ void TemperatureController::loadTemperatureSettings() {
     }
 
     if (_storage) {
-        _targetTemp = _storage->readInt(targetFile);
         _lowerLimit = _storage->readInt(lowerFile);
         _higherLimit = _storage->readInt(higherFile);
     }
 
     DEBUG_PRINT("Mode: ");
     DEBUG_PRINTLN(_currentMode == HEATING ? "HEATING" : "COOLING");
-    DEBUG_PRINT("Target: ");
-    DEBUG_PRINTLN(_targetTemp);
     DEBUG_PRINT("Lower: ");
     DEBUG_PRINTLN(_lowerLimit);
     DEBUG_PRINT("Higher: ");
