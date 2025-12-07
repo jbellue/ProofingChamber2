@@ -3,9 +3,11 @@
 #include "IInputManager.h"
 #include "ITemperatureController.h"
 #include "IDisplayManager.h"
+#include "services/INetworkService.h"
 #include "NullInputManager.h"
 #include "NullTemperatureController.h"
 #include "NullDisplayManager.h"
+#include "NullNetworkService.h"
 
 /**
  * Helper class for safe pointer resolution using Null Object Pattern
@@ -37,6 +39,13 @@ public:
     static IDisplayManager* resolve(IDisplayManager* ptr) {
         if (ptr == nullptr) {
             return &NullDisplayManager::getInstance();
+        }
+        return ptr;
+    }
+
+    static services::INetworkService* resolve(services::INetworkService* ptr) {
+        if (ptr == nullptr) {
+            return &services::NullNetworkService::getInstance();
         }
         return ptr;
     }
