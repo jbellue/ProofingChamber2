@@ -4,9 +4,13 @@
 #include "icons.h"
 #include "MenuActions.h"
 
+// Initialize dynamic timezone menus (call once at startup)
+void initializeAllMenus();
+
 extern Menu::MenuItem mainMenu[];
 extern Menu::MenuItem coolMenu[];
 extern Menu::MenuItem settingsMenu[];
 extern Menu::MenuItem moreSettingsMenu[];
 extern Menu::MenuItem hotMenu[];
 extern Menu::MenuItem coldMenu[];
+extern Menu::MenuItem* timezoneMenu;

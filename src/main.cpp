@@ -14,18 +14,18 @@
 #include "screens/controllers/AdjustTimeController.h"
 #include "screens/controllers/AdjustValueController.h"
 #include "screens/controllers/RebootController.h"
-#include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/WiFiResetController.h"
 #include "screens/controllers/CoolingController.h"
 #include "screens/controllers/DataDisplayController.h"
+#include "screens/controllers/ConfirmTimezoneController.h"
 #include "screens/views/AdjustValueView.h"
 #include "screens/views/AdjustTimeView.h"
 #include "screens/views/CoolingView.h"
 #include "screens/views/ProofingView.h"
 #include "screens/views/RebootView.h"
-#include "screens/views/SetTimezoneView.h"
 #include "screens/views/WiFiResetView.h"
 #include "screens/views/DataDisplayView.h"
+#include "screens/views/ConfirmTimezoneView.h"
 #include "ScreensManager.h"
 #include "Storage.h"
 #include "TemperatureController.h"
@@ -55,20 +55,20 @@ AppContext appContext;
 static AdjustValueController adjustValueControllerInstance(&appContext);
 static AdjustTimeController adjustTimeControllerInstance(&appContext);
 static ProofingController proofingControllerInstance(&appContext);
-static SetTimezoneController setTimezoneControllerInstance(&appContext);
 static RebootController rebootInstance(&appContext);
 static CoolingController coolingControllerInstance(&appContext);
 static WiFiResetController wifiResetControllerInstance(&appContext);
 static DataDisplayController dataDisplayControllerInstance(&appContext);
+static ConfirmTimezoneController confirmTimezoneControllerInstance(&appContext);
 
 AdjustValueController* adjustValueController = &adjustValueControllerInstance;
 AdjustTimeController* adjustTimeController = &adjustTimeControllerInstance;
 ProofingController* proofingController = &proofingControllerInstance;
-SetTimezoneController* setTimezoneController = &setTimezoneControllerInstance;
 RebootController* reboot = &rebootInstance;
 CoolingController* coolingController = &coolingControllerInstance;
 WiFiResetController* wifiResetController = &wifiResetControllerInstance;
 DataDisplayController* dataDisplayController = &dataDisplayControllerInstance;
+ConfirmTimezoneController* confirmTimezoneController = &confirmTimezoneControllerInstance;
 Initialization* initialization = nullptr; // Created in setup after network service
 
 MenuActions* menuActions = nullptr; // Created in setup
@@ -84,9 +84,9 @@ static AdjustTimeView adjustTimeView(&displayManager);
 static CoolingView coolingView(&displayManager);
 static ProofingView proofingView(&displayManager);
 static RebootView rebootView(&displayManager);
-static SetTimezoneView setTimezoneView(&displayManager);
 static WiFiResetView wifiResetView(&displayManager);
 static DataDisplayView dataDisplayView(&displayManager);
+static ConfirmTimezoneView confirmTimezoneView(&displayManager);
 
 void setup() {
 #if DEBUG
@@ -121,9 +121,9 @@ void setup() {
     appContext.coolingView = &coolingView;
     appContext.proofingView = &proofingView;
     appContext.rebootView = &rebootView;
-    appContext.setTimezoneView = &setTimezoneView;
     appContext.wifiResetView = &wifiResetView;
     appContext.dataDisplayView = &dataDisplayView;
+    appContext.confirmTimezoneView = &confirmTimezoneView;
 
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);
@@ -132,11 +132,17 @@ void setup() {
     static Initialization initializationInstance(&appContext);
     initialization = &initializationInstance;
     
-    static MenuActions menuActionsInstance(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, setTimezoneController, reboot, dataDisplayController);
+    static MenuActions menuActionsInstance(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, reboot, dataDisplayController, confirmTimezoneController);
     menuActions = &menuActionsInstance;
     
     static Menu menuInstance(&appContext, menuActions);
     menu = &menuInstance;
+    
+    // Initialize dynamic timezone menus
+    initializeAllMenus();
+    
+    // Set the menu instance in MenuActions for context-aware actions
+    menuActions->setMenu(&menuInstance);
 
     initialization->setNextScreen(menu);
     screensManager.setActiveScreen(initialization);

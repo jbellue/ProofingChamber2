@@ -22,6 +22,10 @@ public:
     void begin();
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
+    
+    // Expose current menu state for context-aware actions
+    MenuItem* getCurrentMenu() const { return _currentMenu; }
+    uint8_t getCurrentMenuIndex() const { return _menuIndex; }
 
 private:
     MenuItem* _currentMenu;

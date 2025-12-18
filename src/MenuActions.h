@@ -8,13 +8,18 @@
 #include "screens/controllers/CoolingController.h"
 #include "screens/controllers/WiFiResetController.h"
 #include "screens/controllers/RebootController.h"
-#include "screens/controllers/SetTimezoneController.h"
 #include "screens/controllers/DataDisplayController.h"
+#include "screens/controllers/ConfirmTimezoneController.h"
 #include "AppContextDecl.h"
+
+class Menu;  // Forward declaration
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* proofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* reboot, DataDisplayController* dataDisplayController);
+    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* proofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, RebootController* reboot, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController);
+    
+    // Set the Menu instance for context-aware actions
+    void setMenu(Menu* menu) { _menu = menu; }
     void proofNowAction();
     void proofInAction();
     void proofAtAction();
@@ -28,8 +33,10 @@ public:
     void adjustColdHigherLimit();
     void resetWiFiAndReboot();
     void reboot();
-    void adjustTimezone();
     void showDataDisplay();
+    
+    // Generic timezone selection handler - uses Menu context to determine selection
+    void selectTimezoneByData();
     
     // Static variables for callback context
     static SimpleTime s_proofInTime;
@@ -37,14 +44,18 @@ public:
     
 private:
     AppContext* _ctx;
+    Menu* _menu = nullptr;
     AdjustTimeController* _adjustTimeController;
     AdjustValueController* _adjustValueController;
     ProofingController* _proofingController;
     CoolingController* _coolingController;
     WiFiResetController* _wifiResetController;
-    SetTimezoneController* _setTimezoneController;
     RebootController* _rebootController;
     DataDisplayController* _dataDisplayController;
+    ConfirmTimezoneController* _confirmTimezoneController;
+    
+    // Helper function to save timezone
+    void saveTimezone(const char* posixString);
 };
 
 #endif

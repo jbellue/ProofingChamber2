@@ -2,6 +2,8 @@
 #include "MenuActions.h"
 #include "DebugUtils.h"
 #include "screens/controllers/AdjustTimeController.h"
+#include "screens/Menu.h"
+#include "Timezones.h"
 
 // Static member definitions
 SimpleTime MenuActions::s_proofInTime(0, 0, 0);
@@ -9,7 +11,7 @@ SimpleTime MenuActions::s_proofAtTime(0, 0, 0);
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
         AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
-        WiFiResetController* wifiResetController, SetTimezoneController* setTimezoneController, RebootController* rebootController, DataDisplayController* dataDisplayController) :
+        WiFiResetController* wifiResetController, RebootController* rebootController, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController) :
     _ctx(ctx),
     _rebootController(rebootController),
     _adjustValueController(adjustValueController),
@@ -17,8 +19,8 @@ MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueCont
     _proofingController(ProofingController),
     _coolingController(coolingController),
     _wifiResetController(wifiResetController),
-    _setTimezoneController(setTimezoneController),
-    _dataDisplayController(dataDisplayController)
+    _dataDisplayController(dataDisplayController),
+    _confirmTimezoneController(confirmTimezoneController)
 {}
 
 void MenuActions::proofNowAction() {
@@ -111,14 +113,6 @@ void MenuActions::reboot() {
     _rebootController->setNextScreen(menu);
 }
 
-void MenuActions::adjustTimezone() {
-    if (!_ctx || !_ctx->screens || !_setTimezoneController) return;
-    BaseController* menu = _ctx->screens->getActiveScreen();
-    if (!menu) return;
-    menu->setNextScreen(_setTimezoneController);
-    _setTimezoneController->setNextScreen(menu);
-}
-
 void MenuActions::showDataDisplay() {
     if (!_ctx || !_ctx->screens || !_dataDisplayController) return;
     BaseController* menu = _ctx->screens->getActiveScreen();
@@ -151,4 +145,69 @@ time_t MenuActions::calculateProofAtEndTime() {
     targetTime.tm_sec = 0;
     // Normalize date in case of overflow
     return mktime(&targetTime);
+}
+
+void MenuActions::saveTimezone(const char* posixString) {
+    if (!_ctx || !_ctx->storage) return;
+    _ctx->storage->writeString("/timezone.txt", posixString);
+    DEBUG_PRINT("Timezone saved: ");
+    DEBUG_PRINTLN(posixString);
+}
+
+// Generic timezone selection handler - uses Menu context to determine which timezone was selected
+void MenuActions::selectTimezoneByData() {
+    if (!_menu) {
+        DEBUG_PRINTLN("Menu context not set");
+        return;
+    }
+    
+    // Get the current menu and selected index
+    Menu::MenuItem* currentMenu = _menu->getCurrentMenu();
+    uint8_t selectedIndex = _menu->getCurrentMenuIndex();
+    
+    if (!currentMenu) {
+        DEBUG_PRINTLN("Invalid menu context");
+        return;
+    }
+    
+    // Find which continent menu we're in by matching the pointer
+    extern Menu::MenuItem* timezoneMenu;
+    
+    int continentIndex = -1;
+    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+        if (timezoneMenu && timezoneMenu[c].subMenu == currentMenu) {
+            continentIndex = c;
+            break;
+        }
+    }
+    
+    if (continentIndex < 0) {
+        DEBUG_PRINTLN("Could not determine continent from menu context");
+        return;
+    }
+    
+    const timezones::Continent& continent = timezones::CONTINENTS[continentIndex];
+    
+    // The last item is "Retour", so if we selected it, don't do anything
+    if (selectedIndex >= continent.count) {
+        return;
+    }
+    
+    // Show confirmation dialog
+    if (!_ctx || !_ctx->screens || !_confirmTimezoneController) {
+        return;
+    }
+    
+    const timezones::Timezone& tz = continent.timezones[selectedIndex];
+    static char tzConfirmName[64];
+    snprintf(tzConfirmName, sizeof(tzConfirmName), "%s/%s", continent.name, tz.name);
+    _confirmTimezoneController->setTimezoneInfo(tzConfirmName, tz.posixString);
+    
+    BaseController* currentScreen = _ctx->screens->getActiveScreen();
+    if (currentScreen) {
+        DEBUG_PRINTLN("Navigating to ConfirmTimezoneController");
+        currentScreen->setNextScreen(_confirmTimezoneController);
+        _confirmTimezoneController->setNextScreen(currentScreen);
+        // No forced transition; let ScreensManager switch after action returns
+    }
 }

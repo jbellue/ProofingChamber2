@@ -27,6 +27,8 @@ void Menu::begin() {
 // Initialize the menu
 void Menu::beginImpl() {
     DEBUG_PRINTLN("Beginning Menu");
+    // Ensure dynamic menus (like timezones) are initialized
+    initializeAllMenus();
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
         _menuIndex = 0;
