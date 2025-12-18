@@ -3,6 +3,8 @@
 #include "../../DebugUtils.h"
 #include "../../services/IStorage.h"
 #include "SafePtr.h"
+#include "../../screens/Menu.h"
+#include "../../MenuItems.h"
 
 ConfirmTimezoneController::ConfirmTimezoneController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr) {}
@@ -48,7 +50,13 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
             DEBUG_PRINT("Timezone confirmed and saved: ");
             DEBUG_PRINTLN(_timezonePosixString);
         }
-        // Return to menu
+        // Return to Advanced settings menu
+        BaseController* next = getNextScreen();
+        Menu* menu = static_cast<Menu*>(next);
+        if (menu) {
+            menu->setCurrentMenu(moreSettingsMenu);
+        }
+        // Finish this screen to trigger transition
         return false;
     }
     return true;

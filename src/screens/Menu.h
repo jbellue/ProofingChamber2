@@ -27,6 +27,9 @@ public:
     MenuItem* getCurrentMenu() const { return _currentMenu; }
     uint8_t getCurrentMenuIndex() const { return _menuIndex; }
 
+    // Programmatically set the current menu (e.g., return to Advanced settings)
+    void setCurrentMenu(MenuItem* menu);
+
 private:
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;

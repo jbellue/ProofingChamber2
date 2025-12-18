@@ -170,3 +170,13 @@ bool Menu::handleMenuSelection() {
     }
     return true;
 }
+
+void Menu::setCurrentMenu(MenuItem* menu) {
+    if (!menu) return;
+    _currentMenu = menu;
+    _menuIndex = 0;
+    _scrollOffset = 0;
+    _currentMenuSize = getCurrentMenuSize();
+    _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+    drawMenu();
+}
