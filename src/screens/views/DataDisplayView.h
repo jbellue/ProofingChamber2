@@ -10,6 +10,7 @@ public:
     bool drawTemperature(float temperatureC);
     bool drawTime(const tm &timeinfo);
     void drawButtons();
+    void drawTimeZone(const char* timezone);
 private:
     void drawTitle();
     float _lastTemperature = -273.15;

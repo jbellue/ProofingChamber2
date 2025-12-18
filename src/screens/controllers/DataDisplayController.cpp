@@ -1,6 +1,7 @@
 #include "DataDisplayController.h"
 #include "../views/DataDisplayView.h"
 #include "DebugUtils.h"
+#include "services/IStorage.h"
 #include "../../SafePtr.h"
 
 void DataDisplayController::beginImpl() {
@@ -10,6 +11,13 @@ void DataDisplayController::beginImpl() {
     AppContext* ctx = getContext();
     _view = ctx->dataDisplayView;
     _view->start();
+    char buffer[50] = {0};
+    services::IStorage* storage = ctx->storage;
+    if (storage) {
+        storage->readString("/timezone.txt", buffer, sizeof(buffer));
+        _view->drawTimeZone(buffer);
+    }
+    _view->sendBuffer();
     getInputManager()->slowTemperaturePolling(false);
 }
 
@@ -29,6 +37,8 @@ bool DataDisplayController::update(bool forceRedraw) {
         _lastUpdateTime = now;
         forceRedraw |= _view->drawTemperature(currentTemp);
         forceRedraw |= _view->drawTime(tm_now);
+
+        services::IStorage* storage = getContext()->storage;
     }
     if (forceRedraw) {
         _view->sendBuffer();

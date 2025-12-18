@@ -7,8 +7,9 @@
 ConfirmTimezoneController::ConfirmTimezoneController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr) {}
 
-void ConfirmTimezoneController::setTimezoneInfo(const char* displayName, const char* posixString) {
-    _timezoneDisplayName = displayName;
+void ConfirmTimezoneController::setTimezoneInfo(const char* continent, const char* tzName, const char* posixString) {
+    _timezoneContinentName = continent;
+    _timezoneDisplayName = tzName;
     _timezonePosixString = posixString;
 }
 
@@ -21,7 +22,7 @@ void ConfirmTimezoneController::beginImpl() {
     _onCancelButton = true;
     
     if (_view && _timezoneDisplayName) {
-        _view->setTimezone(_timezoneDisplayName);
+        _view->setTimezone(_timezoneContinentName, _timezoneDisplayName);
         _view->start();
         _view->sendBuffer();
     }

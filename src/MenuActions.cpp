@@ -200,8 +200,7 @@ void MenuActions::selectTimezoneByData() {
     
     const timezones::Timezone& tz = continent.timezones[selectedIndex];
     static char tzConfirmName[64];
-    snprintf(tzConfirmName, sizeof(tzConfirmName), "%s/%s", continent.name, tz.name);
-    _confirmTimezoneController->setTimezoneInfo(tzConfirmName, tz.posixString);
+    _confirmTimezoneController->setTimezoneInfo(continent.name, tz.name, tz.posixString);
     
     BaseController* currentScreen = _ctx->screens->getActiveScreen();
     if (currentScreen) {

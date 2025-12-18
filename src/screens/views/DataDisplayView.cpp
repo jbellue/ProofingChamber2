@@ -21,6 +21,26 @@ void DataDisplayView::reset() {
     _lastMinute = -1;
 }
 
+void DataDisplayView::drawTimeZone(const char* timezone) {
+    _display->setFont(u8g2_font_t0_11_tf);
+    const uint8_t screenWidth = _display->getDisplayWidth();
+    const uint8_t tzY = 38;
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t height = ascent - _display->getDescent();
+
+    // Measure string width using UTF-8-aware width
+    const uint8_t width = _display->getUTF8Width(timezone);
+
+    // Clear the entire line area to avoid artifacts
+    _display->setDrawColor(0);
+    _display->drawBox(0, tzY - ascent, screenWidth, height);
+    _display->setDrawColor(1);
+
+    // Center if it fits; otherwise left-align at 0
+    uint8_t tzX = (width < screenWidth) ? (uint8_t)((screenWidth - width) / 2) : 0;
+    _display->drawUTF8(tzX, tzY, timezone);
+}
+
 bool DataDisplayView::drawTemperature(float temperatureC) {
     if (abs(_lastTemperature - temperatureC) < 0.1) {
         return false; // No significant change, skip redraw
@@ -32,7 +52,7 @@ bool DataDisplayView::drawTemperature(float temperatureC) {
     const uint8_t tempWidth = _display->getUTF8Width("99.9°C");
     const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
     const uint8_t tempX = (_display->getDisplayWidth() - tempWidth) / 2;
-    const uint8_t tempY = 42;
+    const uint8_t tempY = 49;
 
     _display->setDrawColor(0);
     _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
@@ -55,7 +75,7 @@ bool DataDisplayView::drawTime(const tm &now) {
     const uint8_t timeWidth = _display->getUTF8Width(timeBuffer);
     const uint8_t timeHeight = _display->getAscent() - _display->getDescent();
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
-    const uint8_t timeY = 26;
+    const uint8_t timeY = 23;
 
     _display->setDrawColor(0);
     _display->drawBox(timeX, timeY - _display->getAscent(), timeWidth, timeHeight);
