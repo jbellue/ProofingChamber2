@@ -6,8 +6,10 @@
 #include "SafePtr.h"
 // Need the concrete service definition to call methods like autoConnect()/configureNtp()
 #include "../services/INetworkService.h"
+// Storage interface to retrieve timezone configuration
+#include "../services/IStorage.h"
 
-Initialization::Initialization(AppContext* ctx) : BaseController(ctx), _display(nullptr), _networkService(nullptr)
+Initialization::Initialization(AppContext* ctx) : BaseController(ctx), _display(nullptr), _networkService(nullptr), _storage(nullptr)
 {}
 
 void Initialization::begin() {
@@ -19,6 +21,7 @@ void Initialization::beginImpl() {
     if (ctx) {
         if (!_display) _display = SafePtr::resolve(ctx->display);
         if (!_networkService) _networkService = SafePtr::resolve(ctx->networkService);
+        if (!_storage) _storage = SafePtr::resolve(ctx->storage);
     }
     _display->clear();
 }
@@ -62,8 +65,11 @@ void Initialization::drawScreen() {
     _display->setCursor(0, 58);
 
     // Configure NTP via network service
-    const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone
-    _networkService->configureNtp(timezone, "pool.ntp.org", "time.nist.gov");
+    const char* defaultTimezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone
+    char timezoneBuf[64];
+    _storage->readString("/timezone.txt", timezoneBuf, sizeof(timezoneBuf), defaultTimezone);
+ 
+    _networkService->configureNtp(timezoneBuf, "pool.ntp.org", "time.nist.gov");
     DEBUG_PRINT("Waiting for NTP time sync");
     const unsigned long timeout = millis() + 30000; // 30 sec timeout
     while (!_networkService->isTimeSyncReady(1000000000)) {

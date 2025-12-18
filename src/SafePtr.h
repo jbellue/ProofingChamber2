@@ -4,10 +4,12 @@
 #include "ITemperatureController.h"
 #include "IDisplayManager.h"
 #include "services/INetworkService.h"
+#include "services/IStorage.h"
 #include "NullInputManager.h"
 #include "NullTemperatureController.h"
 #include "NullDisplayManager.h"
 #include "NullNetworkService.h"
+#include "NullStorage.h"
 
 /**
  * Helper class for safe pointer resolution using Null Object Pattern
@@ -46,6 +48,13 @@ public:
     static services::INetworkService* resolve(services::INetworkService* ptr) {
         if (ptr == nullptr) {
             return &services::NullNetworkService::getInstance();
+        }
+        return ptr;
+    }
+
+    static services::IStorage* resolve(services::IStorage* ptr) {
+        if (ptr == nullptr) {
+            return &services::NullStorage::getInstance();
         }
         return ptr;
     }
