@@ -34,10 +34,6 @@ private:
     uint8_t _currentMenuSize = 0;
     
     uint8_t _selectionYPos = 0;
-    uint8_t _targetYPos = 0;
-    uint8_t _animationStartYPos = 0;
-    unsigned long _animationStartTime = 0;
-    static const uint16_t ANIMATION_DURATION_MS = 70;  // fixed short duration
 
     static const uint8_t MAX_VISIBLE_ITEMS = 4;
     static const uint8_t MENU_ITEM_HEIGHT = 16;
