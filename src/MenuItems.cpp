@@ -97,7 +97,7 @@ namespace {
                 
                 if (isCurrent) {
                     // Allocate string with checkmark for current timezone
-                    // Space (1 byte) + UTF-8 checkmark "✓" (3 bytes) + null terminator (1 byte) = 5 extra bytes
+                    // Add space (1 byte) + UTF-8 checkmark "✓" (3 bytes) + null terminator (1 byte)
                     // Note: This memory is intentionally not freed as menu items persist for app lifetime
                     size_t nameLen = strlen(continent.timezones[i].name);
                     char* markedName = new char[nameLen + 5];
