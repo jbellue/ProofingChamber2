@@ -4,6 +4,9 @@
 #include "icons.h"
 #include "MenuActions.h"
 
+// Forward declaration for AppContext
+struct AppContext;
+
 // Initialize dynamic timezone menus (call once at startup)
 void initializeAllMenus(AppContext* ctx = nullptr);
 

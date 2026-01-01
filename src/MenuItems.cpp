@@ -97,9 +97,10 @@ namespace {
                 
                 if (isCurrent) {
                     // Allocate string with checkmark for current timezone
-                    // Using UTF-8 checkmark: ✓ (U+2713)
+                    // Using UTF-8 checkmark: ✓ (U+2713) = 3 bytes + 1 space + 1 null = 5 bytes
+                    // Note: This memory is intentionally not freed as menu items persist for app lifetime
                     size_t nameLen = strlen(continent.timezones[i].name);
-                    char* markedName = new char[nameLen + 6]; // " ✓" + name + null
+                    char* markedName = new char[nameLen + 5]; // name + " ✓" + null
                     strcpy(markedName, continent.timezones[i].name);
                     strcat(markedName, " \xE2\x9C\x93"); // UTF-8 checkmark
                     timezoneSubmenus[c][i].name = markedName;
