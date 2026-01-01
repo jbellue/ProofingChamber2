@@ -57,6 +57,7 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
             menu->setCurrentMenu(moreSettingsMenu);
         }
         // Finish this screen to trigger transition
+        // TODO apply the timezone change immediately
         return false;
     }
     return true;

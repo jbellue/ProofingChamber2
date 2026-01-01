@@ -14,6 +14,7 @@ namespace {
     static bool timezoneMenusInitialized = false;
 
     void initializeTimezoneMenus() {
+        //TODO automatically select current timezone on initialization
         if (timezoneMenusInitialized) return;
 
         // Allocate array of pointers to timezone menus (one per continent)
