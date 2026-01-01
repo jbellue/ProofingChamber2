@@ -5,3 +5,9 @@
 .vscode/ipch
 .vscode/extensions.json
 .vscode/settings.json
+
+# Test binaries
+test/*_bin
+test_*_bin
+*.o
+*.out
