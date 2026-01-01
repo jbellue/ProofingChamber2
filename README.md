@@ -68,7 +68,7 @@ Navigate with rotary encoder, select with push button:
    - **Avancés** (Advanced Settings)
      - Données (Display current temperature)
      - Reset du WiFi (Reset WiFi & reboot)
-     - Fuseau horaire (Timezone - TODO)
+     - Fuseau horaire (Timezone)
      - Redémarrer (Reboot)
 
 ### Data Storage

@@ -24,8 +24,7 @@ void Menu::begin() {
 // Initialize the menu
 void Menu::beginImpl() {
     DEBUG_PRINTLN("Beginning Menu");
-    // Ensure dynamic menus (like timezones) are initialized
-    initializeAllMenus();
+    // Dynamic menus (like timezones) are initialized in main.cpp with proper AppContext
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
         _menuIndex = 0;
