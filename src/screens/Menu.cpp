@@ -86,11 +86,15 @@ void Menu::drawScrollbar() {
     
     // Calculate scrollbar dimensions
     const uint8_t scrollbarTrackHeight = displayHeight - (2 * SCROLLBAR_Y_MARGIN);
-    const uint8_t scrollbarHeight = max((uint8_t)4, (uint8_t)((MAX_VISIBLE_ITEMS * scrollbarTrackHeight) / _currentMenuSize));
+    // Use uint16_t to prevent overflow in multiplication before division
+    const uint16_t heightCalc = (uint16_t)MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize;
+    const uint8_t scrollbarHeight = max((uint8_t)4, (uint8_t)heightCalc);
     
     // Calculate scrollbar position based on the highlighted item
+    // Safety: _currentMenuSize > MAX_VISIBLE_ITEMS (>= 5), so (_currentMenuSize - 1) >= 4
     const uint8_t maxScrollRange = scrollbarTrackHeight - scrollbarHeight;
-    const uint8_t scrollbarY = SCROLLBAR_Y_MARGIN + ((_menuIndex * maxScrollRange) / (_currentMenuSize - 1));
+    const uint16_t posCalc = (uint16_t)_menuIndex * maxScrollRange / (_currentMenuSize - 1);
+    const uint8_t scrollbarY = SCROLLBAR_Y_MARGIN + (uint8_t)posCalc;
     
     // Calculate X position (right side of display)
     const uint8_t scrollbarX = displayWidth - SCROLLBAR_WIDTH - SCROLLBAR_X_OFFSET;
