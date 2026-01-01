@@ -183,3 +183,20 @@ Uses Null Object Pattern via `SafePtr` to prevent null pointer crashes:
 IInputManager* input = SafePtr::resolve(ctx->input);
 // Safe! Returns NullInputManager if ctx->input is nullptr
 ```
+
+### Testing
+
+The project includes comprehensive unit tests that run on the host machine without requiring ESP32 hardware. See [test/README.md](test/README.md) for details.
+
+To run all tests:
+```bash
+./test/run_tests.sh
+```
+
+**Test Coverage:**
+- SimpleTime: 26 tests covering time manipulation and comparison logic
+- OptionalBool: 17 tests for optional boolean state management
+- SafePtr: 6 tests for null pointer safety
+- Graph: 17 tests for data graphing logic
+
+Total: **66 tests**, all passing ✓
