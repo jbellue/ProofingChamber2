@@ -49,6 +49,12 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
             ctx->storage->writeString("/timezone.txt", _timezonePosixString);
             DEBUG_PRINT("Timezone confirmed and saved: ");
             DEBUG_PRINTLN(_timezonePosixString);
+            
+            // Apply the timezone change immediately without requiring a reboot
+            if (ctx->networkService) {
+                ctx->networkService->configureNtp(_timezonePosixString, "pool.ntp.org", "time.nist.gov");
+                DEBUG_PRINTLN("Timezone applied immediately");
+            }
         }
         // Return to Advanced settings menu
         BaseController* next = getNextScreen();
@@ -57,7 +63,6 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
             menu->setCurrentMenu(moreSettingsMenu);
         }
         // Finish this screen to trigger transition
-        // TODO apply the timezone change immediately
         return false;
     }
     return true;

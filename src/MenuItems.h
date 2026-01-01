@@ -5,7 +5,7 @@
 #include "MenuActions.h"
 
 // Initialize dynamic timezone menus (call once at startup)
-void initializeAllMenus();
+void initializeAllMenus(AppContext* ctx = nullptr);
 
 extern Menu::MenuItem mainMenu[];
 extern Menu::MenuItem coolMenu[];

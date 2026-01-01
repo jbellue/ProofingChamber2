@@ -1,5 +1,8 @@
 #include "MenuItems.h"
 #include "Timezones.h"
+#include "AppContext.h"
+#include "services/IStorage.h"
+#include <cstring>
 
 // MenuActions instance will be set at runtime; we use a pointer
 extern MenuActions* menuActions;
@@ -12,10 +15,53 @@ namespace {
     static Menu::MenuItem** timezoneSubmenus = nullptr;
     static Menu::MenuItem* timezoneMenuAllocated = nullptr;
     static bool timezoneMenusInitialized = false;
+    
+    // Helper function to find the current timezone based on saved posix string
+    // Returns the continent index and timezone index within that continent
+    // Returns {-1, -1} if not found
+    struct TimezoneLocation {
+        int continentIndex;
+        int timezoneIndex;
+    };
+    
+    TimezoneLocation findCurrentTimezone(const char* posixString) {
+        TimezoneLocation result = {-1, -1};
+        if (!posixString || posixString[0] == '\0') {
+            // Return default timezone (Paris) if no timezone is saved
+            result.continentIndex = timezones::DEFAULT_CONTINENT_INDEX;
+            result.timezoneIndex = timezones::DEFAULT_TIMEZONE_INDEX;
+            return result;
+        }
+        
+        // Search through all continents and timezones
+        for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+            const timezones::Continent& continent = timezones::CONTINENTS[c];
+            for (int i = 0; i < continent.count; i++) {
+                if (strcmp(continent.timezones[i].posixString, posixString) == 0) {
+                    result.continentIndex = c;
+                    result.timezoneIndex = i;
+                    return result;
+                }
+            }
+        }
+        
+        // If not found, return default
+        result.continentIndex = timezones::DEFAULT_CONTINENT_INDEX;
+        result.timezoneIndex = timezones::DEFAULT_TIMEZONE_INDEX;
+        return result;
+    }
 
-    void initializeTimezoneMenus() {
-        //TODO automatically select current timezone on initialization
+    void initializeTimezoneMenus(AppContext* ctx) {
         if (timezoneMenusInitialized) return;
+        
+        // Try to read current timezone from storage
+        char currentTimezone[64] = "";
+        if (ctx && ctx->storage) {
+            ctx->storage->readString("/timezone.txt", currentTimezone, sizeof(currentTimezone), "");
+        }
+        
+        // Find which timezone is currently selected
+        TimezoneLocation currentLoc = findCurrentTimezone(currentTimezone);
 
         // Allocate array of pointers to timezone menus (one per continent)
         timezoneSubmenus = new Menu::MenuItem*[timezones::CONTINENT_COUNT];
@@ -46,7 +92,21 @@ namespace {
             
             // Populate menu items from timezone data
             for (int i = 0; i < continent.count; i++) {
-                timezoneSubmenus[c][i].name = continent.timezones[i].name;
+                // Check if this is the currently selected timezone
+                bool isCurrent = (c == currentLoc.continentIndex && i == currentLoc.timezoneIndex);
+                
+                if (isCurrent) {
+                    // Allocate string with checkmark for current timezone
+                    // Using UTF-8 checkmark: ✓ (U+2713)
+                    size_t nameLen = strlen(continent.timezones[i].name);
+                    char* markedName = new char[nameLen + 6]; // " ✓" + name + null
+                    strcpy(markedName, continent.timezones[i].name);
+                    strcat(markedName, " \xE2\x9C\x93"); // UTF-8 checkmark
+                    timezoneSubmenus[c][i].name = markedName;
+                } else {
+                    timezoneSubmenus[c][i].name = continent.timezones[i].name;
+                }
+                
                 timezoneSubmenus[c][i].icon = nullptr;
                 timezoneSubmenus[c][i].subMenu = nullptr;
                 // All timezone items use the same generic handler that uses timezone data
@@ -68,8 +128,8 @@ namespace {
 }
 
 // Call this from MenuItems initialization
-void initializeAllMenus() {
-    initializeTimezoneMenus();
+void initializeAllMenus(AppContext* ctx) {
+    initializeTimezoneMenus(ctx);
     
     // Set up timezone submenu pointers after initialization
     for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {

@@ -111,7 +111,6 @@ uint8_t DisplayManager::drawTitle(const char* title, const uint8_t y) {
     const uint8_t lineHeight = _display.getAscent() - _display.getDescent() + 2; // Line height (font height + spacing)
     const uint8_t displayWidth = _display.getDisplayWidth(); // Get the display width
 
-    // TODO: verify this...
     // Split the title into lines based on EOL or CR
     char titleCopy[100]; // Copy the title to a mutable buffer
     strncpy(titleCopy, title, sizeof(titleCopy));

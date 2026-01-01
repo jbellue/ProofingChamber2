@@ -139,7 +139,7 @@ void setup() {
     menu = &menuInstance;
     
     // Initialize dynamic timezone menus
-    initializeAllMenus();
+    initializeAllMenus(&appContext);
     
     // Set the menu instance in MenuActions for context-aware actions
     menuActions->setMenu(&menuInstance);
