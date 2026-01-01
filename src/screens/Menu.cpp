@@ -75,28 +75,28 @@ bool Menu::update(bool forceRedraw) {
     return true;
 }
 
-// Draws a small filled arrow (up or down) using horizontal lines for pixel-perfect symmetry
-void Menu::drawTriangle(const bool up, const uint8_t centerX, const uint8_t topY, const uint8_t height) {
-    for (uint8_t row = 0; row < height; ++row) {
-        const uint8_t y = up ? (topY + row)          // grow downward for up arrow
-                              : (topY + (height - 1 - row)); // grow upward for down arrow
-        const uint8_t startX = centerX - row;
-        const uint8_t width = row * 2 + 1;
-        _display->drawHLine(startX, y, width);
+void Menu::drawScrollbar() {
+    // Only draw scrollbar if there are more items than can be displayed
+    if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
+        return;
     }
-}
-
-void Menu::drawNavigationHints(const uint8_t visibleEnd) {
-    const uint8_t arrowXPosition = _display->getDisplayWidth() - SCROLL_ARROW_X_OFFSET;
-
-    if (_scrollOffset > 0) {
-        // Up arrow at top
-        drawTriangle(true, arrowXPosition, SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
-    }
-    if (visibleEnd < _currentMenuSize) {
-        // Down arrow at bottom
-        drawTriangle(false, arrowXPosition, _display->getDisplayHeight() - TRIANGLE_HEIGHT - SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
-    }
+    
+    const uint8_t displayHeight = _display->getDisplayHeight();
+    const uint8_t displayWidth = _display->getDisplayWidth();
+    
+    // Calculate scrollbar dimensions
+    const uint8_t scrollbarTrackHeight = displayHeight - (2 * SCROLLBAR_Y_MARGIN);
+    const uint8_t scrollbarHeight = max((uint8_t)4, (uint8_t)((MAX_VISIBLE_ITEMS * scrollbarTrackHeight) / _currentMenuSize));
+    
+    // Calculate scrollbar position based on the highlighted item
+    const uint8_t maxScrollRange = scrollbarTrackHeight - scrollbarHeight;
+    const uint8_t scrollbarY = SCROLLBAR_Y_MARGIN + ((_menuIndex * maxScrollRange) / (_currentMenuSize - 1));
+    
+    // Calculate X position (right side of display)
+    const uint8_t scrollbarX = displayWidth - SCROLLBAR_WIDTH - SCROLLBAR_X_OFFSET;
+    
+    // Draw the scrollbar
+    _display->drawBox(scrollbarX, scrollbarY, SCROLLBAR_WIDTH, scrollbarHeight);
 }
 
 // Helper functions
@@ -125,7 +125,7 @@ void Menu::drawMenu() {
     _display->drawRBox(MENU_SELECTION_X_OFFSET, _selectionYPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
 
-    drawNavigationHints(visibleEnd);
+    drawScrollbar();
 
     _display->sendBuffer();
 }
