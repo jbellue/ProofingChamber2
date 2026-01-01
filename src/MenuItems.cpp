@@ -71,7 +71,8 @@ namespace {
         timezoneMenuAllocated = new Menu::MenuItem[timezones::CONTINENT_COUNT + 2];
         for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
             timezoneMenuAllocated[c].name = timezones::CONTINENTS[c].name;
-            timezoneMenuAllocated[c].icon = nullptr;
+            // Show icon in front of currently selected continent
+            timezoneMenuAllocated[c].icon = (c == currentLoc.continentIndex) ? iconCheck : nullptr;
             timezoneMenuAllocated[c].subMenu = nullptr; // set after submenus are created
             timezoneMenuAllocated[c].action = nullptr;
         }
@@ -94,21 +95,8 @@ namespace {
             for (int i = 0; i < continent.count; i++) {
                 // Check if this is the currently selected timezone
                 bool isCurrent = (c == currentLoc.continentIndex && i == currentLoc.timezoneIndex);
-                
-                if (isCurrent) {
-                    // Allocate string with checkmark for current timezone
-                    // Add space (1 byte) + UTF-8 checkmark "✓" (3 bytes) + null terminator (1 byte)
-                    // Note: This memory is intentionally not freed as menu items persist for app lifetime
-                    size_t nameLen = strlen(continent.timezones[i].name);
-                    char* markedName = new char[nameLen + 5];
-                    strcpy(markedName, continent.timezones[i].name);
-                    strcat(markedName, " \xE2\x9C\x93"); // UTF-8 checkmark
-                    timezoneSubmenus[c][i].name = markedName;
-                } else {
-                    timezoneSubmenus[c][i].name = continent.timezones[i].name;
-                }
-                
-                timezoneSubmenus[c][i].icon = nullptr;
+                timezoneSubmenus[c][i].name = continent.timezones[i].name;
+                timezoneSubmenus[c][i].icon = isCurrent ? iconCheck : nullptr;
                 timezoneSubmenus[c][i].subMenu = nullptr;
                 // All timezone items use the same generic handler that uses timezone data
                 timezoneSubmenus[c][i].action = &MenuActions::selectTimezoneByData;
@@ -143,6 +131,34 @@ void initializeAllMenus(AppContext* ctx) {
     // Ensure the "Fuseau horaire" item points to the initialized timezone menu
     // Item index 2 in moreSettingsMenu corresponds to "Fuseau horaire"
     moreSettingsMenu[2].subMenu = timezoneMenu;
+}
+
+// Update the check icons to match current saved timezone selection
+void refreshTimezoneSelectionIcons(AppContext* ctx) {
+    // Ensure menus exist
+    if (!timezoneMenusInitialized) {
+        initializeTimezoneMenus(ctx);
+    }
+    // Read current timezone
+    char currentTimezone[64] = "";
+    if (ctx && ctx->storage) {
+        ctx->storage->readString("/timezone.txt", currentTimezone, sizeof(currentTimezone), "");
+    }
+    // Find indices
+    TimezoneLocation currentLoc = findCurrentTimezone(currentTimezone);
+    // Update continent icons
+    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+        if (timezoneMenuAllocated) {
+            timezoneMenuAllocated[c].icon = (c == currentLoc.continentIndex) ? iconCheck : nullptr;
+        }
+        // Update timezone icons per continent
+        const timezones::Continent& continent = timezones::CONTINENTS[c];
+        if (timezoneSubmenus) {
+            for (int i = 0; i < continent.count; i++) {
+                timezoneSubmenus[c][i].icon = (c == currentLoc.continentIndex && i == currentLoc.timezoneIndex) ? iconCheck : nullptr;
+            }
+        }
+    }
 }
 
 Menu::MenuItem mainMenu[] = {

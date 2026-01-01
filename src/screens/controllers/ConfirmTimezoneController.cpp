@@ -55,6 +55,8 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
                 ctx->networkService->configureNtp(_timezonePosixString, "pool.ntp.org", "time.nist.gov");
                 DEBUG_PRINTLN("Timezone applied immediately");
             }
+            // Refresh menu icons to reflect the new selection
+            refreshTimezoneSelectionIcons(ctx);
         }
         // Return to Advanced settings menu
         BaseController* next = getNextScreen();

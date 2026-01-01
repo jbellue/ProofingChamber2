@@ -17,3 +17,6 @@ extern Menu::MenuItem moreSettingsMenu[];
 extern Menu::MenuItem hotMenu[];
 extern Menu::MenuItem coldMenu[];
 extern Menu::MenuItem* timezoneMenu;
+
+// Refresh icons to reflect the saved timezone selection without rebuilding menus
+void refreshTimezoneSelectionIcons(AppContext* ctx = nullptr);
