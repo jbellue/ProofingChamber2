@@ -82,6 +82,8 @@ Current pin assignments (defined in `main.cpp`):
 - ENCODER_DT: 4
 - ENCODER_SW: 10
 
+Note: The OLED display uses hardware I2C with default ESP32-C3 pins (typically GPIO8 for SDA and GPIO9 for SCL)
+
 ## Build and Development
 
 ### Building
