@@ -91,6 +91,10 @@ public:
         // Silent no-op
     }
 
+    void drawVLine(uint8_t x, uint8_t y, uint8_t h) override {
+        // Silent no-op
+    }
+
     void setFontMode(uint8_t mode) override {
         // Silent no-op
     }

@@ -75,28 +75,34 @@ bool Menu::update(bool forceRedraw) {
     return true;
 }
 
-// Draws a small filled arrow (up or down) using horizontal lines for pixel-perfect symmetry
-void Menu::drawTriangle(const bool up, const uint8_t centerX, const uint8_t topY, const uint8_t height) {
-    for (uint8_t row = 0; row < height; ++row) {
-        const uint8_t y = up ? (topY + row)          // grow downward for up arrow
-                              : (topY + (height - 1 - row)); // grow upward for down arrow
-        const uint8_t startX = centerX - row;
-        const uint8_t width = row * 2 + 1;
-        _display->drawHLine(startX, y, width);
+void Menu::drawScrollbar() {
+    // Only draw scrollbar if there are more items than can be displayed
+    if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
+        return;
     }
-}
-
-void Menu::drawNavigationHints(const uint8_t visibleEnd) {
-    const uint8_t arrowXPosition = _display->getDisplayWidth() - SCROLL_ARROW_X_OFFSET;
-
-    if (_scrollOffset > 0) {
-        // Up arrow at top
-        drawTriangle(true, arrowXPosition, SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
-    }
-    if (visibleEnd < _currentMenuSize) {
-        // Down arrow at bottom
-        drawTriangle(false, arrowXPosition, _display->getDisplayHeight() - TRIANGLE_HEIGHT - SCROLL_ARROW_Y_OFFSET, TRIANGLE_HEIGHT);
-    }
+    
+    const uint8_t displayHeight = _display->getDisplayHeight();
+    const uint8_t displayWidth = _display->getDisplayWidth();
+    
+    // Calculate scrollbar dimensions
+    const uint8_t scrollbarTrackHeight = displayHeight - (2 * SCROLLBAR_Y_MARGIN);
+    // Use uint16_t to prevent overflow in multiplication before division
+    // Scrollbar height represents the proportion of visible items to total items
+    const uint16_t heightCalc = min((uint16_t)MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize, 20);
+    const uint8_t scrollbarHeight = min(scrollbarTrackHeight, max((uint8_t)4, (uint8_t)heightCalc));
+    
+    // Calculate scrollbar position based on the highlighted item
+    // Safety: _currentMenuSize > MAX_VISIBLE_ITEMS (>= 5), so (_currentMenuSize - 1) >= 4
+    const uint8_t maxScrollRange = scrollbarTrackHeight - scrollbarHeight;
+    const uint16_t posCalc = (uint16_t)_menuIndex * maxScrollRange / (_currentMenuSize - 1);
+    const uint8_t scrollbarY = SCROLLBAR_Y_MARGIN + (uint8_t)posCalc;
+    
+    // Calculate X position (right side of display)
+    const uint8_t scrollbarX = displayWidth - SCROLLBAR_WIDTH - SCROLLBAR_X_OFFSET;
+    
+    // Draw the scrollbar
+    _display->drawBox(scrollbarX, scrollbarY, SCROLLBAR_WIDTH, scrollbarHeight);
+    _display->drawVLine(scrollbarX + 1, SCROLLBAR_Y_MARGIN, scrollbarTrackHeight);
 }
 
 // Helper functions
@@ -125,7 +131,7 @@ void Menu::drawMenu() {
     _display->drawRBox(MENU_SELECTION_X_OFFSET, _selectionYPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
 
-    drawNavigationHints(visibleEnd);
+    drawScrollbar();
 
     _display->sendBuffer();
 }

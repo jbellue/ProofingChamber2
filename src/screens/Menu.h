@@ -51,9 +51,9 @@ private:
     static const uint8_t MENU_SELECTION_HEIGHT = 15;
     static const uint8_t MENU_SELECTION_RADIUS = 1;
 
-    static const uint8_t SCROLL_ARROW_X_OFFSET = 5;
-    static const uint8_t SCROLL_ARROW_Y_OFFSET = 2;
-    static const uint8_t TRIANGLE_HEIGHT = 4;
+    static const uint8_t SCROLLBAR_WIDTH = 3;
+    static const uint8_t SCROLLBAR_X_OFFSET = 2;
+    static const uint8_t SCROLLBAR_Y_MARGIN = 2;
 
     MenuActions* _menuActions;
     IDisplayManager* _display;
@@ -64,6 +64,5 @@ private:
     bool handleMenuSelection();
     void updateScrollOffset();
 
-    void drawNavigationHints(const uint8_t visibleEnd);
-    void drawTriangle(const bool up, const uint8_t yPos, const uint8_t xPos, const uint8_t height);
+    void drawScrollbar();
 };

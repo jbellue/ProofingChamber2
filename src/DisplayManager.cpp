@@ -85,6 +85,10 @@ void DisplayManager::drawHLine(uint8_t x, uint8_t y, uint8_t w) {
     _display.drawHLine(x, y, w);
 }
 
+void DisplayManager::drawVLine(uint8_t x, uint8_t y, uint8_t h) {
+    _display.drawVLine(x, y, h);
+}
+
 void DisplayManager::setFontMode(uint8_t mode) {
     _display.setFontMode(mode);
 }
