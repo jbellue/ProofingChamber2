@@ -12,7 +12,7 @@ ProofingChamber2 is an ESP32-based temperature controller for a bread proofing c
 - **Temperature Sensor**: DS18B20 (OneWire/Dallas Temperature)
 - **File System**: LittleFS
 - **Key Libraries**:
-  - U8g2: Display management
+  - U8G2: Display management
   - WiFiManager: WiFi configuration
   - OneWire/DallasTemperature: Temperature sensing
   - rotaryencoder: User input
