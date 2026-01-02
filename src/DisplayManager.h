@@ -26,6 +26,7 @@ public:
     void setFont(const uint8_t* font) override;
     void drawUTF8(uint8_t x, uint8_t y, const char* str) override;
     void drawHLine(uint8_t x, uint8_t y, uint8_t w) override;
+    void drawVLine(uint8_t x, uint8_t y, uint8_t h) override;
     void setFontMode(uint8_t mode) override;
     void setBitmapMode(uint8_t mode) override;
     void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override;

@@ -26,6 +26,7 @@ public:
     virtual void setFont(const uint8_t* font) = 0;
     virtual void drawUTF8(uint8_t x, uint8_t y, const char* str) = 0;
     virtual void drawHLine(uint8_t x, uint8_t y, uint8_t w) = 0;
+    virtual void drawVLine(uint8_t x, uint8_t y, uint8_t h) = 0;
     virtual void setFontMode(uint8_t mode) = 0;
     virtual void setBitmapMode(uint8_t mode) = 0;
     virtual void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) = 0;
