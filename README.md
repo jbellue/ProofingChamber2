@@ -186,11 +186,13 @@ IInputManager* input = SafePtr::resolve(ctx->input);
 
 ### Testing
 
-The project includes comprehensive unit tests that run on the host machine without requiring ESP32 hardware. See [test/README.md](test/README.md) for details.
+The project includes comprehensive unit tests that run on the host machine without requiring ESP32 hardware. Tests use PlatformIO with automatically managed dependencies (Unity and ArduinoFake). See [test/README.md](test/README.md) for details.
 
 To run all tests:
 ```bash
 ./test/run_tests.sh
+# or directly with PlatformIO:
+pio test -e native
 ```
 
 **Test Coverage:**

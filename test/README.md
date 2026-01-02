@@ -30,31 +30,26 @@ The easiest way to run all tests:
 ./test/run_tests.sh
 ```
 
-### Manual Compilation
+This script uses PlatformIO to automatically download dependencies (Unity and ArduinoFake) and run all tests.
 
-You can also compile and run individual tests:
+### Using PlatformIO Directly
+
+You can also run tests directly with PlatformIO:
 
 ```bash
-# SimpleTime tests
-g++ -std=c++11 -I lib/Unity/src -I src \
-    lib/Unity/src/unity.c test/test_SimpleTime.cpp src/SimpleTime.cpp \
-    -o test_SimpleTime_bin && ./test_SimpleTime_bin
+# Run all tests
+pio test -e native
 
-# OptionalBool tests
-g++ -std=c++11 -I lib/Unity/src -I src \
-    lib/Unity/src/unity.c test/test_OptionalBool.cpp \
-    -o test_OptionalBool_bin && ./test_OptionalBool_bin
+# Run with verbose output
+pio test -e native -v
 
-# SafePtr tests
-g++ -std=c++11 -I lib/Unity/src -I src \
-    lib/Unity/src/unity.c test/test_SafePtr.cpp \
-    -o test_SafePtr_bin && ./test_SafePtr_bin
-
-# Graph tests
-g++ -std=c++11 -I lib/Unity/src -I test -I src \
-    lib/Unity/src/unity.c test/test_Graph.cpp src/Graph.cpp \
-    -o test_Graph_bin && ./test_Graph_bin
+# Run specific test
+pio test -e native -f test_SimpleTime
 ```
+
+PlatformIO will automatically download and manage the test dependencies defined in `platformio.ini`:
+- `throwtheswitch/Unity@^2.6.0` - C unit testing framework
+- `fabiobatsilva/ArduinoFake@^0.4.0` - Arduino mocking framework
 
 ## Test Coverage
 
@@ -103,9 +98,12 @@ These components are better tested through integration tests on actual hardware 
 
 ## Requirements
 
-- GCC/G++ compiler with C++11 support
-- Unity test framework (installed in `lib/Unity/`)
-- FakeIt mocking framework (installed in `lib/FakeIt/` for future use)
+- PlatformIO (will automatically download dependencies)
+- GCC/G++ compiler with C++11 support (for native platform)
+
+Dependencies are automatically managed by PlatformIO via `lib_deps` in `platformio.ini`:
+- Unity 2.6.0+ (testing framework)
+- ArduinoFake 0.4.0+ (Arduino mocking framework)
 
 ## Future Improvements
 
