@@ -13,12 +13,12 @@ The tests use the Unity test framework and are organized as follows:
 
 ## Mocks
 
-Since some code depends on Arduino and hardware-specific libraries, mock implementations are provided in the `test/` directory:
+Since some code depends on hardware-specific libraries, minimal mock implementations are provided in the `test/` directory:
 
-- `mock_Arduino.h` / `mock_Arduino.cpp` - Mock Arduino functions (pinMode, digitalWrite, etc.)
-- `Arduino.h` - Symlink to mock_Arduino.h
-- `U8g2lib.h` - Mock U8G2 display library
+- `U8g2lib.h` - Mock U8G2 display library (for Graph tests)
 - `DebugUtils.h` - Mock debug utilities
+
+Arduino mocking is provided automatically by the ArduinoFake library (managed via PlatformIO lib_deps).
 
 ## Running Tests
 
