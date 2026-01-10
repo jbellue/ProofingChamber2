@@ -162,13 +162,13 @@ void refreshTimezoneSelectionIcons(AppContext* ctx) {
 }
 
 Menu::MenuItem mainMenu[] = {
-    {"Mettre en pousse", iconProof,    nullptr,      &MenuActions::proofNowAction},
-    {"Mettre en froid",  iconCool,     coolMenu,     nullptr},
-    {"R\xC3\xA9glages",  iconSettings, settingsMenu, nullptr},
-    {nullptr,            nullptr,      nullptr,      nullptr} // End of menu
+    {"Pousse imm\xC3\xA9" "diate",       iconProof,    nullptr,          &MenuActions::proofNowAction},
+    {"Pousse diff\xC3\xA9r\xC3\xA9" "e", iconCool,     delayedProofMenu, nullptr},
+    {"R\xC3\xA9glages",                  iconSettings, settingsMenu,     nullptr},
+    {nullptr,                            nullptr,      nullptr,          nullptr} // End of menu
 };
 
-Menu::MenuItem coolMenu[] = {
+Menu::MenuItem delayedProofMenu[] = {
     {"Pousser \xC3\xA0...", iconClock,     nullptr,  &MenuActions::proofAtAction},
     {"Pousser dans...",     iconHourglass, nullptr,  &MenuActions::proofInAction},
     {"Retour",              iconBack,      mainMenu, nullptr},

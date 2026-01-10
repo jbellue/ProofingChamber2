@@ -11,7 +11,7 @@ struct AppContext;
 void initializeAllMenus(AppContext* ctx = nullptr);
 
 extern Menu::MenuItem mainMenu[];
-extern Menu::MenuItem coolMenu[];
+extern Menu::MenuItem delayedProofMenu[];
 extern Menu::MenuItem settingsMenu[];
 extern Menu::MenuItem moreSettingsMenu[];
 extern Menu::MenuItem hotMenu[];
