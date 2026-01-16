@@ -23,7 +23,6 @@ private:
     int _buttonState;
     bool _initialized;
     unsigned long _lastDebounceTime;
-    int64_t _lastEncoderPosition;
     IInputManager::EncoderDirection _lastDirection;
     bool _buttonPressed;
     const unsigned long _debounceDelay = 50;

@@ -4,12 +4,13 @@
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin) :
     _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin), _buttonPressed(false),
-    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin), _initialized(false) {}
+    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin), _initialized(false) {
+    _encoder.setPosition(0);
+}
 
 
 void InputManager::resetEncoderPosition() {
     _encoder.setPosition(0);
-    _lastEncoderPosition = 0;
     _lastDirection = IInputManager::EncoderDirection::None;
 }
 
@@ -21,19 +22,23 @@ void InputManager::begin() {
         _ds18b20Manager.startPolling();
         _initialized = true;
     }
-    _encoder.tick();
     resetEncoderPosition();
 }
 
 void InputManager::update() {
-    // Handle encoder rotation
     _encoder.tick();
-    const int64_t newPosition = _encoder.getPosition();
-    if (newPosition != _lastEncoderPosition) {
-        _lastDirection = (newPosition > _lastEncoderPosition) ?
-            IInputManager::EncoderDirection::Clockwise :
-            IInputManager::EncoderDirection::CounterClockwise;
-        _lastEncoderPosition = newPosition;
+    const auto dir = _encoder.getDirection();
+    switch (dir) {
+        case RotaryEncoder::Direction::CLOCKWISE:
+            _lastDirection = IInputManager::EncoderDirection::Clockwise;
+            break;
+        case RotaryEncoder::Direction::COUNTERCLOCKWISE:
+            _lastDirection = IInputManager::EncoderDirection::CounterClockwise;
+            break;
+        case RotaryEncoder::Direction::NOROTATION:
+        default:
+            _lastDirection = IInputManager::EncoderDirection::None;
+            break;
     }
 
     // Handle button press
