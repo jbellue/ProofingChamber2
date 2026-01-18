@@ -32,6 +32,7 @@ The generator uses zones.json and creates a **single flat array** of all timezon
 
 The generated header contains:
 
+### Timezones.h (Static Data Only)
 ```cpp
 namespace timezones {
     struct Timezone {
@@ -43,14 +44,25 @@ namespace timezones {
     static const Timezone TIMEZONES[] = { ... };  // 461 entries
     static const int TIMEZONE_COUNT;
     static const int DEFAULT_TIMEZONE_INDEX;      // Points to Europe/Paris
-    
-    // Helper functions
+}
+```
+
+### TimezoneHelpers.h (Helper Functions)
+```cpp
+namespace timezones {
+    // Helper functions for working with timezone data
     int getContinentCount();
     const char* getContinentName(int continentIndex);
     int getTimezoneCount(const char* continent);
     const Timezone* getTimezone(const char* continent, int localIndex);
     int findTimezoneIndex(const char* posixString);
 }
+```
+
+To use the helper functions, include both headers:
+```cpp
+#include "Timezones.h"
+#include "TimezoneHelpers.h"
 ```
 
 ## Manual Generation
@@ -73,13 +85,18 @@ git add tools/posix_tz_db
 git commit -m "Update timezone database"
 ```
 
-## Generated File
+## Generated Files
 
-The generated `src/Timezones.h` file is:
+### src/Timezones.h
 - **Automatically generated** during build
 - **Git-ignored** (not committed to the repository)
-- **Clean and simple** - one flat array instead of multiple continent arrays
-- **Well-formatted** with aligned columns for readability
+- **Contains only static data** - timezone array, struct definition, constants
+- Clean and simple - just the data
+
+### src/TimezoneHelpers.h
+- **Manually maintained** helper file
+- Contains inline functions for convenient timezone access
+- Includes `Timezones.h` internally
 
 ## Metadata
 

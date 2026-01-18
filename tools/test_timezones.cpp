@@ -1,5 +1,6 @@
 // Simple test to verify Timezones.h structure
 #include "../src/Timezones.h"
+#include "../src/TimezoneHelpers.h"
 #include <iostream>
 #include <cstring>
 
