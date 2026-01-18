@@ -149,35 +149,54 @@ def generate_header(continents, commit_hash, json_hash):
     header.append('        int count;')
     header.append('    };')
     header.append('')
+    header.append('    // ========================================================================')
+    header.append('    // Timezone Data by Continent')
+    header.append('    // ========================================================================')
+    header.append('')
+    
+    # Calculate max city name length for alignment
+    max_city_len = max(len(escape_string(zone['city'])) 
+                       for zones in continents.values() 
+                       for zone in zones)
     
     # Generate timezone arrays for each continent
     for continent in sorted_continents:
         zones = continents[continent]
         const_name = continent.upper().replace(' ', '_')
         
-        header.append(f'    // {continent} timezones')
+        header.append(f'    // --- {continent} ({len(zones)} timezones) ---')
         header.append(f'    static const Timezone {const_name}[] = {{')
         
         for zone in zones:
             city = escape_string(zone['city'])
             posix = escape_string(zone['posix'])
-            header.append(f'        {{"{city}", "{posix}"}},')
+            # Align the entries for better readability
+            padding = ' ' * (max_city_len - len(city))
+            header.append(f'        {{"{city}",{padding} "{posix}"}},')
         
         header.append('    };')
         header.append('')
     
     # Generate continents array
-    header.append('    // All continents')
+    header.append('    // ========================================================================')
+    header.append('    // Continent Array')
+    header.append('    // ========================================================================')
+    header.append('')
     header.append('    static const Continent CONTINENTS[] = {')
     
     for continent in sorted_continents:
         const_name = continent.upper().replace(' ', '_')
-        header.append(f'        {{"{continent}", {const_name}, sizeof({const_name}) / sizeof(Timezone)}},')
+        count = len(continents[continent])
+        header.append(f'        {{"{continent}", {const_name}, {count}}},')
     
     header.append('    };')
     header.append('')
     header.append('    static const int CONTINENT_COUNT = sizeof(CONTINENTS) / sizeof(Continent);')
-    
+    header.append('')
+    header.append('    // ========================================================================')
+    header.append('    // Defaults')
+    header.append('    // ========================================================================')
+    header.append('')
     # Try to find Europe and Paris for defaults
     default_continent_idx = 0
     default_timezone_idx = 0
@@ -191,11 +210,14 @@ def generate_header(continents, commit_hash, json_hash):
                 default_timezone_idx = idx
                 break
     
-    header.append(f'    static const int DEFAULT_CONTINENT_INDEX = {default_continent_idx};  // {sorted_continents[default_continent_idx]}')
-    header.append(f'    static const int DEFAULT_TIMEZONE_INDEX = {default_timezone_idx};   // Default city')
+    default_continent_name = sorted_continents[default_continent_idx]
+    default_city_name = continents[default_continent_name][default_timezone_idx]['city']
     
-    header.append('}')
-    header.append('')
+    header.append(f'    // Default: {default_continent_name}/{default_city_name}')
+    header.append(f'    static const int DEFAULT_CONTINENT_INDEX = {default_continent_idx};')
+    header.append(f'    static const int DEFAULT_TIMEZONE_INDEX = {default_timezone_idx};')
+    
+    header.append('}  // namespace timezones')
     header.append('')
     
     return '\n'.join(header)
