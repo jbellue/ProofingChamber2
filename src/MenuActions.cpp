@@ -174,7 +174,9 @@ void MenuActions::selectTimezoneByData() {
     extern Menu::MenuItem* timezoneMenu;
     
     int continentIndex = -1;
-    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+    int continentCount = timezones::getContinentCount();
+    
+    for (int c = 0; c < continentCount; c++) {
         if (timezoneMenu && timezoneMenu[c].subMenu == currentMenu) {
             continentIndex = c;
             break;
@@ -186,10 +188,11 @@ void MenuActions::selectTimezoneByData() {
         return;
     }
     
-    const timezones::Continent& continent = timezones::CONTINENTS[continentIndex];
+    const char* continentName = timezones::getContinentName(continentIndex);
+    int tzCount = timezones::getTimezoneCount(continentName);
     
     // The last item is "Retour", so if we selected it, don't do anything
-    if (selectedIndex >= continent.count) {
+    if (selectedIndex >= tzCount) {
         return;
     }
     
@@ -198,9 +201,13 @@ void MenuActions::selectTimezoneByData() {
         return;
     }
     
-    const timezones::Timezone& tz = continent.timezones[selectedIndex];
-    static char tzConfirmName[64];
-    _confirmTimezoneController->setTimezoneInfo(continent.name, tz.name, tz.posixString);
+    const timezones::Timezone* tz = timezones::getTimezone(continentName, selectedIndex);
+    if (!tz) {
+        DEBUG_PRINTLN("Could not get timezone");
+        return;
+    }
+    
+    _confirmTimezoneController->setTimezoneInfo(continentName, tz->name, tz->posixString);
     
     BaseController* currentScreen = _ctx->screens->getActiveScreen();
     if (currentScreen) {
