@@ -7,38 +7,41 @@ int main() {
     std::cout << "Testing generated Timezones.h..." << std::endl;
     
     // Test that we have timezones
-    if (timezones::CONTINENT_COUNT == 0) {
-        std::cerr << "ERROR: No continents found!" << std::endl;
+    if (timezones::TIMEZONE_COUNT == 0) {
+        std::cerr << "ERROR: No timezones found!" << std::endl;
         return 1;
     }
     
-    std::cout << "Found " << timezones::CONTINENT_COUNT << " continents" << std::endl;
+    std::cout << "Found " << timezones::TIMEZONE_COUNT << " timezones" << std::endl;
     
-    // Test that Europe exists and has Paris
-    bool foundEurope = false;
-    bool foundParis = false;
+    // Test continent count
+    int continentCount = timezones::getContinentCount();
+    std::cout << "Found " << continentCount << " continents" << std::endl;
     
-    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
-        const timezones::Continent& continent = timezones::CONTINENTS[c];
-        std::cout << "  - " << continent.name << ": " << continent.count << " timezones" << std::endl;
-        
-        if (strcmp(continent.name, "Europe") == 0) {
-            foundEurope = true;
-            
-            // Look for Paris
-            for (int i = 0; i < continent.count; i++) {
-                if (strcmp(continent.timezones[i].name, "Paris") == 0) {
-                    foundParis = true;
-                    std::cout << "    Found Paris: " << continent.timezones[i].posixString << std::endl;
-                    break;
-                }
-            }
-        }
+    // List all continents
+    for (int c = 0; c < continentCount; c++) {
+        const char* continentName = timezones::getContinentName(c);
+        int tzCount = timezones::getTimezoneCount(continentName);
+        std::cout << "  - " << continentName << ": " << tzCount << " timezones" << std::endl;
     }
     
-    if (!foundEurope) {
+    // Test that Europe/Paris exists
+    bool foundParis = false;
+    int europeCount = timezones::getTimezoneCount("Europe");
+    
+    if (europeCount == 0) {
         std::cerr << "ERROR: Europe continent not found!" << std::endl;
         return 1;
+    }
+    
+    // Look for Paris
+    for (int i = 0; i < europeCount; i++) {
+        const timezones::Timezone* tz = timezones::getTimezone("Europe", i);
+        if (tz && strcmp(tz->name, "Paris") == 0) {
+            foundParis = true;
+            std::cout << "    Found Paris: " << tz->posixString << std::endl;
+            break;
+        }
     }
     
     if (!foundParis) {
@@ -46,9 +49,22 @@ int main() {
         return 1;
     }
     
-    // Test defaults
-    std::cout << "Default continent: " << timezones::CONTINENTS[timezones::DEFAULT_CONTINENT_INDEX].name << std::endl;
-    std::cout << "Default timezone: " << timezones::CONTINENTS[timezones::DEFAULT_CONTINENT_INDEX].timezones[timezones::DEFAULT_TIMEZONE_INDEX].name << std::endl;
+    // Test default timezone
+    const timezones::Timezone& defaultTz = timezones::TIMEZONES[timezones::DEFAULT_TIMEZONE_INDEX];
+    std::cout << "Default timezone: " << defaultTz.continent << "/" << defaultTz.name << std::endl;
+    
+    if (strcmp(defaultTz.continent, "Europe") != 0 || strcmp(defaultTz.name, "Paris") != 0) {
+        std::cerr << "ERROR: Default timezone is not Europe/Paris!" << std::endl;
+        return 1;
+    }
+    
+    // Test findTimezoneIndex
+    int parisIndex = timezones::findTimezoneIndex("CET-1CEST,M3.5.0,M10.5.0/3");
+    if (parisIndex < 0 || parisIndex >= timezones::TIMEZONE_COUNT) {
+        std::cerr << "ERROR: findTimezoneIndex failed!" << std::endl;
+        return 1;
+    }
+    std::cout << "findTimezoneIndex test passed (Paris at index " << parisIndex << ")" << std::endl;
     
     std::cout << "All tests passed!" << std::endl;
     return 0;
