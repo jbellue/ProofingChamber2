@@ -83,6 +83,8 @@ Settings are persisted to LittleFS:
 /cold/
   ├── lower_limit.txt
   └── higher_limit.txt
+
+/timezone.txt
 ```
 
 Default values:

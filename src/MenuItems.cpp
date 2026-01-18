@@ -1,5 +1,6 @@
 #include "MenuItems.h"
 #include "Timezones.h"
+#include "TimezoneHelpers.h"
 #include "AppContext.h"
 #include "services/IStorage.h"
 #include <cstring>
@@ -17,38 +18,51 @@ namespace {
     static bool timezoneMenusInitialized = false;
     
     // Helper function to find the current timezone based on saved posix string
-    // Returns the continent index and timezone index within that continent
-    // Returns {-1, -1} if not found
-    struct TimezoneLocation {
-        int continentIndex;
-        int timezoneIndex;
-    };
-    
-    TimezoneLocation findCurrentTimezone(const char* posixString) {
-        TimezoneLocation result = {-1, -1};
+    // Returns the global timezone index
+    // Returns DEFAULT_TIMEZONE_INDEX if not found
+    int findCurrentTimezone(const char* posixString) {
         if (!posixString || posixString[0] == '\0') {
             // Return default timezone (Paris) if no timezone is saved
-            result.continentIndex = timezones::DEFAULT_CONTINENT_INDEX;
-            result.timezoneIndex = timezones::DEFAULT_TIMEZONE_INDEX;
-            return result;
+            return timezones::DEFAULT_TIMEZONE_INDEX;
         }
         
-        // Search through all continents and timezones
-        for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
-            const timezones::Continent& continent = timezones::CONTINENTS[c];
-            for (int i = 0; i < continent.count; i++) {
-                if (strcmp(continent.timezones[i].posixString, posixString) == 0) {
-                    result.continentIndex = c;
-                    result.timezoneIndex = i;
-                    return result;
-                }
+        // Use the helper function from Timezones.h
+        return timezones::findTimezoneIndex(posixString);
+    }
+    
+    // Helper to get continent index for a timezone
+    int getContinentIndexForTimezone(int timezoneIndex) {
+        if (timezoneIndex < 0 || timezoneIndex >= timezones::TIMEZONE_COUNT) {
+            return 0;
+        }
+        
+        const char* tzContinent = timezones::TIMEZONES[timezoneIndex].continent;
+        int continentCount = timezones::getContinentCount();
+        
+        for (int c = 0; c < continentCount; c++) {
+            const char* continentName = timezones::getContinentName(c);
+            if (strcmp(continentName, tzContinent) == 0) {
+                return c;
             }
         }
+        return 0;
+    }
+    
+    // Helper to get local timezone index within a continent
+    int getLocalTimezoneIndex(int globalTimezoneIndex) {
+        if (globalTimezoneIndex < 0 || globalTimezoneIndex >= timezones::TIMEZONE_COUNT) {
+            return 0;
+        }
         
-        // If not found, return default
-        result.continentIndex = timezones::DEFAULT_CONTINENT_INDEX;
-        result.timezoneIndex = timezones::DEFAULT_TIMEZONE_INDEX;
-        return result;
+        const char* targetContinent = timezones::TIMEZONES[globalTimezoneIndex].continent;
+        int localIndex = 0;
+        
+        for (int i = 0; i < globalTimezoneIndex; i++) {
+            if (strcmp(timezones::TIMEZONES[i].continent, targetContinent) == 0) {
+                localIndex++;
+            }
+        }
+        return localIndex;
     }
 
     void initializeTimezoneMenus(AppContext* ctx) {
@@ -61,41 +75,50 @@ namespace {
         }
         
         // Find which timezone is currently selected
-        TimezoneLocation currentLoc = findCurrentTimezone(currentTimezone);
+        const int currentTimezoneIndex = findCurrentTimezone(currentTimezone);
+        const int currentContinentIndex = getContinentIndexForTimezone(currentTimezoneIndex);
+        const int currentLocalIndex = getLocalTimezoneIndex(currentTimezoneIndex);
 
+        // Get continent count
+        const int continentCount = timezones::getContinentCount();
         // Allocate array of pointers to timezone menus (one per continent)
-        timezoneSubmenus = new Menu::MenuItem*[timezones::CONTINENT_COUNT];
+        timezoneSubmenus = new Menu::MenuItem*[continentCount];
 
         // Allocate and populate the top-level timezone (continent) menu dynamically
         // Size: continents + 1 for "Retour" + 1 for terminator
-        timezoneMenuAllocated = new Menu::MenuItem[timezones::CONTINENT_COUNT + 2];
-        for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
-            timezoneMenuAllocated[c].name = timezones::CONTINENTS[c].name;
+        timezoneMenuAllocated = new Menu::MenuItem[continentCount + 2];
+        for (int c = 0; c < continentCount; c++) {
+            const char* continentName = timezones::getContinentName(c);
+            timezoneMenuAllocated[c].name = continentName;
             // Show icon in front of currently selected continent
-            timezoneMenuAllocated[c].icon = (c == currentLoc.continentIndex) ? iconCheck : nullptr;
+            timezoneMenuAllocated[c].icon = (c == currentContinentIndex) ? iconCheck : nullptr;
             timezoneMenuAllocated[c].subMenu = nullptr; // set after submenus are created
             timezoneMenuAllocated[c].action = nullptr;
         }
         // Add "Retour" at the end
-        timezoneMenuAllocated[timezones::CONTINENT_COUNT].name = "Retour";
-        timezoneMenuAllocated[timezones::CONTINENT_COUNT].icon = iconBack;
-        timezoneMenuAllocated[timezones::CONTINENT_COUNT].subMenu = moreSettingsMenu;
-        timezoneMenuAllocated[timezones::CONTINENT_COUNT].action = nullptr;
+        timezoneMenuAllocated[continentCount].name = "Retour";
+        timezoneMenuAllocated[continentCount].icon = iconBack;
+        timezoneMenuAllocated[continentCount].subMenu = moreSettingsMenu;
+        timezoneMenuAllocated[continentCount].action = nullptr;
         // Null terminator
-        timezoneMenuAllocated[timezones::CONTINENT_COUNT + 1] = {nullptr, nullptr, nullptr, nullptr};
+        timezoneMenuAllocated[continentCount + 1] = {nullptr, nullptr, nullptr, nullptr};
 
         // Build submenu for each continent
-        for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
-            const timezones::Continent& continent = timezones::CONTINENTS[c];
+        for (int c = 0; c < continentCount; c++) {
+            const char* continentName = timezones::getContinentName(c);
+            const int tzCount = timezones::getTimezoneCount(continentName);
             
             // Allocate menu items for this continent (timezones + 1 for "Retour" + 1 for null terminator)
-            timezoneSubmenus[c] = new Menu::MenuItem[continent.count + 2];
+            timezoneSubmenus[c] = new Menu::MenuItem[tzCount + 2];
             
             // Populate menu items from timezone data
-            for (int i = 0; i < continent.count; i++) {
+            for (int i = 0; i < tzCount; i++) {
+                const timezones::Timezone* tz = timezones::getTimezone(continentName, i);
+                if (!tz) continue;
+                
                 // Check if this is the currently selected timezone
-                bool isCurrent = (c == currentLoc.continentIndex && i == currentLoc.timezoneIndex);
-                timezoneSubmenus[c][i].name = continent.timezones[i].name;
+                bool isCurrent = (c == currentContinentIndex && i == currentLocalIndex);
+                timezoneSubmenus[c][i].name = tz->name;
                 timezoneSubmenus[c][i].icon = isCurrent ? iconCheck : nullptr;
                 timezoneSubmenus[c][i].subMenu = nullptr;
                 // All timezone items use the same generic handler that uses timezone data
@@ -103,13 +126,13 @@ namespace {
             }
             
             // Add "Retour" item to go back to parent menu
-            timezoneSubmenus[c][continent.count].name = "Retour";
-            timezoneSubmenus[c][continent.count].icon = iconBack;
-            timezoneSubmenus[c][continent.count].subMenu = timezoneMenuAllocated;
-            timezoneSubmenus[c][continent.count].action = nullptr;
+            timezoneSubmenus[c][tzCount].name = "Retour";
+            timezoneSubmenus[c][tzCount].icon = iconBack;
+            timezoneSubmenus[c][tzCount].subMenu = timezoneMenuAllocated;
+            timezoneSubmenus[c][tzCount].action = nullptr;
             
             // Add null terminator
-            timezoneSubmenus[c][continent.count + 1] = {nullptr, nullptr, nullptr, nullptr};
+            timezoneSubmenus[c][tzCount + 1] = {nullptr, nullptr, nullptr, nullptr};
         }
 
         timezoneMenusInitialized = true;
@@ -120,8 +143,10 @@ namespace {
 void initializeAllMenus(AppContext* ctx) {
     initializeTimezoneMenus(ctx);
     
+    const int continentCount = timezones::getContinentCount();
+    
     // Set up timezone submenu pointers after initialization
-    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+    for (int c = 0; c < continentCount; c++) {
         timezoneMenuAllocated[c].subMenu = timezoneSubmenus[c];
     }
 
@@ -145,17 +170,23 @@ void refreshTimezoneSelectionIcons(AppContext* ctx) {
         ctx->storage->readString("/timezone.txt", currentTimezone, sizeof(currentTimezone), "");
     }
     // Find indices
-    TimezoneLocation currentLoc = findCurrentTimezone(currentTimezone);
+    const int currentTimezoneIndex = findCurrentTimezone(currentTimezone);
+    const int currentContinentIndex = getContinentIndexForTimezone(currentTimezoneIndex);
+    const int currentLocalIndex = getLocalTimezoneIndex(currentTimezoneIndex);
+    
+    int continentCount = timezones::getContinentCount();
+    
     // Update continent icons
-    for (int c = 0; c < timezones::CONTINENT_COUNT; c++) {
+    for (int c = 0; c < continentCount; c++) {
         if (timezoneMenuAllocated) {
-            timezoneMenuAllocated[c].icon = (c == currentLoc.continentIndex) ? iconCheck : nullptr;
+            timezoneMenuAllocated[c].icon = (c == currentContinentIndex) ? iconCheck : nullptr;
         }
         // Update timezone icons per continent
-        const timezones::Continent& continent = timezones::CONTINENTS[c];
+        const char* continentName = timezones::getContinentName(c);
+        const int tzCount = timezones::getTimezoneCount(continentName);
         if (timezoneSubmenus) {
-            for (int i = 0; i < continent.count; i++) {
-                timezoneSubmenus[c][i].icon = (c == currentLoc.continentIndex && i == currentLoc.timezoneIndex) ? iconCheck : nullptr;
+            for (int i = 0; i < tzCount; i++) {
+                timezoneSubmenus[c][i].icon = (c == currentContinentIndex && i == currentLocalIndex) ? iconCheck : nullptr;
             }
         }
     }
