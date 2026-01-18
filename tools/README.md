@@ -6,11 +6,11 @@ This directory contains the timezone database and generation scripts for the Pro
 
 The timezone list is now automatically generated from the [posix_tz_db](https://github.com/nayarsystems/posix_tz_db) repository, which provides a comprehensive database of POSIX timezone strings.
 
-The generator uses zones.json (instead of CSV) for simpler parsing in Python.
+The generator uses zones.json and creates a **single flat array** of all timezones with continent information embedded in each entry. Much simpler than the old multi-array approach!
 
 ## Files
 
-- `posix_tz_db/` - Git submodule containing the timezone database (zones.json, zones.csv)
+- `posix_tz_db/` - Git submodule containing the timezone database (zones.json)
 - `generate_timezones.py` - Python script that parses zones.json and generates `src/Timezones.h`
 - `pre_build.py` - PlatformIO extra script that runs the generator before each build
 
@@ -24,10 +24,34 @@ The generator uses zones.json (instead of CSV) for simpler parsing in Python.
    - The existing Timezones.h doesn't exist or has no metadata
 4. **Header Generation**: Creates `src/Timezones.h` with:
    - Metadata comments (commit hash, JSON hash, generation time, timezone count)
-   - Timezone data organized by continent
-   - 11 continents (Africa, America, Antarctica, Arctic, Asia, Atlantic, Australia, Etc, Europe, Indian, Pacific)
-   - Same API structure as the previous static list
+   - Single flat array of timezones (sorted alphabetically)
+   - Helper functions for querying by continent
    - Default timezone set to Europe/Paris
+
+## Structure
+
+The generated header contains:
+
+```cpp
+namespace timezones {
+    struct Timezone {
+        const char* continent;   // e.g., "Europe"
+        const char* name;        // e.g., "Paris"
+        const char* posixString; // e.g., "CET-1CEST,M3.5.0,M10.5.0/3"
+    };
+    
+    static const Timezone TIMEZONES[] = { ... };  // 461 entries
+    static const int TIMEZONE_COUNT;
+    static const int DEFAULT_TIMEZONE_INDEX;      // Points to Europe/Paris
+    
+    // Helper functions
+    int getContinentCount();
+    const char* getContinentName(int continentIndex);
+    int getTimezoneCount(const char* continent);
+    const Timezone* getTimezone(const char* continent, int localIndex);
+    int findTimezoneIndex(const char* posixString);
+}
+```
 
 ## Manual Generation
 
@@ -54,37 +78,8 @@ git commit -m "Update timezone database"
 The generated `src/Timezones.h` file is:
 - **Automatically generated** during build
 - **Git-ignored** (not committed to the repository)
-- **API-compatible** with the previous static list
-
-## Data Format
-
-The source JSON has the simple format:
-```json
-{
-  "Africa/Abidjan": "GMT0",
-  "Europe/Paris": "CET-1CEST,M3.5.0,M10.5.0/3",
-  "America/New_York": "EST5EDT,M3.2.0,M11.1.0"
-}
-```
-
-The generated C++ structure:
-```cpp
-namespace timezones {
-    struct Timezone {
-        const char* name;        // e.g., "Paris"
-        const char* posixString; // e.g., "CET-1CEST,M3.5.0,M10.5.0/3"
-    };
-    
-    struct Continent {
-        const char* name;
-        const Timezone* timezones;
-        int count;
-    };
-    
-    static const Timezone EUROPE[] = { ... };
-    static const Continent CONTINENTS[] = { ... };
-}
-```
+- **Clean and simple** - one flat array instead of multiple continent arrays
+- **Well-formatted** with aligned columns for readability
 
 ## Metadata
 

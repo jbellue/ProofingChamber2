@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Generate Timezones.h from posix_tz_db zones.json
+Creates a simple flat array of timezones with continent information
 """
 
 import json
 import os
 import subprocess
 import hashlib
-from collections import defaultdict
 from datetime import datetime
 
 # Path to the zones.json file
@@ -80,13 +80,13 @@ def needs_regeneration():
     return False
 
 def parse_zones():
-    """Parse zones.json and organize by continent"""
-    continents = defaultdict(list)
+    """Parse zones.json and create a flat list with continent information"""
+    timezones = []
     
     with open(JSON_FILE, 'r', encoding='utf-8') as f:
         zones_data = json.load(f)
     
-    for zone_name, posix_string in zones_data.items():
+    for zone_name, posix_string in sorted(zones_data.items()):
         # Split zone name into continent and city
         parts = zone_name.split('/')
         if len(parts) >= 2:
@@ -96,31 +96,36 @@ def parse_zones():
             # Clean up city name for display (replace underscores with spaces)
             city_display = city.replace('_', ' ')
             
-            continents[continent].append({
+            timezones.append({
+                'continent': continent,
                 'city': city_display,
                 'posix': posix_string
             })
     
-    return continents
+    return timezones
 
 def escape_string(s):
     """Escape special characters in C strings"""
     return s.replace('\\', '\\\\').replace('"', '\\"')
 
-def generate_header(continents, commit_hash, json_hash):
-    """Generate the Timezones.h header file"""
+def generate_header(timezones, commit_hash, json_hash):
+    """Generate the Timezones.h header file with a simple flat structure"""
     
-    # Sort continents for consistent output
-    sorted_continents = sorted(continents.keys())
-    
-    # Count total timezones
-    total_timezones = sum(len(zones) for zones in continents.values())
+    # Count total timezones and continents
+    total_timezones = len(timezones)
+    continents = sorted(set(tz['continent'] for tz in timezones))
     
     # Get generation timestamp
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
     
+    # Calculate max lengths for alignment
+    max_continent_len = max(len(tz['continent']) for tz in timezones)
+    max_city_len = max(len(escape_string(tz['city'])) for tz in timezones)
+    
     header = []
     header.append('#pragma once')
+    header.append('')
+    header.append('#include <cstring>  // for strcmp')
     header.append('')
     header.append('// ============================================================================')
     header.append('// AUTO-GENERATED FILE - DO NOT EDIT')
@@ -132,91 +137,123 @@ def generate_header(continents, commit_hash, json_hash):
     header.append(f'// JSON hash: {json_hash}')
     header.append(f'// Generated at: {timestamp}')
     header.append(f'// Total timezones: {total_timezones}')
-    header.append(f'// Continents: {len(sorted_continents)}')
+    header.append(f'// Continents: {len(continents)}')
     header.append('//')
     header.append('// To regenerate: python3 tools/generate_timezones.py')
     header.append('// ============================================================================')
     header.append('')
     header.append('namespace timezones {')
     header.append('    struct Timezone {')
+    header.append('        const char* continent;')
     header.append('        const char* name;')
     header.append('        const char* posixString;')
     header.append('    };')
     header.append('')
-    header.append('    struct Continent {')
-    header.append('        const char* name;')
-    header.append('        const Timezone* timezones;')
-    header.append('        int count;')
-    header.append('    };')
-    header.append('')
     header.append('    // ========================================================================')
-    header.append('    // Timezone Data by Continent')
+    header.append('    // All Timezones (sorted alphabetically)')
     header.append('    // ========================================================================')
     header.append('')
+    header.append('    static const Timezone TIMEZONES[] = {')
     
-    # Calculate max city name length for alignment
-    max_city_len = max(len(escape_string(zone['city'])) 
-                       for zones in continents.values() 
-                       for zone in zones)
-    
-    # Generate timezone arrays for each continent
-    for continent in sorted_continents:
-        zones = continents[continent]
-        const_name = continent.upper().replace(' ', '_')
+    # Generate timezone entries
+    for tz in timezones:
+        continent = tz['continent']
+        city = escape_string(tz['city'])
+        posix = escape_string(tz['posix'])
         
-        header.append(f'    // --- {continent} ({len(zones)} timezones) ---')
-        header.append(f'    static const Timezone {const_name}[] = {{')
+        # Align the entries for better readability
+        continent_padding = ' ' * (max_continent_len - len(continent))
+        city_padding = ' ' * (max_city_len - len(city))
         
-        for zone in zones:
-            city = escape_string(zone['city'])
-            posix = escape_string(zone['posix'])
-            # Align the entries for better readability
-            padding = ' ' * (max_city_len - len(city))
-            header.append(f'        {{"{city}",{padding} "{posix}"}},')
-        
-        header.append('    };')
-        header.append('')
-    
-    # Generate continents array
-    header.append('    // ========================================================================')
-    header.append('    // Continent Array')
-    header.append('    // ========================================================================')
-    header.append('')
-    header.append('    static const Continent CONTINENTS[] = {')
-    
-    for continent in sorted_continents:
-        const_name = continent.upper().replace(' ', '_')
-        count = len(continents[continent])
-        header.append(f'        {{"{continent}", {const_name}, {count}}},')
+        header.append(f'        {{"{continent}",{continent_padding} "{city}",{city_padding} "{posix}"}},')
     
     header.append('    };')
     header.append('')
-    header.append('    static const int CONTINENT_COUNT = sizeof(CONTINENTS) / sizeof(Continent);')
+    header.append('    static const int TIMEZONE_COUNT = sizeof(TIMEZONES) / sizeof(Timezone);')
     header.append('')
     header.append('    // ========================================================================')
-    header.append('    // Defaults')
+    header.append('    // Default')
     header.append('    // ========================================================================')
     header.append('')
-    # Try to find Europe and Paris for defaults
-    default_continent_idx = 0
-    default_timezone_idx = 0
     
-    if 'Europe' in continents:
-        default_continent_idx = sorted_continents.index('Europe')
-        europe_zones = continents['Europe']
-        # Look for Paris
-        for idx, zone in enumerate(europe_zones):
-            if zone['city'] == 'Paris':
-                default_timezone_idx = idx
-                break
+    # Find default timezone (Europe/Paris)
+    default_index = 0
+    for idx, tz in enumerate(timezones):
+        if tz['continent'] == 'Europe' and tz['city'] == 'Paris':
+            default_index = idx
+            break
     
-    default_continent_name = sorted_continents[default_continent_idx]
-    default_city_name = continents[default_continent_name][default_timezone_idx]['city']
-    
-    header.append(f'    // Default: {default_continent_name}/{default_city_name}')
-    header.append(f'    static const int DEFAULT_CONTINENT_INDEX = {default_continent_idx};')
-    header.append(f'    static const int DEFAULT_TIMEZONE_INDEX = {default_timezone_idx};')
-    
+    header.append(f'    // Default: Europe/Paris')
+    header.append(f'    static const int DEFAULT_TIMEZONE_INDEX = {default_index};')
+    header.append('')
+    header.append('    // ========================================================================')
+    header.append('    // Helper Functions')
+    header.append('    // ========================================================================')
+    header.append('')
+    header.append('    // Get count of unique continents')
+    header.append('    inline int getContinentCount() {')
+    header.append('        int count = 0;')
+    header.append('        const char* lastContinent = nullptr;')
+    header.append('        for (int i = 0; i < TIMEZONE_COUNT; i++) {')
+    header.append('            if (!lastContinent || strcmp(TIMEZONES[i].continent, lastContinent) != 0) {')
+    header.append('                count++;')
+    header.append('                lastContinent = TIMEZONES[i].continent;')
+    header.append('            }')
+    header.append('        }')
+    header.append('        return count;')
+    header.append('    }')
+    header.append('')
+    header.append('    // Get continent name by index (0-based)')
+    header.append('    inline const char* getContinentName(int continentIndex) {')
+    header.append('        int currentContinent = -1;')
+    header.append('        const char* lastContinent = nullptr;')
+    header.append('        for (int i = 0; i < TIMEZONE_COUNT; i++) {')
+    header.append('            if (!lastContinent || strcmp(TIMEZONES[i].continent, lastContinent) != 0) {')
+    header.append('                currentContinent++;')
+    header.append('                lastContinent = TIMEZONES[i].continent;')
+    header.append('                if (currentContinent == continentIndex) {')
+    header.append('                    return lastContinent;')
+    header.append('                }')
+    header.append('            }')
+    header.append('        }')
+    header.append('        return nullptr;')
+    header.append('    }')
+    header.append('')
+    header.append('    // Get timezone count for a continent')
+    header.append('    inline int getTimezoneCount(const char* continent) {')
+    header.append('        int count = 0;')
+    header.append('        for (int i = 0; i < TIMEZONE_COUNT; i++) {')
+    header.append('            if (strcmp(TIMEZONES[i].continent, continent) == 0) {')
+    header.append('                count++;')
+    header.append('            }')
+    header.append('        }')
+    header.append('        return count;')
+    header.append('    }')
+    header.append('')
+    header.append('    // Get timezone by continent and local index')
+    header.append('    inline const Timezone* getTimezone(const char* continent, int localIndex) {')
+    header.append('        int currentIndex = -1;')
+    header.append('        for (int i = 0; i < TIMEZONE_COUNT; i++) {')
+    header.append('            if (strcmp(TIMEZONES[i].continent, continent) == 0) {')
+    header.append('                currentIndex++;')
+    header.append('                if (currentIndex == localIndex) {')
+    header.append('                    return &TIMEZONES[i];')
+    header.append('                }')
+    header.append('            }')
+    header.append('        }')
+    header.append('        return nullptr;')
+    header.append('    }')
+    header.append('')
+    header.append('    // Find timezone global index by POSIX string')
+    header.append('    inline int findTimezoneIndex(const char* posixString) {')
+    header.append('        for (int i = 0; i < TIMEZONE_COUNT; i++) {')
+    header.append('            if (strcmp(TIMEZONES[i].posixString, posixString) == 0) {')
+    header.append('                return i;')
+    header.append('            }')
+    header.append('        }')
+    header.append('        return DEFAULT_TIMEZONE_INDEX;')
+    header.append('    }')
+    header.append('')
     header.append('}  // namespace timezones')
     header.append('')
     
@@ -230,16 +267,16 @@ def main():
         print("Skipping generation - file is up to date")
         return
     
-    continents = parse_zones()
+    timezones = parse_zones()
     
-    print(f'Found {len(continents)} continents:')
-    for continent in sorted(continents.keys()):
-        print(f'  {continent}: {len(continents[continent])} timezones')
+    print(f'Found {len(timezones)} timezones')
+    continents = sorted(set(tz['continent'] for tz in timezones))
+    print(f'Across {len(continents)} continents: {", ".join(continents)}')
     
     commit_hash = get_submodule_commit()
     json_hash = get_json_hash()
     
-    header_content = generate_header(continents, commit_hash, json_hash)
+    header_content = generate_header(timezones, commit_hash, json_hash)
     
     print(f'Writing header file to: {OUTPUT_FILE}')
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
