@@ -1,63 +1,103 @@
 #include "InputManager.h"
 #include "DebugUtils.h"
 #include <Arduino.h>
+#include <driver/gpio.h>
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin) :
-    _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderSWPin(swPin), _buttonPressed(false),
-    _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin), _initialized(false) {}
+        _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderClk((gpio_num_t)clkPin),
+        _encoderDt((gpio_num_t)dtPin), _encoderSWPin((gpio_num_t)swPin), _buttonPressed(false),
+        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin),
+        _initialized(false), _lastEncoderPosition(0), _pendingSteps(0), _buttonIrq(false), _lastRawButtonReading(HIGH)
+{
+    _encoder.setPosition(0);
+}
 
 
 void InputManager::resetEncoderPosition() {
     _encoder.setPosition(0);
     _lastEncoderPosition = 0;
-    _lastDirection = EncoderDirection::None;
+    _pendingSteps = 0;
 }
 
 void InputManager::begin() {
     if (!_initialized) {
-        pinMode(_encoderSWPin, INPUT_PULLUP);
+        initialiseEncoderISR();
         _ds18b20Manager.begin();
         _ds18b20Manager.setSlowPolling(true);
         _ds18b20Manager.startPolling();
         _initialized = true;
     }
-    _encoder.tick();
     resetEncoderPosition();
 }
 
+void InputManager::initialiseEncoderISR()
+{
+    // Configure encoder pins using ESP-IDF for fast ISR reads
+    gpio_config_t cfg = {
+        .pin_bit_mask = (1ULL << _encoderClk) | (1ULL << _encoderDt) | (1ULL << _encoderSWPin),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_ANYEDGE
+    };
+    gpio_config(&cfg);
+    gpio_install_isr_service(0);
+    // Register handlers with context
+    gpio_isr_handler_add(_encoderClk, InputManager::isrEncoder, this);
+    gpio_isr_handler_add(_encoderDt, InputManager::isrEncoder, this);
+    gpio_isr_handler_add(_encoderSWPin, InputManager::isrButton, this);
+}
+
 void InputManager::update() {
-    // Handle encoder rotation
-    _encoder.tick();
-    const int64_t newPosition = _encoder.getPosition();
-    if (newPosition != _lastEncoderPosition) {
-        _lastDirection = (newPosition > _lastEncoderPosition) ?
-            EncoderDirection::Clockwise :
-            EncoderDirection::CounterClockwise;
-        _lastEncoderPosition = newPosition;
+    const long pos = _encoder.getPosition();
+    const long delta = pos - _lastEncoderPosition;
+    if (delta != 0) {
+        // accumulate steps; positive for CW, negative for CCW
+        _pendingSteps += (int)delta;
+        _lastEncoderPosition = pos;
     }
 
-    // Handle button press
-    const int reading = digitalRead(_encoderSWPin);
-    if (reading != _lastButtonState) {
+    // Handle button press with ISR edge gating and debounce
+    if (_buttonIrq) {
+        _buttonIrq = false;
         _lastDebounceTime = millis();
     }
     if ((millis() - _lastDebounceTime) > _debounceDelay) {
-        if (reading != _buttonState) {
-            _buttonState = reading;
+        if (_lastRawButtonReading != _buttonState) {
+            _buttonState = _lastRawButtonReading;
             if (_buttonState == LOW) {
                 _buttonPressed = true;
             }
         }
+        _lastButtonState = _lastRawButtonReading;
     }
-    _lastButtonState = reading;
 
     _ds18b20Manager.update();
 }
 
-InputManager::EncoderDirection InputManager::getEncoderDirection() {
-    const EncoderDirection direction = _lastDirection;
-    _lastDirection = EncoderDirection::None;
-    return direction;
+IInputManager::EncoderDirection InputManager::getEncoderDirection() {
+    if (_pendingSteps > 0) {
+        _pendingSteps--;
+        return IInputManager::EncoderDirection::Clockwise;
+    }
+    if (_pendingSteps < 0) {
+        _pendingSteps++;
+        return IInputManager::EncoderDirection::CounterClockwise;
+    }
+    return IInputManager::EncoderDirection::None;
+}
+
+void IRAM_ATTR InputManager::isrEncoder(void* arg) {
+    auto* self = static_cast<InputManager*>(arg);
+    const int s1 = gpio_get_level(self->_encoderClk);
+    const int s2 = gpio_get_level(self->_encoderDt);
+    self->_encoder.tick(s1, s2);
+}
+
+void IRAM_ATTR InputManager::isrButton(void* arg) {
+    auto* self = static_cast<InputManager*>(arg);
+    self->_lastRawButtonReading = gpio_get_level(self->_encoderSWPin);
+    self->_buttonIrq = true;
 }
 
 bool InputManager::isButtonPressed() {

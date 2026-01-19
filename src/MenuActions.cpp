@@ -1,148 +1,220 @@
-#include <WiFiManager.h>
 #include "SimpleTime.h"
 #include "MenuActions.h"
 #include "DebugUtils.h"
+#include "screens/controllers/AdjustTimeController.h"
+#include "screens/Menu.h"
+#include "Timezones.h"
+#include "TimezoneHelpers.h"
 
-MenuActions::MenuActions(ScreensManager* screensManager, AdjustValue* adjustValue, 
-        AdjustTime* adjustTime,ProofingScreen* proofingScreen, CoolingScreen* coolingScreen,
-        WiFiReset* wifiReset, SetTimezone* setTimezone, Reboot* reboot) :
-    _reboot(reboot),
-    _screensManager(screensManager),
-    _adjustValue(adjustValue),
-    _adjustTime(adjustTime),
-    _proofingScreen(proofingScreen),
-    _coolingScreen(coolingScreen),
-    _wifiReset(wifiReset),
-    _setTimezone(setTimezone)
+// Static member definitions
+SimpleTime MenuActions::s_proofInTime(0, 0, 0);
+SimpleTime MenuActions::s_proofAtTime(0, 0, 0);
+
+MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
+        AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
+        WiFiResetController* wifiResetController, RebootController* rebootController, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController) :
+    _ctx(ctx),
+    _rebootController(rebootController),
+    _adjustValueController(adjustValueController),
+    _adjustTimeController(adjustTimeController),
+    _proofingController(ProofingController),
+    _coolingController(coolingController),
+    _wifiResetController(wifiResetController),
+    _dataDisplayController(dataDisplayController),
+    _confirmTimezoneController(confirmTimezoneController)
 {}
 
 void MenuActions::proofNowAction() {
-    DEBUG_PRINTLN("MenuActions: proofNowAction called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_proofingScreen);
-    _proofingScreen->setNextScreen(menu);
-    _proofingScreen->begin();
+    if (!_ctx || !_ctx->screens || !_proofingController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_proofingController);
+    _proofingController->setNextScreen(menu);
 }
 
 void MenuActions::proofInAction() {
-    DEBUG_PRINTLN("MenuActions: proofInAction called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustTime);
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustTimeController);
 
-    // Lambda calculates end time based on user input from AdjustTime
-    auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTime->getTime();
-        const time_t delayInSeconds = timeinfo.tm_mday * 24 * 60 * 60 + timeinfo.tm_hour * 60 * 60 + timeinfo.tm_min * 60;
-        struct tm now;
-        getLocalTime(&now);
-        const time_t now_time = mktime(&now);
-        const time_t endTime = now_time + delayInSeconds;
-        DEBUG_PRINT("end time in:");
-        DEBUG_PRINTLN(endTime);
-        return endTime;
-    };
-    _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
+    // Prepare screens for deferred begin via ScreensManager
+    _coolingController->prepare(&calculateProofInEndTime, _proofingController, menu);
     SimpleTime startTime(0, 0, 0);
-    _adjustTime->begin("Pousser dans...", _coolingScreen, menu, startTime);
+    _adjustTimeController->prepare("Pousser dans...", _coolingController, menu, startTime, TimeMode::ProofIn);
 }
 
 void MenuActions::proofAtAction() {
-    DEBUG_PRINTLN("MenuActions: proofAtAction called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustTime);
+    if (!_ctx || !_ctx->screens || !_adjustTimeController || !_coolingController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustTimeController);
     struct tm timeinfo;
     SimpleTime startTime(0, 0, 0);
     if (!getLocalTime(&timeinfo)) {
         DEBUG_PRINTLN("Failed to obtain time, defaulting to 0:00");
-        _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
+        _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime, TimeMode::ProofAt);
     }
     startTime.hours = timeinfo.tm_hour;
     startTime.minutes = timeinfo.tm_min;
-    // Lambda calculates end time based on user input from AdjustTime
-    auto timeCalculator = [this]() -> time_t {
-        struct tm timeinfo = _adjustTime->getTime();
-        struct tm endTime;
-        getLocalTime(&endTime);
-        endTime.tm_mday += timeinfo.tm_mday;
-        endTime.tm_hour = timeinfo.tm_hour;
-        endTime.tm_min = timeinfo.tm_min;
-        endTime.tm_sec = 0;
-        DEBUG_PRINT("end time in:");
-        DEBUG_PRINTLN(mktime(&endTime));
-        return mktime(&endTime);
-    };
-    _coolingScreen->begin(timeCalculator, _proofingScreen, menu); // Pass menu screen
-    _adjustTime->begin("Pousser \xC3\xA0...", _coolingScreen, menu, startTime);
-}
-
-void MenuActions::adjustHotTargetTemp() {
-    DEBUG_PRINTLN("MenuActions: adjustHotTargetTemp called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Temp\xC3\xA9rature\n" "de chauffe vis\xC3\xA9" "e", "/hot/target_temp.txt");
+    
+    _coolingController->prepare(&calculateProofAtEndTime, _proofingController, menu);
+    _adjustTimeController->prepare("Pousser \xC3\xA0...", _coolingController, menu, startTime, TimeMode::ProofAt);
 }
 
 void MenuActions::adjustHotLowerLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustHotLowerLimit called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
 }
 
 void MenuActions::adjustHotHigherLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustHotHigherLimit called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
-}
-
-void MenuActions::adjustColdTargetTemp() {
-    DEBUG_PRINTLN("MenuActions: adjustColdTargetTemp called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Temp\xC3\xA9rature\n" "de froid vis\xC3\xA9" "e", "/cold/target_temp.txt");
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
 }
 
 void MenuActions::adjustColdLowerLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustColdLowerLimit called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Limite basse\n" "de froid", "/cold/lower_limit.txt");
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite basse\n" "de froid", "/cold/lower_limit.txt");
 }
 
 void MenuActions::adjustColdHigherLimit() {
-    DEBUG_PRINTLN("MenuActions: adjustColdHigherLimit called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_adjustValue);
-    _adjustValue->setNextScreen(menu);
-    _adjustValue->begin("Limite haute\n" "de froid", "/cold/higher_limit.txt");
+    if (!_ctx || !_ctx->screens || !_adjustValueController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_adjustValueController);
+    _adjustValueController->setNextScreen(menu);
+    _adjustValueController->prepare("Limite haute\n" "de froid", "/cold/higher_limit.txt");
 }
 
 void MenuActions::resetWiFiAndReboot() {
-    DEBUG_PRINTLN("MenuActions: resetWiFiAndReboot called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_wifiReset);
-    _wifiReset->setNextScreen(menu);
-    _wifiReset->begin();
+    if (!_ctx || !_ctx->screens || !_wifiResetController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_wifiResetController);
+    _wifiResetController->setNextScreen(menu);
 }
 
 void MenuActions::reboot() {
-    DEBUG_PRINTLN("MenuActions: reboot called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_reboot);
-    _reboot->setNextScreen(menu);
-    _reboot->begin();
+    if (!_ctx || !_ctx->screens || !_rebootController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_rebootController);
+    _rebootController->setNextScreen(menu);
 }
 
-void MenuActions::adjustTimezone() {
-    DEBUG_PRINTLN("MenuActions: adjustTimezone called");
-    Screen* menu = _screensManager->getActiveScreen();
-    menu->setNextScreen(_setTimezone);
-    _setTimezone->setNextScreen(menu);
-    _setTimezone->begin();
+void MenuActions::showDataDisplay() {
+    if (!_ctx || !_ctx->screens || !_dataDisplayController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_dataDisplayController);
+    _dataDisplayController->setNextScreen(menu);
+}
+
+// Static callback functions for time calculations
+time_t MenuActions::calculateProofInEndTime() {
+    // Convert stored time to seconds delay from now
+    struct tm now;
+    getLocalTime(&now);
+    time_t nowTime = mktime(&now);
+    time_t delayInSeconds =
+        s_proofInTime.days * 86400 +
+        s_proofInTime.hours * 3600 +
+        s_proofInTime.minutes * 60;
+    return nowTime + delayInSeconds;
+}
+
+time_t MenuActions::calculateProofAtEndTime() {
+    // Convert stored time to target time_t
+    struct tm targetTime;
+    getLocalTime(&targetTime);
+
+    targetTime.tm_mday += s_proofAtTime.days;
+    targetTime.tm_hour = s_proofAtTime.hours;
+    targetTime.tm_min = s_proofAtTime.minutes;
+    targetTime.tm_sec = 0;
+    // Normalize date in case of overflow
+    return mktime(&targetTime);
+}
+
+void MenuActions::saveTimezone(const char* posixString) {
+    if (!_ctx || !_ctx->storage) return;
+    _ctx->storage->writeString("/timezone.txt", posixString);
+    DEBUG_PRINT("Timezone saved: ");
+    DEBUG_PRINTLN(posixString);
+}
+
+// Generic timezone selection handler - uses Menu context to determine which timezone was selected
+void MenuActions::selectTimezoneByData() {
+    if (!_menu) {
+        DEBUG_PRINTLN("Menu context not set");
+        return;
+    }
+    
+    // Get the current menu and selected index
+    Menu::MenuItem* currentMenu = _menu->getCurrentMenu();
+    uint8_t selectedIndex = _menu->getCurrentMenuIndex();
+    
+    if (!currentMenu) {
+        DEBUG_PRINTLN("Invalid menu context");
+        return;
+    }
+    
+    // Find which continent menu we're in by matching the pointer
+    extern Menu::MenuItem* timezoneMenu;
+    
+    int continentIndex = -1;
+    int continentCount = timezones::getContinentCount();
+    
+    for (int c = 0; c < continentCount; c++) {
+        if (timezoneMenu && timezoneMenu[c].subMenu == currentMenu) {
+            continentIndex = c;
+            break;
+        }
+    }
+    
+    if (continentIndex < 0) {
+        DEBUG_PRINTLN("Could not determine continent from menu context");
+        return;
+    }
+    
+    const char* continentName = timezones::getContinentName(continentIndex);
+    int tzCount = timezones::getTimezoneCount(continentName);
+    
+    // The last item is "Retour", so if we selected it, don't do anything
+    if (selectedIndex >= tzCount) {
+        return;
+    }
+    
+    // Show confirmation dialog
+    if (!_ctx || !_ctx->screens || !_confirmTimezoneController) {
+        return;
+    }
+    
+    const timezones::Timezone* tz = timezones::getTimezone(continentName, selectedIndex);
+    if (!tz) {
+        DEBUG_PRINTLN("Could not get timezone");
+        return;
+    }
+    
+    _confirmTimezoneController->setTimezoneInfo(continentName, tz->name, tz->posixString);
+    
+    BaseController* currentScreen = _ctx->screens->getActiveScreen();
+    if (currentScreen) {
+        DEBUG_PRINTLN("Navigating to ConfirmTimezoneController");
+        currentScreen->setNextScreen(_confirmTimezoneController);
+        _confirmTimezoneController->setNextScreen(currentScreen);
+        // No forced transition; let ScreensManager switch after action returns
+    }
 }

@@ -5,3 +5,6 @@
 .vscode/ipch
 .vscode/extensions.json
 .vscode/settings.json
+
+# Generated file - built from posix_tz_db submodule
+src/Timezones.h
