@@ -111,8 +111,8 @@ bool Menu::update(bool forceRedraw) {
     _selectionYPos += (_targetSelectionYPos - _selectionYPos) * ANIMATION_SPEED;
     
     // Update integer scroll offset
-    // _scrollOffsetFloat is always >= 0 due to our logic, but ensure it's clamped
-    const uint8_t newScrollOffset = static_cast<uint8_t>(std::max(0.0f, _scrollOffsetFloat + 0.5f));
+    // Clamp and round _scrollOffsetFloat to ensure valid uint8_t range
+    const uint8_t newScrollOffset = static_cast<uint8_t>(std::max(0.0f, std::min(_scrollOffsetFloat + 0.5f, 255.0f)));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
         redraw = true;
