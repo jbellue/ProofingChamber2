@@ -114,7 +114,8 @@ bool Menu::update(bool forceRedraw) {
     _selectionYPos += (_targetSelectionYPos - _selectionYPos) * ANIMATION_SPEED;
     
     // Update integer scroll offset
-    const uint8_t newScrollOffset = (uint8_t)(_scrollOffsetFloat + 0.5f);
+    // _scrollOffsetFloat is always >= 0 due to our logic, but ensure it's clamped
+    const uint8_t newScrollOffset = static_cast<uint8_t>(max(0.0f, _scrollOffsetFloat + 0.5f));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
         redraw = true;
@@ -184,14 +185,14 @@ void Menu::drawMenu() {
     // Draw visible menu items with smooth scrolling
     // Items are offset by the fractional part of the scroll offset
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
-    const int16_t scrollPixelOffset = (int16_t)(scrollFraction * MENU_ITEM_HEIGHT);
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
     for (uint8_t i = _scrollOffset; i < visibleEnd; i++) {
         const uint8_t displayIndex = i - _scrollOffset;
         const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
         
         // Only draw if within visible bounds
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < (int16_t)_display->getDisplayHeight()) {
+        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
             _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
             if (_currentMenu[i].icon != nullptr) {
                 _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
@@ -203,7 +204,7 @@ void Menu::drawMenu() {
     if (_scrollOffset > 0 && scrollFraction > 0.01f) {
         const uint8_t i = _scrollOffset - 1;
         const int16_t yPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < (int16_t)_display->getDisplayHeight()) {
+        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
             _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
             if (_currentMenu[i].icon != nullptr) {
                 _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
@@ -216,7 +217,7 @@ void Menu::drawMenu() {
         const uint8_t i = visibleEnd;
         const uint8_t displayIndex = i - _scrollOffset;
         const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < (int16_t)_display->getDisplayHeight()) {
+        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
             _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
             if (_currentMenu[i].icon != nullptr) {
                 _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
@@ -227,7 +228,7 @@ void Menu::drawMenu() {
     // Draw selection highlight at smooth position
     // Note: The highlight moves WITH the items during scrolling (same scrollPixelOffset)
     // This keeps the highlight visually attached to the selected menu item
-    const int16_t selectionY = (int16_t)(_selectionYPos + 0.5f) - scrollPixelOffset;
+    const int16_t selectionY = static_cast<int16_t>(_selectionYPos + 0.5f) - scrollPixelOffset;
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
