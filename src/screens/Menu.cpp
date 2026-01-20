@@ -5,6 +5,7 @@
 #include "screens/controllers/ProofingController.h"
 #include "icons.h"
 #include "screens/BaseController.h"
+#include <cmath>
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
@@ -17,8 +18,7 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _selectionYPos(0),
     _targetSelectionYPos(0),
     _scrollOffsetFloat(0),
-    _targetScrollOffset(0),
-    _lastUpdateTime(0)
+    _targetScrollOffset(0)
 {}
 
 void Menu::begin() {
@@ -47,7 +47,6 @@ void Menu::beginImpl() {
         if (!_display) _display = SafePtr::resolve(ctx->display);
     }
     _display->clear();
-    _lastUpdateTime = millis();
 }
 
 // Update the menu
@@ -226,6 +225,8 @@ void Menu::drawMenu() {
     }
     
     // Draw selection highlight at smooth position
+    // Note: The highlight moves WITH the items during scrolling (same scrollPixelOffset)
+    // This keeps the highlight visually attached to the selected menu item
     const int16_t selectionY = (int16_t)(_selectionYPos + 0.5f) - scrollPixelOffset;
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
