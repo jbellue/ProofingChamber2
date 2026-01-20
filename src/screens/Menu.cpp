@@ -54,7 +54,6 @@ void Menu::beginImpl() {
 bool Menu::update(bool forceRedraw) {
     IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
-    bool animating = false;
     
     // Handle encoder rotation - update menu index and calculate targets
     const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
@@ -107,9 +106,6 @@ bool Menu::update(bool forceRedraw) {
     }
 
     // Animate towards target positions
-    const float currentScrollOffset = _scrollOffsetFloat;
-    const float currentSelectionY = _selectionYPos;
-    
     // Smooth interpolation
     _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
     _selectionYPos += (_targetSelectionYPos - _selectionYPos) * ANIMATION_SPEED;
@@ -126,7 +122,6 @@ bool Menu::update(bool forceRedraw) {
     const float scrollDiff = fabsf(_targetScrollOffset - _scrollOffsetFloat);
     const float selectionDiff = fabsf(_targetSelectionYPos - _selectionYPos);
     if (scrollDiff > ANIMATION_CONVERGENCE_THRESHOLD || selectionDiff > ANIMATION_CONVERGENCE_THRESHOLD) {
-        animating = true;
         redraw = true;
     }
     
@@ -214,7 +209,7 @@ void Menu::drawMenu() {
     }
     
     // Draw one extra item below if scrolling
-    if (visibleEnd < _currentMenuSize) {
+    if (visibleEnd < _currentMenuSize && scrollFraction > SCROLL_RENDER_THRESHOLD) {
         const uint8_t i = visibleEnd;
         const uint8_t displayIndex = i - _scrollOffset;
         const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
