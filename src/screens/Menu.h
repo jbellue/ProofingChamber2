@@ -61,6 +61,8 @@ private:
     
     // Smooth scrolling animation
     static constexpr float ANIMATION_SPEED = 0.25f;  // Interpolation factor (0-1, higher = faster)
+    static constexpr float ANIMATION_CONVERGENCE_THRESHOLD = 0.1f;  // Pixels - stop animating when this close to target
+    static constexpr float SCROLL_RENDER_THRESHOLD = 0.01f;  // Fractional offset - render extra items when scrolling
 
     MenuActions* _menuActions;
     IDisplayManager* _display;

@@ -116,7 +116,7 @@ bool Menu::update(bool forceRedraw) {
     
     // Update integer scroll offset
     // _scrollOffsetFloat is always >= 0 due to our logic, but ensure it's clamped
-    const uint8_t newScrollOffset = static_cast<uint8_t>(max(0.0f, _scrollOffsetFloat + 0.5f));
+    const uint8_t newScrollOffset = static_cast<uint8_t>(std::max(0.0f, _scrollOffsetFloat + 0.5f));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
         redraw = true;
@@ -125,7 +125,7 @@ bool Menu::update(bool forceRedraw) {
     // Check if still animating
     const float scrollDiff = fabsf(_targetScrollOffset - _scrollOffsetFloat);
     const float selectionDiff = fabsf(_targetSelectionYPos - _selectionYPos);
-    if (scrollDiff > 0.1f || selectionDiff > 0.1f) {
+    if (scrollDiff > ANIMATION_CONVERGENCE_THRESHOLD || selectionDiff > ANIMATION_CONVERGENCE_THRESHOLD) {
         animating = true;
         redraw = true;
     }
@@ -155,8 +155,8 @@ void Menu::drawScrollbar() {
     const uint8_t scrollbarTrackHeight = displayHeight - (2 * SCROLLBAR_Y_MARGIN);
     // Use uint16_t to prevent overflow in multiplication before division
     // Scrollbar height represents the proportion of visible items to total items
-    const uint16_t heightCalc = min((uint16_t)MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize, 20);
-    const uint8_t scrollbarHeight = min(scrollbarTrackHeight, max((uint8_t)4, (uint8_t)heightCalc));
+    const uint16_t heightCalc = std::min(static_cast<uint16_t>(MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize), static_cast<uint16_t>(20));
+    const uint8_t scrollbarHeight = std::min(scrollbarTrackHeight, std::max(static_cast<uint8_t>(4), static_cast<uint8_t>(heightCalc)));
     
     // Calculate scrollbar position based on the highlighted item
     // Safety: _currentMenuSize > MAX_VISIBLE_ITEMS (>= 5), so (_currentMenuSize - 1) >= 4
@@ -181,7 +181,7 @@ void Menu::drawMenu() {
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
-    const uint8_t visibleEnd = min((uint8_t)(_scrollOffset + MAX_VISIBLE_ITEMS), _currentMenuSize);
+    const uint8_t visibleEnd = std::min(static_cast<uint8_t>(_scrollOffset + MAX_VISIBLE_ITEMS), _currentMenuSize);
 
     // Draw visible menu items with smooth scrolling
     // Items are offset by the fractional part of the scroll offset
@@ -202,7 +202,7 @@ void Menu::drawMenu() {
     }
     
     // Draw one extra item above if scrolling
-    if (_scrollOffset > 0 && scrollFraction > 0.01f) {
+    if (_scrollOffset > 0 && scrollFraction > SCROLL_RENDER_THRESHOLD) {
         const uint8_t i = _scrollOffset - 1;
         const int16_t yPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
         if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
