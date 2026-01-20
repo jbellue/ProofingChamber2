@@ -119,8 +119,8 @@ bool Menu::update(bool forceRedraw) {
     }
     
     // Check if still animating
-    const float scrollDiff = fabsf(_targetScrollOffset - _scrollOffsetFloat);
-    const float selectionDiff = fabsf(_targetSelectionYPos - _selectionYPos);
+    const float scrollDiff = std::fabs(_targetScrollOffset - _scrollOffsetFloat);
+    const float selectionDiff = std::fabs(_targetSelectionYPos - _selectionYPos);
     if (scrollDiff > ANIMATION_CONVERGENCE_THRESHOLD || selectionDiff > ANIMATION_CONVERGENCE_THRESHOLD) {
         redraw = true;
     }
