@@ -6,6 +6,7 @@
 #include "icons.h"
 #include "screens/BaseController.h"
 #include <cmath>
+#include <algorithm>
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
