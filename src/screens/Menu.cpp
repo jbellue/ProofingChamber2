@@ -149,30 +149,25 @@ void Menu::drawMenu() {
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
     const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
-    // Draw items with wrapping - items circulate infinitely
+    // Draw menu items without looping
+    // Show blank space above first item and below last item
     // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
     for (uint8_t displayIndex = 0; displayIndex <= MAX_VISIBLE_ITEMS; displayIndex++) {
-        // Calculate which menu item to show at this display position
-        // Use modulo to wrap around
+        // Calculate which menu item would be at this display position
         const int16_t virtualIndex = _scrollOffset + displayIndex;
-        const uint8_t menuItemIndex = ((virtualIndex % _currentMenuSize) + _currentMenuSize) % _currentMenuSize;
         
         const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
         
-        // Only draw if within visible bounds
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
-            _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[menuItemIndex].name);
-            if (_currentMenu[menuItemIndex].icon != nullptr) {
-                _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[menuItemIndex].icon);
-            }
+        // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
+        // This creates blank space above item 0 and below last item
+        if (virtualIndex >= 0 && virtualIndex < _currentMenuSize) {
+            const uint8_t menuItemIndex = static_cast<uint8_t>(virtualIndex);
             
-            // Draw separator line when we wrap from last to first item
-            // Check if the next item wraps around
-            if (menuItemIndex == _currentMenuSize - 1) {
-                // This is the last item, draw a separator line below it
-                const int16_t separatorY = yPos + MENU_ITEM_HEIGHT / 2;
-                if (separatorY > 0 && separatorY < static_cast<int16_t>(_display->getDisplayHeight())) {
-                    _display->drawHLine(0, separatorY, _display->getDisplayWidth() - 10);
+            // Only draw if within visible bounds
+            if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
+                _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[menuItemIndex].name);
+                if (_currentMenu[menuItemIndex].icon != nullptr) {
+                    _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[menuItemIndex].icon);
                 }
             }
         }
