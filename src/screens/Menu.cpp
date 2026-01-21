@@ -49,21 +49,22 @@ bool Menu::update(bool forceRedraw) {
     IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
     
-    // Process ALL pending encoder steps before animating
-    // This ensures no steps are missed
+    // Check if we're currently animating
+    const bool isAnimating = fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD;
+    
+    // Process encoder input - only one step at a time for smooth animation
+    // If we're still animating, don't process new input yet
     bool indexChanged = false;
-    while (true) {
+    if (!isAnimating) {
         const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
-        if (encoderDirection == IInputManager::EncoderDirection::None) {
-            break;  // No more steps to process
+        if (encoderDirection != IInputManager::EncoderDirection::None) {
+            if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
+                _menuIndex = (_menuIndex + 1) % _currentMenuSize;
+            } else {
+                _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
+            }
+            indexChanged = true;
         }
-        
-        if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
-            _menuIndex = (_menuIndex + 1) % _currentMenuSize;
-        } else {
-            _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
-        }
-        indexChanged = true;
     }
     
     // If menu index changed, calculate new target scroll offset
@@ -85,9 +86,10 @@ bool Menu::update(bool forceRedraw) {
     if (fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD) {
         _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
         redraw = true;
-    } else {
-        // Snap to target when very close
+    } else if (indexChanged) {
+        // Just reached target, snap to it
         _scrollOffsetFloat = _targetScrollOffset;
+        redraw = true;
     }
     
     // Update integer scroll offset (can be negative for circular scrolling)
