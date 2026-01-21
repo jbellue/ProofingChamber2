@@ -93,8 +93,8 @@ bool Menu::update(bool forceRedraw) {
     }
     
     // Update integer scroll offset (can be negative for circular scrolling)
-    // Use floor with offset for proper rounding of negative numbers
-    const int16_t newScrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat + 0.5f));
+    // Use floor (not round) to get the integer part - this ensures scrollFraction is always positive
+    const int16_t newScrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
         redraw = true;
