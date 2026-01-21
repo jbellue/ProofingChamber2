@@ -15,8 +15,6 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _currentMenu(nullptr),
     _menuIndex(0),
     _scrollOffset(0),
-    _selectionYPos(0),
-    _targetSelectionYPos(0),
     _scrollOffsetFloat(0),
     _targetScrollOffset(0)
 {}
@@ -34,9 +32,6 @@ void Menu::beginImpl() {
         _menuIndex = 0;
         _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        const float initialYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-        _selectionYPos = initialYPos;
-        _targetSelectionYPos = initialYPos;
         _scrollOffsetFloat = 0;
         _targetScrollOffset = 0;
     }
@@ -54,15 +49,25 @@ bool Menu::update(bool forceRedraw) {
     IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
     
-    // Handle encoder rotation - update menu index and calculate targets
-    const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
-    if (encoderDirection != IInputManager::EncoderDirection::None) {
+    // Process ALL pending encoder steps before animating
+    // This ensures no steps are missed
+    bool indexChanged = false;
+    while (true) {
+        const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
+        if (encoderDirection == IInputManager::EncoderDirection::None) {
+            break;  // No more steps to process
+        }
+        
         if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % _currentMenuSize;
         } else {
             _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
         }
-        
+        indexChanged = true;
+    }
+    
+    // If menu index changed, calculate new target scroll offset
+    if (indexChanged) {
         // Calculate target scroll offset based on menu position
         if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
             // All items fit on screen - no scrolling needed
@@ -97,30 +102,22 @@ bool Menu::update(bool forceRedraw) {
             }
         }
         
-        // Calculate target selection Y position (relative to current scroll offset)
-        const float targetDisplayIndex = _menuIndex - _targetScrollOffset;
-        _targetSelectionYPos = (targetDisplayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-        
         redraw = true;
     }
 
-    // Animate towards target positions
-    // Smooth interpolation
-    _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
-    _selectionYPos += (_targetSelectionYPos - _selectionYPos) * ANIMATION_SPEED;
+    // Animate scroll offset towards target
+    if (fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD) {
+        _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
+        redraw = true;
+    } else {
+        // Snap to target when very close
+        _scrollOffsetFloat = _targetScrollOffset;
+    }
     
     // Update integer scroll offset
-    // Clamp and round _scrollOffsetFloat to ensure valid uint8_t range
     const uint8_t newScrollOffset = static_cast<uint8_t>(max(0.0f, min(_scrollOffsetFloat + 0.5f, 255.0f)));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
-        redraw = true;
-    }
-    
-    // Check if still animating
-    const float scrollDiff = fabsf(_targetScrollOffset - _scrollOffsetFloat);
-    const float selectionDiff = fabsf(_targetSelectionYPos - _selectionYPos);
-    if (scrollDiff > ANIMATION_CONVERGENCE_THRESHOLD || selectionDiff > ANIMATION_CONVERGENCE_THRESHOLD) {
         redraw = true;
     }
     
@@ -220,10 +217,10 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw selection highlight at smooth position
-    // Note: The highlight moves WITH the items during scrolling (same scrollPixelOffset)
-    // This keeps the highlight visually attached to the selected menu item
-    const int16_t selectionY = static_cast<int16_t>(_selectionYPos + 0.5f) - scrollPixelOffset;
+    // Draw selection highlight at fixed position relative to displayed items
+    // The highlight doesn't move - items scroll underneath it
+    const float displayIndex = _menuIndex - _scrollOffsetFloat;
+    const int16_t selectionY = static_cast<int16_t>((displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET + 0.5f) - scrollPixelOffset;
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
@@ -246,9 +243,6 @@ bool Menu::handleMenuSelection() {
         _menuIndex = 0;
         _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        const float initialYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-        _selectionYPos = initialYPos;
-        _targetSelectionYPos = initialYPos;
         _scrollOffsetFloat = 0;
         _targetScrollOffset = 0;
         drawMenu();
@@ -267,9 +261,6 @@ void Menu::setCurrentMenu(MenuItem* menu) {
     _menuIndex = 0;
     _scrollOffset = 0;
     _currentMenuSize = getCurrentMenuSize();
-    const float initialYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-    _selectionYPos = initialYPos;
-    _targetSelectionYPos = initialYPos;
     _scrollOffsetFloat = 0;
     _targetScrollOffset = 0;
     drawMenu();

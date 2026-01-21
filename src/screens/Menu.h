@@ -37,8 +37,6 @@ private:
     uint8_t _currentMenuSize = 0;
     
     // Smooth scrolling state
-    float _selectionYPos = 0;
-    float _targetSelectionYPos = 0;
     float _scrollOffsetFloat = 0;
     float _targetScrollOffset = 0;
 
