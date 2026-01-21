@@ -70,14 +70,9 @@ bool Menu::update(bool forceRedraw) {
     // If menu index changed, calculate new target scroll offset
     // The goal is to position the selected item at SELECTION_POSITION
     if (indexChanged) {
-        if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
-            // All items fit on screen - no scrolling needed, center them
-            _targetScrollOffset = -static_cast<float>(MAX_VISIBLE_ITEMS - _currentMenuSize) / 2.0f;
-        } else {
-            // Always position selected item at SELECTION_POSITION
-            // No clamping - items will wrap around
-            _targetScrollOffset = _menuIndex - SELECTION_POSITION;
-        }
+        // Always position selected item at SELECTION_POSITION
+        // Items will wrap around using modulo arithmetic in drawing code
+        _targetScrollOffset = _menuIndex - SELECTION_POSITION;
         
         redraw = true;
     }
