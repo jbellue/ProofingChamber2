@@ -33,7 +33,7 @@ public:
 private:
     MenuItem* _currentMenu;
     uint8_t _menuIndex = 0;
-    uint8_t _scrollOffset = 0;
+    int16_t _scrollOffset = 0;  // Can be negative for circular scrolling
     uint8_t _currentMenuSize = 0;
     
     // Smooth scrolling state

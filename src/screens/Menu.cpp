@@ -90,8 +90,9 @@ bool Menu::update(bool forceRedraw) {
         _scrollOffsetFloat = _targetScrollOffset;
     }
     
-    // Update integer scroll offset
-    const uint8_t newScrollOffset = static_cast<uint8_t>(max(0.0f, min(_scrollOffsetFloat + 0.5f, 255.0f)));
+    // Update integer scroll offset (can be negative for circular scrolling)
+    // Use floor with offset for proper rounding of negative numbers
+    const int16_t newScrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat + 0.5f));
     if (newScrollOffset != _scrollOffset) {
         _scrollOffset = newScrollOffset;
         redraw = true;
