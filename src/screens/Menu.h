@@ -39,6 +39,8 @@ private:
     // Smooth scrolling state
     float _scrollOffsetFloat = 0;
     float _targetScrollOffset = 0;
+    float _selectionDisplayIndex = 0;  // Where the selection is currently displayed (0-3 for 4 visible items)
+    float _targetSelectionDisplayIndex = 0;  // Where it should be
 
     static const uint8_t MAX_VISIBLE_ITEMS = 4;
     static const uint8_t MENU_ITEM_HEIGHT = 16;

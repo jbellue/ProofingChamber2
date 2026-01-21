@@ -16,7 +16,9 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _menuIndex(0),
     _scrollOffset(0),
     _scrollOffsetFloat(0),
-    _targetScrollOffset(0)
+    _targetScrollOffset(0),
+    _selectionDisplayIndex(0),
+    _targetSelectionDisplayIndex(0)
 {}
 
 void Menu::begin() {
@@ -34,6 +36,8 @@ void Menu::beginImpl() {
         _currentMenuSize = getCurrentMenuSize();
         _scrollOffsetFloat = 0;
         _targetScrollOffset = 0;
+        _selectionDisplayIndex = 0;
+        _targetSelectionDisplayIndex = 0;
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -66,7 +70,7 @@ bool Menu::update(bool forceRedraw) {
         indexChanged = true;
     }
     
-    // If menu index changed, calculate new target scroll offset
+    // If menu index changed, calculate new target scroll offset and selection position
     if (indexChanged) {
         // Calculate target scroll offset based on menu position
         if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
@@ -102,6 +106,9 @@ bool Menu::update(bool forceRedraw) {
             }
         }
         
+        // Calculate target selection display index (where it appears on screen)
+        _targetSelectionDisplayIndex = _menuIndex - _targetScrollOffset;
+        
         redraw = true;
     }
 
@@ -112,6 +119,15 @@ bool Menu::update(bool forceRedraw) {
     } else {
         // Snap to target when very close
         _scrollOffsetFloat = _targetScrollOffset;
+    }
+    
+    // Animate selection display index towards target
+    if (fabsf(_targetSelectionDisplayIndex - _selectionDisplayIndex) > ANIMATION_CONVERGENCE_THRESHOLD) {
+        _selectionDisplayIndex += (_targetSelectionDisplayIndex - _selectionDisplayIndex) * ANIMATION_SPEED;
+        redraw = true;
+    } else {
+        // Snap to target when very close
+        _selectionDisplayIndex = _targetSelectionDisplayIndex;
     }
     
     // Update integer scroll offset
@@ -192,8 +208,8 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw one extra item above if scrolling
-    if (_scrollOffset > 0 && scrollFraction > SCROLL_RENDER_THRESHOLD) {
+    // Draw one extra item above if scrolling up (negative fraction means items move down)
+    if (_scrollOffset > 0 && scrollFraction < -SCROLL_RENDER_THRESHOLD) {
         const uint8_t i = _scrollOffset - 1;
         const int16_t yPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
         if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
@@ -204,7 +220,7 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw one extra item below if scrolling
+    // Draw one extra item below if scrolling down (positive fraction means items move up)
     if (visibleEnd < _currentMenuSize && scrollFraction > SCROLL_RENDER_THRESHOLD) {
         const uint8_t i = visibleEnd;
         const uint8_t displayIndex = i - _scrollOffset;
@@ -217,10 +233,9 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw selection highlight at fixed position relative to displayed items
-    // The highlight doesn't move - items scroll underneath it
-    const float displayIndex = _menuIndex - _scrollOffsetFloat;
-    const int16_t selectionY = static_cast<int16_t>((displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET + 0.5f) - scrollPixelOffset;
+    // Draw selection highlight using the animated display index
+    // This ensures smooth movement even when scroll offset doesn't change
+    const int16_t selectionY = static_cast<int16_t>((_selectionDisplayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET + 0.5f);
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
@@ -245,6 +260,8 @@ bool Menu::handleMenuSelection() {
         _currentMenuSize = getCurrentMenuSize();
         _scrollOffsetFloat = 0;
         _targetScrollOffset = 0;
+        _selectionDisplayIndex = 0;
+        _targetSelectionDisplayIndex = 0;
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr && _menuActions != nullptr) {
@@ -263,5 +280,7 @@ void Menu::setCurrentMenu(MenuItem* menu) {
     _currentMenuSize = getCurrentMenuSize();
     _scrollOffsetFloat = 0;
     _targetScrollOffset = 0;
+    _selectionDisplayIndex = 0;
+    _targetSelectionDisplayIndex = 0;
     drawMenu();
 }
