@@ -70,16 +70,12 @@ bool Menu::update(bool forceRedraw) {
     // The goal is to position the selected item at SELECTION_POSITION
     if (indexChanged) {
         if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
-            // All items fit on screen - no scrolling needed
-            _targetScrollOffset = 0;
+            // All items fit on screen - no scrolling needed, center them
+            _targetScrollOffset = -static_cast<float>(MAX_VISIBLE_ITEMS - _currentMenuSize) / 2.0f;
         } else {
-            // Calculate scroll offset to put selected item at SELECTION_POSITION
-            // scrollOffset = menuIndex - SELECTION_POSITION, clamped to valid range
-            float desiredScroll = _menuIndex - SELECTION_POSITION;
-            
-            // Clamp to valid range: [0, menuSize - MAX_VISIBLE_ITEMS]
-            const float maxScroll = _currentMenuSize - MAX_VISIBLE_ITEMS;
-            _targetScrollOffset = max(0.0f, min(desiredScroll, maxScroll));
+            // Always position selected item at SELECTION_POSITION
+            // No clamping - items will wrap around
+            _targetScrollOffset = _menuIndex - SELECTION_POSITION;
         }
         
         redraw = true;
@@ -152,47 +148,34 @@ void Menu::drawMenu() {
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
-    const uint8_t visibleEnd = min(static_cast<uint8_t>(_scrollOffset + MAX_VISIBLE_ITEMS), _currentMenuSize);
-
-    // Draw visible menu items with smooth scrolling
-    // Items are offset by the fractional part of the scroll offset
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
     const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
-    for (uint8_t i = _scrollOffset; i < visibleEnd; i++) {
-        const uint8_t displayIndex = i - _scrollOffset;
+    // Draw items with wrapping - items circulate infinitely
+    // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
+    for (uint8_t displayIndex = 0; displayIndex <= MAX_VISIBLE_ITEMS; displayIndex++) {
+        // Calculate which menu item to show at this display position
+        // Use modulo to wrap around
+        const int16_t virtualIndex = _scrollOffset + displayIndex;
+        const uint8_t menuItemIndex = ((virtualIndex % _currentMenuSize) + _currentMenuSize) % _currentMenuSize;
+        
         const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
         
         // Only draw if within visible bounds
         if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
-            _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
-            if (_currentMenu[i].icon != nullptr) {
-                _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
+            _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[menuItemIndex].name);
+            if (_currentMenu[menuItemIndex].icon != nullptr) {
+                _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[menuItemIndex].icon);
             }
-        }
-    }
-    
-    // Draw one extra item above if scrolling up (negative fraction means items move down)
-    if (_scrollOffset > 0 && scrollFraction < -SCROLL_RENDER_THRESHOLD) {
-        const uint8_t i = _scrollOffset - 1;
-        const int16_t yPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
-            _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
-            if (_currentMenu[i].icon != nullptr) {
-                _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
-            }
-        }
-    }
-    
-    // Draw one extra item below if scrolling down (positive fraction means items move up)
-    if (visibleEnd < _currentMenuSize && scrollFraction > SCROLL_RENDER_THRESHOLD) {
-        const uint8_t i = visibleEnd;
-        const uint8_t displayIndex = i - _scrollOffset;
-        const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
-        if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
-            _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
-            if (_currentMenu[i].icon != nullptr) {
-                _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
+            
+            // Draw separator line when we wrap from last to first item
+            // Check if the next item wraps around
+            if (menuItemIndex == _currentMenuSize - 1) {
+                // This is the last item, draw a separator line below it
+                const int16_t separatorY = yPos + MENU_ITEM_HEIGHT / 2;
+                if (separatorY > 0 && separatorY < static_cast<int16_t>(_display->getDisplayHeight())) {
+                    _display->drawHLine(0, separatorY, _display->getDisplayWidth() - 10);
+                }
             }
         }
     }
