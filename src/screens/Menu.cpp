@@ -6,6 +6,7 @@
 #include "icons.h"
 #include "screens/BaseController.h"
 #include <cmath>
+#include <algorithm>
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
@@ -92,12 +93,14 @@ bool Menu::update(bool forceRedraw) {
     bool indexChanged = false;
     if (inputManager) {
         const int pendingSteps = inputManager->getPendingSteps();
-        const int stepsToProcess = min(pendingSteps, (int)MAX_ENCODER_STEPS_PER_UPDATE);
+        const int stepsToProcess = std::min(pendingSteps, (int)MAX_ENCODER_STEPS_PER_UPDATE);
         
         for (int i = 0; i < stepsToProcess; i++) {
             const auto encoderDirection = inputManager->getEncoderDirection();
             if (encoderDirection == IInputManager::EncoderDirection::None) {
-                break;  // Shouldn't happen, but safety check
+                // This shouldn't happen since we queried the count, but safety check
+                DEBUG_PRINTLN("Menu: Unexpected None from getEncoderDirection");
+                break;
             }
             
             if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
