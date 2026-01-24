@@ -30,6 +30,9 @@ struct AppContext {
     services::INetworkService* networkService = nullptr;
     services::IStorage* storage = nullptr;
     
+    // Hardware configuration
+    uint8_t encoderButtonPin = 0;
+    
     // Static view instances
     AdjustValueView* adjustValueView = nullptr;
     AdjustTimeView* adjustTimeView = nullptr;

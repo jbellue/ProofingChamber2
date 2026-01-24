@@ -36,11 +36,11 @@
 #define DS18B20_PIN       0
 #define COOLING_RELAY_PIN 1
 #define HEATING_RELAY_PIN 2
-#define COOLING_LED_PIN   5
+#define COOLING_LED_PIN   10
 #define PROOFING_LED_PIN  6
 #define ENCODER_CLK       3
 #define ENCODER_DT        4
-#define ENCODER_SW        10
+#define ENCODER_SW        5
 
 // Global objects
 DisplayManager displayManager(U8G2_R0);
@@ -119,6 +119,7 @@ void setup() {
     appContext.rebootService = &rebootService;
     appContext.networkService = &networkService;
     appContext.storage = &storageAdapter;
+    appContext.encoderButtonPin = ENCODER_SW;
     
     // Add view pointers to AppContext
     appContext.adjustValueView = &adjustValueView;
