@@ -31,8 +31,6 @@ public:
     static bool writeStringToFile(const char* path, const char* value);
 
 private:
-    // Helper method to write data to a file
-    static bool writeToFile(const char* path, const char* value);
     static bool _initialized;  // Track initialization state
 };
 

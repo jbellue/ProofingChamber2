@@ -128,14 +128,6 @@ bool Storage::writeStringToFile(const char* path, const char* value) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
     }
-    return writeToFile(path, value);
-}
-
-bool Storage::writeToFile(const char* path, const char* value) {
-    if (!_initialized) {
-        DEBUG_PRINTLN("Storage not initialized");
-        return false;
-    }
     DEBUG_PRINT("Writing string to key ");
     DEBUG_PRINTLN(path);
 
