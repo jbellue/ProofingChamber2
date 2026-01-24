@@ -159,6 +159,9 @@ void Menu::drawMenu() {
     // Calculate selection box center - this is where the selected item's text baseline will be
     const int16_t selectionBoxCenter = selectionY + MENU_SELECTION_Y_OFFSET + MENU_SELECTION_HEIGHT / 2;
     
+    // Base Y position for the selected item (SELECTION_POSITION) - always fixed
+    const int16_t selectedItemY = selectionBoxCenter + MENU_ITEM_Y_OFFSET;
+    
     // Draw menu items without looping
     // Show blank space above first item and below last item
     // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
@@ -166,10 +169,10 @@ void Menu::drawMenu() {
         // Calculate which menu item would be at this display position
         const int16_t virtualIndex = _scrollOffset + displayIndex;
         
-        // Calculate Y position relative to the selection position
-        // Items above/below the selection are offset by MENU_ITEM_HEIGHT
+        // Calculate Y position: start from selected item position, offset by item spacing, then apply scroll
+        // The key insight: ALL items move together by scrollPixelOffset
         const int16_t offsetFromSelection = static_cast<int16_t>(displayIndex) - SELECTION_POSITION;
-        const int16_t yPos = selectionBoxCenter + offsetFromSelection * MENU_ITEM_HEIGHT - scrollPixelOffset + MENU_ITEM_Y_OFFSET;
+        const int16_t yPos = selectedItemY + offsetFromSelection * MENU_ITEM_HEIGHT - scrollPixelOffset;
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
         // This creates blank space above item 0 and below last item
