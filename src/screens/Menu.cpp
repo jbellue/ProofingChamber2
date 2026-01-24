@@ -92,12 +92,13 @@ bool Menu::update(bool forceRedraw) {
     bool indexChanged = false;
     if (inputManager) {
         const int pendingSteps = inputManager->getPendingSteps();
+        // Limit steps to prevent runaway processing if InputManager malfunctions
         const int stepsToProcess = pendingSteps < MAX_ENCODER_STEPS_PER_UPDATE ? pendingSteps : MAX_ENCODER_STEPS_PER_UPDATE;
         
         for (int i = 0; i < stepsToProcess; i++) {
             const auto encoderDirection = inputManager->getEncoderDirection();
             if (encoderDirection == IInputManager::EncoderDirection::None) {
-                DEBUG_PRINTLN("Menu: encoder mismatch");
+                DEBUG_PRINTLN("Menu: Encoder queue mismatch");
                 break;
             }
             
