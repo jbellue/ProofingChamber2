@@ -30,7 +30,6 @@ void Menu::begin() {
 
 // Initialize the menu
 void Menu::beginImpl() {
-    DEBUG_PRINTLN("Beginning Menu");
     // Dynamic menus (like timezones) are initialized in main.cpp with proper AppContext
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
@@ -67,13 +66,6 @@ void Menu::beginImpl() {
     // baseline = _selectionCenterY + (ascent - descent) / 2
     // offset = baseline - _selectionCenterY = (ascent - descent) / 2
     _menuItemYOffset = (ascent - descent) / 2;
-    
-    DEBUG_PRINT("Font metrics - ascent: ");
-    DEBUG_PRINT(ascent);
-    DEBUG_PRINT(", descent: ");
-    DEBUG_PRINT(descent);
-    DEBUG_PRINT(", offset: ");
-    DEBUG_PRINTLN(_menuItemYOffset);
     
     // Calculate where displayIndex=0 should be positioned
     // so that displayIndex=SELECTION_POSITION lands at the selection center
@@ -196,16 +188,6 @@ void Menu::drawMenu() {
     // Truncation ensures that scrollPixelOffset is always in range [0, 15]
     // and produces identical positions for the same scrollFraction value
     const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
-    
-    // DEBUG: Log scroll offset values
-    DEBUG_PRINT("scrollOffsetFloat: ");
-    DEBUG_PRINT(_scrollOffsetFloat);
-    DEBUG_PRINT(", floor: ");
-    DEBUG_PRINT(floorf(_scrollOffsetFloat));
-    DEBUG_PRINT(", fraction: ");
-    DEBUG_PRINT(scrollFraction);
-    DEBUG_PRINT(", pixelOffset: ");
-    DEBUG_PRINTLN(scrollPixelOffset);
     
     // Draw menu items without looping
     // Show blank space above first item and below last item
