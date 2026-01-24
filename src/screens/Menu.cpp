@@ -87,12 +87,21 @@ bool Menu::update(bool forceRedraw) {
     // Check if we're currently animating
     const bool isAnimating = fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD;
     
-    // Process encoder input - only one step at a time for smooth animation
-    // If we're still animating, don't process new input yet
+    // Always consume and process ALL encoder input to ensure no steps are missed
+    // Query how many steps are pending and consume exactly that many
     bool indexChanged = false;
-    if (!isAnimating) {
-        const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
-        if (encoderDirection != IInputManager::EncoderDirection::None) {
+    if (inputManager) {
+        const int pendingSteps = inputManager->getPendingSteps();
+        // Limit steps to prevent runaway processing if InputManager malfunctions
+        const int stepsToProcess = pendingSteps < MAX_ENCODER_STEPS_PER_UPDATE ? pendingSteps : MAX_ENCODER_STEPS_PER_UPDATE;
+        
+        for (int i = 0; i < stepsToProcess; i++) {
+            const auto encoderDirection = inputManager->getEncoderDirection();
+            if (encoderDirection == IInputManager::EncoderDirection::None) {
+                DEBUG_PRINTLN("Menu: Encoder queue mismatch");
+                break;
+            }
+            
             if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
                 _menuIndex = (_menuIndex + 1) % _currentMenuSize;
             } else {

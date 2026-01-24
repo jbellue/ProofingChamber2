@@ -14,6 +14,7 @@ public:
     void resetEncoderPosition() override;
     bool isButtonPressed() override;
     IInputManager::EncoderDirection getEncoderDirection() override;
+    int getPendingSteps() const override;
     void slowTemperaturePolling(bool slowPolling) override;
     float getTemperature() const override;
 

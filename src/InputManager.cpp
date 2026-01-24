@@ -87,6 +87,10 @@ IInputManager::EncoderDirection InputManager::getEncoderDirection() {
     return IInputManager::EncoderDirection::None;
 }
 
+int InputManager::getPendingSteps() const {
+    return _pendingSteps >= 0 ? _pendingSteps : -_pendingSteps;
+}
+
 void IRAM_ATTR InputManager::isrEncoder(void* arg) {
     auto* self = static_cast<InputManager*>(arg);
     const int s1 = gpio_get_level(self->_encoderClk);
