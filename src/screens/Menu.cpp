@@ -192,7 +192,8 @@ void Menu::drawMenu() {
     // Calculate scroll pixel offset from the fractional part of _scrollOffsetFloat
     // scrollFraction varies from 0.0 to 0.999 as animation proceeds
     const float scrollFraction = _scrollOffsetFloat - floorf(_scrollOffsetFloat);
-    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
+    // Round to nearest integer for consistent positioning in both directions
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT + 0.5f);
     
     // Draw menu items without looping
     // Show blank space above first item and below last item
