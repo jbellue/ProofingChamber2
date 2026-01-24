@@ -58,8 +58,8 @@ void Menu::beginImpl() {
     
     // Calculate text offset to center text vertically in the selection box
     // Font metrics: ascent is pixels above baseline, descent is pixels below
-    const uint8_t ascent = _display->getAscent();
-    const uint8_t descent = _display->getDescent();
+    const int8_t ascent = static_cast<int8_t>(_display->getAscent());
+    const int8_t descent = static_cast<int8_t>(_display->getDescent());
     
     // Visual center of text is at: baseline - (ascent - descent) / 2
     // To place visual center at selection center:
@@ -67,6 +67,13 @@ void Menu::beginImpl() {
     // baseline = _selectionCenterY + (ascent - descent) / 2
     // offset = baseline - _selectionCenterY = (ascent - descent) / 2
     _menuItemYOffset = (ascent - descent) / 2;
+    
+    DEBUG_PRINT("Font metrics - ascent: ");
+    DEBUG_PRINT(ascent);
+    DEBUG_PRINT(", descent: ");
+    DEBUG_PRINT(descent);
+    DEBUG_PRINT(", offset: ");
+    DEBUG_PRINTLN(_menuItemYOffset);
     
     // Calculate where displayIndex=0 should be positioned
     // so that displayIndex=SELECTION_POSITION lands at the selection center
