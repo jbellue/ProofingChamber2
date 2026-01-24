@@ -175,8 +175,15 @@ void Menu::drawMenu() {
         if (virtualIndex >= 0 && virtualIndex < _currentMenuSize) {
             const uint8_t menuItemIndex = static_cast<uint8_t>(virtualIndex);
             
-            // Only draw if within visible bounds
-            if (yPos > -MENU_ITEM_HEIGHT && yPos < static_cast<int16_t>(_display->getDisplayHeight())) {
+            // Calculate the full extent of the item (icon top to text bottom with margins)
+            // Icon is at yPos + MENU_ICON_Y_OFFSET (-9), height MENU_ICON_HEIGHT (10)
+            // Text baseline is at yPos, extends ~2-3px below for descenders
+            // Add small margins to ensure partial visibility doesn't clip items
+            const int16_t itemTop = yPos + MENU_ICON_Y_OFFSET - 2;  // Icon top with margin
+            const int16_t itemBottom = yPos + 4;  // Text bottom with margin for descenders
+            
+            // Only draw if any part of the item is within visible bounds
+            if (itemBottom > 0 && itemTop < static_cast<int16_t>(_display->getDisplayHeight())) {
                 _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[menuItemIndex].name);
                 if (_currentMenu[menuItemIndex].icon != nullptr) {
                     _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[menuItemIndex].icon);
