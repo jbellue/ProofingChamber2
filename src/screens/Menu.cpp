@@ -17,7 +17,21 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _scrollOffset(0),
     _scrollOffsetFloat(0),
     _targetScrollOffset(0)
-{}
+{
+    // Pre-calculate all integer positions from screen center
+    // This is done once and never changes
+    const uint8_t displayHeight = 64;  // SH1106 display height
+    const int16_t screenCenterY = displayHeight / 2;  // 32
+    
+    // Selection box center is at screen center
+    _selectionCenterY = screenCenterY;
+    
+    // Calculate where displayIndex=0 should be positioned
+    // so that displayIndex=SELECTION_POSITION lands at the selection center
+    // Item at SELECTION_POSITION has baseline at: _selectionCenterY + MENU_ITEM_Y_OFFSET
+    // Working backwards: baseY + SELECTION_POSITION * MENU_ITEM_HEIGHT = _selectionCenterY + MENU_ITEM_Y_OFFSET
+    _itemBaseY = _selectionCenterY + MENU_ITEM_Y_OFFSET - SELECTION_POSITION * MENU_ITEM_HEIGHT;
+}
 
 void Menu::begin() {
     beginImpl();
@@ -147,23 +161,12 @@ void Menu::drawMenu() {
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
+    // Calculate integer scroll pixel offset using rounding for consistent positioning
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
-    // Use floating-point scroll offset for smooth sub-pixel animation
-    // The fractional part will be handled by the rendering system
-    const float scrollPixelOffsetFloat = scrollFraction * MENU_ITEM_HEIGHT;
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT + 0.5f);
     
-    // Calculate selection box position (for alignment)
-    const uint8_t displayHeight = _display->getDisplayHeight();
-    const int16_t screenCenter = displayHeight / 2;
-    const int16_t selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT / 2;
-    
-    // Calculate selection box center - this is where the selected item's text baseline will be
-    const int16_t selectionBoxCenter = selectionY + MENU_SELECTION_Y_OFFSET + MENU_SELECTION_HEIGHT / 2;
-    
-    // Calculate the base Y position for items
-    // Items are positioned relative to where they would be at integer scroll positions
-    // The scrollPixelOffset shifts ALL items smoothly during animation
-    const int16_t baseY = selectionBoxCenter + MENU_ITEM_Y_OFFSET - SELECTION_POSITION * MENU_ITEM_HEIGHT;
+    // Calculate selection box Y position from the pre-calculated center
+    const int16_t selectionY = _selectionCenterY - MENU_SELECTION_HEIGHT / 2;
     
     // Draw menu items without looping
     // Show blank space above first item and below last item
@@ -172,10 +175,10 @@ void Menu::drawMenu() {
         // Calculate which menu item would be at this display position
         const int16_t virtualIndex = _scrollOffset + displayIndex;
         
-        // Calculate Y position: base position + item index * spacing - scroll animation offset
-        // This ensures ALL items (including selected) move consistently during scrolling
-        // Use floating-point arithmetic and convert to int16_t at the end for consistent positioning
-        const int16_t yPos = static_cast<int16_t>(baseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffsetFloat);
+        // Calculate Y position using integer arithmetic only
+        // yPos = baseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffset
+        // All positions are integers - no floating point at all
+        const int16_t yPos = _itemBaseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffset;
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
         // This creates blank space above item 0 and below last item
@@ -183,10 +186,6 @@ void Menu::drawMenu() {
             const uint8_t menuItemIndex = static_cast<uint8_t>(virtualIndex);
             
             // Calculate the full extent of the item (icon top to text bottom with margins)
-            // Icon is at yPos + MENU_ICON_Y_OFFSET (-9), height MENU_ICON_HEIGHT (10)
-            // So icon spans from (yPos - 9) to (yPos - 9 + 10) = (yPos + 1)
-            // Text baseline is at yPos, extends ~2-3px below for descenders
-            // Add margins to prevent clipping when partially scrolling off-screen
             const int16_t itemTop = yPos + MENU_ICON_Y_OFFSET;  // Top of icon (yPos - 9)
             const int16_t itemBottom = yPos + 4;  // Text bottom with margin for descenders
             

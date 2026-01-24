@@ -53,6 +53,10 @@ private:
     static const int8_t MENU_SELECTION_Y_OFFSET = -12;
     static const uint8_t MENU_SELECTION_HEIGHT = 15;
     static const uint8_t MENU_SELECTION_RADIUS = 1;
+    
+    // Pre-calculated integer positions (set in constructor)
+    int16_t _selectionCenterY = 0;  // Y coordinate of selection box center
+    int16_t _itemBaseY = 0;  // Base Y position for menu items (where displayIndex=0 would be)
 
     static const uint8_t SCROLLBAR_WIDTH = 3;
     static const uint8_t SCROLLBAR_X_OFFSET = 2;
