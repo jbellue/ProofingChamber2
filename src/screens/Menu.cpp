@@ -89,8 +89,10 @@ bool Menu::update(bool forceRedraw) {
     
     // Always consume and process ALL encoder input to ensure no steps are missed
     // Loop to drain all pending steps in a single update cycle
+    // Safety limit to prevent infinite loop if InputManager malfunctions
     bool indexChanged = false;
-    while (true) {
+    const uint8_t MAX_STEPS_PER_UPDATE = 20;  // Reasonable limit for rapid scrolling
+    for (uint8_t i = 0; i < MAX_STEPS_PER_UPDATE; i++) {
         const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
         if (encoderDirection == IInputManager::EncoderDirection::None) {
             break;  // No more pending steps
