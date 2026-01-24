@@ -64,7 +64,8 @@ void PowerOffController::performPowerOff() {
     }
     
     // Configure button pin as wake-up source
-    // ENCODER_SW is on GPIO10 - use ext0 wake on low level (button press)
+    // ENCODER_SW is on GPIO10 as defined in main.cpp - hardcoded here since 
+    // it's a hardware constant and we need the gpio_num_t type for ESP sleep API
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_10, 0);  // 0 = wake on LOW (button pressed)
     
     DEBUG_PRINTLN("Entering deep sleep mode. Press button to wake.");
