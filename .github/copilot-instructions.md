@@ -10,7 +10,7 @@ ProofingChamber2 is an ESP32-based temperature controller for a bread proofing c
 - **Framework**: Arduino
 - **Display**: SH1106 128x64 OLED (U8G2 library)
 - **Temperature Sensor**: DS18B20 (OneWire/Dallas Temperature)
-- **File System**: LittleFS
+- **Storage**: ESP32 Preferences (NVS)
 - **Key Libraries**:
   - U8G2: Display management
   - WiFiManager: WiFi configuration
@@ -25,7 +25,7 @@ ProofingChamber2 is an ESP32-based temperature controller for a bread proofing c
 2. **TemperatureController**: Controls heating and cooling relays based on temperature readings
 3. **InputManager**: Handles rotary encoder and button input
 4. **ScreensManager**: Manages screen transitions and active screen
-5. **Storage**: Static class for LittleFS file operations (read/write configuration)
+5. **Storage**: Static class for Preferences-based storage operations (read/write configuration to NVS)
 6. **DS18B20Manager**: Manages DS18B20 temperature sensor
 
 ### Design Patterns
@@ -103,7 +103,7 @@ pio device monitor
 
 - Build configuration is in `platformio.ini`
 - Board: esp32-c3-devkitm-1
-- Filesystem: LittleFS
+- Storage: ESP32 Preferences (NVS)
 - Monitor speed: 115200
 
 ### Testing
@@ -125,8 +125,9 @@ When creating new screens:
 
 ## Storage/Persistence
 
-- Use `Storage` class static methods for all file operations
-- Files are stored in LittleFS filesystem
+- Use `Storage` class static methods for all storage operations
+- Data is stored in ESP32 NVS (Non-Volatile Storage) using Preferences library
+- File paths are automatically converted to preference keys (e.g., `/hot/lower_limit.txt` → `hot_lower_limit`)
 - Available methods: `readIntFromFile()`, `writeIntToFile()`, `readFloatFromFile()`, `writeFloatToFile()`, `readStringFromFile()`, `writeStringToFile()`
 - Always provide default values when reading
 - Check return values when writing
