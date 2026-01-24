@@ -99,7 +99,7 @@ bool Menu::update(bool forceRedraw) {
             const auto encoderDirection = inputManager->getEncoderDirection();
             if (encoderDirection == IInputManager::EncoderDirection::None) {
                 // This shouldn't happen since we queried the count, but safety check
-                DEBUG_PRINTLN("Menu: Unexpected None from getEncoderDirection");
+                DEBUG_PRINTLN("Menu: getEncoderDirection() returned None despite getPendingSteps() indicating available steps");
                 break;
             }
             
