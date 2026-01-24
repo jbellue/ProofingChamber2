@@ -5,6 +5,7 @@
 #include "screens/controllers/ProofingController.h"
 #include "icons.h"
 #include "screens/BaseController.h"
+#include <cmath>
 
 // Constructor
 Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
@@ -14,8 +15,14 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _currentMenu(nullptr),
     _menuIndex(0),
     _scrollOffset(0),
-    _selectionYPos(0)
-{}
+    _scrollOffsetFloat(0),
+    _targetScrollOffset(0),
+    _selectionCenterY(0),
+    _itemBaseY(0),
+    _menuItemYOffset(0)
+{
+    // Positions will be calculated in beginImpl() after display is available
+}
 
 void Menu::begin() {
     beginImpl();
@@ -23,14 +30,11 @@ void Menu::begin() {
 
 // Initialize the menu
 void Menu::beginImpl() {
-    DEBUG_PRINTLN("Beginning Menu");
     // Dynamic menus (like timezones) are initialized in main.cpp with proper AppContext
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
         _menuIndex = 0;
-        _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -39,6 +43,40 @@ void Menu::beginImpl() {
         if (!_display) _display = SafePtr::resolve(ctx->display);
     }
     _display->clear();
+    
+    // Calculate all integer positions from screen center
+    // This must be done after display is available to get font metrics
+    const uint8_t displayHeight = _display->getDisplayHeight();  // 64 for SH1106
+    const int16_t screenCenterY = displayHeight / 2;  // 32
+    
+    // Selection box center is at screen center
+    _selectionCenterY = screenCenterY;
+    
+    // Set the font to get accurate font metrics
+    _display->setFont(u8g2_font_t0_11_tf);
+    
+    // Calculate text offset to center text vertically in the selection box
+    // Font metrics: ascent is pixels above baseline, descent is pixels below
+    const int8_t ascent = static_cast<int8_t>(_display->getAscent());
+    const int8_t descent = static_cast<int8_t>(_display->getDescent());
+    
+    // Visual center of text is at: baseline - (ascent - descent) / 2
+    // To place visual center at selection center:
+    // baseline - (ascent - descent) / 2 = _selectionCenterY
+    // baseline = _selectionCenterY + (ascent - descent) / 2
+    // offset = baseline - _selectionCenterY = (ascent - descent) / 2
+    _menuItemYOffset = (ascent - descent) / 2;
+    
+    // Calculate where displayIndex=0 should be positioned
+    // so that displayIndex=SELECTION_POSITION lands at the selection center
+    // Item at SELECTION_POSITION has baseline at: _selectionCenterY + _menuItemYOffset
+    // Working backwards: baseY + SELECTION_POSITION * MENU_ITEM_HEIGHT = _selectionCenterY + _menuItemYOffset
+    _itemBaseY = _selectionCenterY + _menuItemYOffset - SELECTION_POSITION * MENU_ITEM_HEIGHT;
+    
+    // Initialize scroll to position first item at SELECTION_POSITION
+    _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+    _scrollOffsetFloat = _targetScrollOffset;
+    _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
 }
 
 // Update the menu
@@ -46,24 +84,52 @@ bool Menu::update(bool forceRedraw) {
     IInputManager* inputManager = getInputManager();
     bool redraw = forceRedraw;
     
-    // Handle encoder rotation
-    const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
-    if (encoderDirection != IInputManager::EncoderDirection::None) {
-        if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
-            _menuIndex = (_menuIndex + 1) % _currentMenuSize;
-        } else {
-            _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
+    // Check if we're currently animating
+    const bool isAnimating = fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD;
+    
+    // Process encoder input - only one step at a time for smooth animation
+    // If we're still animating, don't process new input yet
+    bool indexChanged = false;
+    if (!isAnimating) {
+        const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
+        if (encoderDirection != IInputManager::EncoderDirection::None) {
+            if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
+                _menuIndex = (_menuIndex + 1) % _currentMenuSize;
+            } else {
+                _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
+            }
+            indexChanged = true;
         }
-        updateScrollOffset();
+    }
+    
+    // If menu index changed, calculate new target scroll offset
+    // The goal is to position the selected item at SELECTION_POSITION
+    if (indexChanged) {
+        // Always position selected item at SELECTION_POSITION
+        // Items will wrap around using modulo arithmetic in drawing code
+        _targetScrollOffset = _menuIndex - SELECTION_POSITION;
         
-        // Jump selection highlight directly to the new item
-        const uint8_t displayIndex = _menuIndex - _scrollOffset;
-        _selectionYPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-
         redraw = true;
     }
 
-
+    // Animate scroll offset towards target
+    if (fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD) {
+        _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
+        redraw = true;
+    } else if (_scrollOffsetFloat != _targetScrollOffset) {
+        // Within threshold - snap to exact target value
+        _scrollOffsetFloat = _targetScrollOffset;
+        redraw = true;
+    }
+    
+    // Update integer scroll offset (can be negative for circular scrolling)
+    // Use floor (not round) to get the integer part - this ensures scrollFraction is always positive
+    const int16_t newScrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
+    if (newScrollOffset != _scrollOffset) {
+        _scrollOffset = newScrollOffset;
+        redraw = true;
+    }
+    
     if (redraw) {
         drawMenu();
     }
@@ -72,6 +138,7 @@ bool Menu::update(bool forceRedraw) {
     if (inputManager && inputManager->isButtonPressed()) {
         return handleMenuSelection();
     }
+    
     return true;
 }
 
@@ -88,8 +155,8 @@ void Menu::drawScrollbar() {
     const uint8_t scrollbarTrackHeight = displayHeight - (2 * SCROLLBAR_Y_MARGIN);
     // Use uint16_t to prevent overflow in multiplication before division
     // Scrollbar height represents the proportion of visible items to total items
-    const uint16_t heightCalc = min((uint16_t)MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize, 20);
-    const uint8_t scrollbarHeight = min(scrollbarTrackHeight, max((uint8_t)4, (uint8_t)heightCalc));
+    const uint16_t heightCalc = min(static_cast<uint16_t>(MAX_VISIBLE_ITEMS * scrollbarTrackHeight / _currentMenuSize), static_cast<uint16_t>(20));
+    const uint8_t scrollbarHeight = min(scrollbarTrackHeight, max(static_cast<uint8_t>(4), static_cast<uint8_t>(heightCalc)));
     
     // Calculate scrollbar position based on the highlighted item
     // Safety: _currentMenuSize > MAX_VISIBLE_ITEMS (>= 5), so (_currentMenuSize - 1) >= 4
@@ -114,21 +181,52 @@ void Menu::drawMenu() {
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
-    const uint8_t visibleEnd = min((uint8_t)(_scrollOffset + MAX_VISIBLE_ITEMS), _currentMenuSize);
-
-    // Draw visible menu items
-    for (uint8_t i = _scrollOffset; i < visibleEnd; i++) {
-        const uint8_t displayIndex = i - _scrollOffset;
-        const uint8_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
-        _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[i].name);
-        if (_currentMenu[i].icon != nullptr) {
-            _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[i].icon);
+    // Calculate scroll pixel offset from the fractional part of _scrollOffsetFloat
+    // scrollFraction varies from 0.0 to 0.999 as animation proceeds
+    const float scrollFraction = _scrollOffsetFloat - floorf(_scrollOffsetFloat);
+    // Truncate (not round) to ensure consistent pixel positions
+    // Truncation ensures that scrollPixelOffset is always in range [0, 15]
+    // and produces identical positions for the same scrollFraction value
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
+    
+    // Draw menu items without looping
+    // Show blank space above first item and below last item
+    // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
+    for (uint8_t displayIndex = 0; displayIndex <= MAX_VISIBLE_ITEMS; displayIndex++) {
+        // Calculate which menu item would be at this display position
+        // virtualIndex = floor(scrollOffsetFloat) + displayIndex
+        const int16_t virtualIndex = static_cast<int16_t>(floorf(_scrollOffsetFloat)) + displayIndex;
+        
+        // Calculate Y position: each display position has a fixed Y, then subtract scroll offset
+        // Item positions move uniformly as scrollPixelOffset increases
+        const int16_t yPos = static_cast<int16_t>(_itemBaseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffset);
+        
+        // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
+        // This creates blank space above item 0 and below last item
+        if (virtualIndex >= 0 && virtualIndex < _currentMenuSize) {
+            const uint8_t menuItemIndex = static_cast<uint8_t>(virtualIndex);
+            
+            // Calculate the full extent of the item (icon top to text bottom with margins)
+            const int16_t itemTop = yPos + MENU_ICON_Y_OFFSET;  // Top of icon (yPos - 9)
+            const int16_t itemBottom = yPos + 4;  // Text bottom with margin for descenders
+            
+            // Only draw if any part of the item is within visible bounds
+            // Allow a bit of clipping at the edges (1 pixel tolerance) for smoother transitions
+            if (itemBottom > -1 && itemTop < static_cast<int16_t>(_display->getDisplayHeight()) + 1) {
+                _display->drawUTF8(MENU_TEXT_X_OFFSET, yPos, _currentMenu[menuItemIndex].name);
+                if (_currentMenu[menuItemIndex].icon != nullptr) {
+                    _display->drawXBMP(MENU_ICON_X_OFFSET, yPos + MENU_ICON_Y_OFFSET, MENU_ICON_WIDTH, MENU_ICON_HEIGHT, _currentMenu[menuItemIndex].icon);
+                }
+            }
         }
     }
     
-    // Draw selection highlight at current position
+    // Draw selection highlight at FIXED position
+    // Selection box NEVER moves - items scroll past it
+    // The selection is always at the position calculated for displayIndex=SELECTION_POSITION with scrollPixelOffset=0
+    const int16_t selectionY = _itemBaseY + SELECTION_POSITION * MENU_ITEM_HEIGHT;
     _display->setDrawColor(2);
-    _display->drawRBox(MENU_SELECTION_X_OFFSET, _selectionYPos + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
+    _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
 
     drawScrollbar();
@@ -142,30 +240,16 @@ uint8_t Menu::getCurrentMenuSize() const {
     return size;
 }
 
-void Menu::updateScrollOffset() {
-    if (_currentMenuSize <= MAX_VISIBLE_ITEMS) {
-        _scrollOffset = 0;
-        return;
-    }
-    
-    // Scroll down if selected item is below visible area
-    if (_menuIndex >= _scrollOffset + MAX_VISIBLE_ITEMS) {
-        _scrollOffset = _menuIndex - MAX_VISIBLE_ITEMS + 1;
-    }
-    // Scroll up if selected item is above visible area
-    else if (_menuIndex < _scrollOffset) {
-        _scrollOffset = _menuIndex;
-    }
-}
-
 bool Menu::handleMenuSelection() {
     MenuItem* selectedItem = &_currentMenu[_menuIndex];
     if (selectedItem->subMenu != nullptr) {
         _currentMenu = selectedItem->subMenu;
         _menuIndex = 0;
-        _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+        // Initialize scroll to position first item at SELECTION_POSITION
+        _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+        _scrollOffsetFloat = _targetScrollOffset;
+        _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr && _menuActions != nullptr) {
@@ -180,8 +264,10 @@ void Menu::setCurrentMenu(MenuItem* menu) {
     if (!menu) return;
     _currentMenu = menu;
     _menuIndex = 0;
-    _scrollOffset = 0;
     _currentMenuSize = getCurrentMenuSize();
-    _selectionYPos = MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+    // Initialize scroll to position first item at SELECTION_POSITION
+    _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+    _scrollOffsetFloat = _targetScrollOffset;
+    _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
     drawMenu();
 }
