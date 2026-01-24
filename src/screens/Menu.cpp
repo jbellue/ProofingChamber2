@@ -148,8 +148,9 @@ void Menu::drawMenu() {
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
-    // Round scrollPixelOffset instead of truncating to prevent 1-pixel jitter during animation
-    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT + 0.5f);
+    // Use floating-point scroll offset for smooth sub-pixel animation
+    // The fractional part will be handled by the rendering system
+    const float scrollPixelOffsetFloat = scrollFraction * MENU_ITEM_HEIGHT;
     
     // Calculate selection box position (for alignment)
     const uint8_t displayHeight = _display->getDisplayHeight();
@@ -173,7 +174,8 @@ void Menu::drawMenu() {
         
         // Calculate Y position: base position + item index * spacing - scroll animation offset
         // This ensures ALL items (including selected) move consistently during scrolling
-        const int16_t yPos = baseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffset;
+        // Use floating-point arithmetic and convert to int16_t at the end for consistent positioning
+        const int16_t yPos = static_cast<int16_t>(baseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffsetFloat);
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
         // This creates blank space above item 0 and below last item
