@@ -150,6 +150,16 @@ void Menu::drawMenu() {
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
     const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
+    // Calculate selection box position (for alignment)
+    const uint8_t displayHeight = _display->getDisplayHeight();
+    const int16_t screenCenter = displayHeight / 2;
+    const int16_t selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT / 2;
+    
+    // Calculate base Y position for SELECTION_POSITION to align with selection box
+    // The selected item should have its baseline aligned with the selection box center
+    const int16_t selectionBoxCenter = selectionY + MENU_SELECTION_Y_OFFSET + MENU_SELECTION_HEIGHT / 2;
+    const int16_t baseYForSelection = selectionBoxCenter;  // Text baseline at box center
+    
     // Draw menu items without looping
     // Show blank space above first item and below last item
     // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
@@ -157,7 +167,10 @@ void Menu::drawMenu() {
         // Calculate which menu item would be at this display position
         const int16_t virtualIndex = _scrollOffset + displayIndex;
         
-        const int16_t yPos = (displayIndex + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET - scrollPixelOffset;
+        // Calculate Y position relative to the selection position
+        // Items above/below the selection are offset by MENU_ITEM_HEIGHT
+        const int16_t offsetFromSelection = static_cast<int16_t>(displayIndex) - SELECTION_POSITION;
+        const int16_t yPos = baseYForSelection + offsetFromSelection * MENU_ITEM_HEIGHT - scrollPixelOffset;
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
         // This creates blank space above item 0 and below last item
@@ -175,16 +188,6 @@ void Menu::drawMenu() {
     }
     
     // Draw selection highlight at screen center
-    // Calculate Y position so the center of the selection box is at screen center
-    const uint8_t displayHeight = _display->getDisplayHeight();
-    const int16_t screenCenter = displayHeight / 2;
-    // Selection box center should be at screenCenter
-    // Box is drawn at selectionY + MENU_SELECTION_Y_OFFSET with height MENU_SELECTION_HEIGHT
-    // Center is at: (selectionY + MENU_SELECTION_Y_OFFSET) + MENU_SELECTION_HEIGHT/2
-    // We want: (selectionY + MENU_SELECTION_Y_OFFSET) + MENU_SELECTION_HEIGHT/2 = screenCenter
-    // So: selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT/2
-    const int16_t selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT / 2;
-    
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
