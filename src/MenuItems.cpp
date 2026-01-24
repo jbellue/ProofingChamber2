@@ -196,6 +196,7 @@ Menu::MenuItem mainMenu[] = {
     {"Pousse imm\xC3\xA9" "diate",       iconProof,    nullptr,          &MenuActions::proofNowAction},
     {"Pousse diff\xC3\xA9r\xC3\xA9" "e", iconCool,     delayedProofMenu, nullptr},
     {"R\xC3\xA9glages",                  iconSettings, settingsMenu,     nullptr},
+    {"\xC3\x89teindre",                  iconReset,    nullptr,          &MenuActions::powerOff},
     {nullptr,                            nullptr,      nullptr,          nullptr} // End of menu
 };
 

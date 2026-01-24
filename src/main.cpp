@@ -18,6 +18,7 @@
 #include "screens/controllers/CoolingController.h"
 #include "screens/controllers/DataDisplayController.h"
 #include "screens/controllers/ConfirmTimezoneController.h"
+#include "screens/controllers/PowerOffController.h"
 #include "screens/views/AdjustValueView.h"
 #include "screens/views/AdjustTimeView.h"
 #include "screens/views/CoolingView.h"
@@ -26,6 +27,7 @@
 #include "screens/views/WiFiResetView.h"
 #include "screens/views/DataDisplayView.h"
 #include "screens/views/ConfirmTimezoneView.h"
+#include "screens/views/PowerOffView.h"
 #include "ScreensManager.h"
 #include "Storage.h"
 #include "TemperatureController.h"
@@ -60,6 +62,7 @@ static CoolingController coolingControllerInstance(&appContext);
 static WiFiResetController wifiResetControllerInstance(&appContext);
 static DataDisplayController dataDisplayControllerInstance(&appContext);
 static ConfirmTimezoneController confirmTimezoneControllerInstance(&appContext);
+static PowerOffController powerOffControllerInstance(&appContext);
 
 AdjustValueController* adjustValueController = &adjustValueControllerInstance;
 AdjustTimeController* adjustTimeController = &adjustTimeControllerInstance;
@@ -69,6 +72,7 @@ CoolingController* coolingController = &coolingControllerInstance;
 WiFiResetController* wifiResetController = &wifiResetControllerInstance;
 DataDisplayController* dataDisplayController = &dataDisplayControllerInstance;
 ConfirmTimezoneController* confirmTimezoneController = &confirmTimezoneControllerInstance;
+PowerOffController* powerOffController = &powerOffControllerInstance;
 Initialization* initialization = nullptr; // Created in setup after network service
 
 MenuActions* menuActions = nullptr; // Created in setup
@@ -87,6 +91,7 @@ static RebootView rebootView(&displayManager);
 static WiFiResetView wifiResetView(&displayManager);
 static DataDisplayView dataDisplayView(&displayManager);
 static ConfirmTimezoneView confirmTimezoneView(&displayManager);
+static PowerOffView powerOffView(&displayManager);
 
 void setup() {
 #if DEBUG
@@ -124,6 +129,7 @@ void setup() {
     appContext.wifiResetView = &wifiResetView;
     appContext.dataDisplayView = &dataDisplayView;
     appContext.confirmTimezoneView = &confirmTimezoneView;
+    appContext.powerOffView = &powerOffView;
 
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);
@@ -132,7 +138,7 @@ void setup() {
     static Initialization initializationInstance(&appContext);
     initialization = &initializationInstance;
     
-    static MenuActions menuActionsInstance(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, reboot, dataDisplayController, confirmTimezoneController);
+    static MenuActions menuActionsInstance(&appContext, adjustValueController, adjustTimeController, proofingController, coolingController, wifiResetController, reboot, dataDisplayController, confirmTimezoneController, powerOffController);
     menuActions = &menuActionsInstance;
     
     static Menu menuInstance(&appContext, menuActions);

@@ -12,9 +12,10 @@ SimpleTime MenuActions::s_proofAtTime(0, 0, 0);
 
 MenuActions::MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, 
         AdjustTimeController* adjustTimeController, ProofingController* ProofingController, CoolingController* coolingController,
-        WiFiResetController* wifiResetController, RebootController* rebootController, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController) :
+        WiFiResetController* wifiResetController, RebootController* rebootController, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController, PowerOffController* powerOffController) :
     _ctx(ctx),
     _rebootController(rebootController),
+    _powerOffController(powerOffController),
     _adjustValueController(adjustValueController),
     _adjustTimeController(adjustTimeController),
     _proofingController(ProofingController),
@@ -112,6 +113,14 @@ void MenuActions::reboot() {
     if (!menu) return;
     menu->setNextScreen(_rebootController);
     _rebootController->setNextScreen(menu);
+}
+
+void MenuActions::powerOff() {
+    if (!_ctx || !_ctx->screens || !_powerOffController) return;
+    BaseController* menu = _ctx->screens->getActiveScreen();
+    if (!menu) return;
+    menu->setNextScreen(_powerOffController);
+    _powerOffController->setNextScreen(menu);
 }
 
 void MenuActions::showDataDisplay() {
