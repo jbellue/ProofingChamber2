@@ -168,7 +168,7 @@ void Menu::drawMenu() {
         // Calculate Y position relative to the selection position
         // Items above/below the selection are offset by MENU_ITEM_HEIGHT
         const int16_t offsetFromSelection = static_cast<int16_t>(displayIndex) - SELECTION_POSITION;
-        const int16_t yPos = selectionBoxCenter + offsetFromSelection * MENU_ITEM_HEIGHT - scrollPixelOffset;
+        const int16_t yPos = selectionBoxCenter + offsetFromSelection * MENU_ITEM_HEIGHT - scrollPixelOffset + MENU_ITEM_Y_OFFSET;
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
         // This creates blank space above item 0 and below last item
@@ -206,10 +206,11 @@ bool Menu::handleMenuSelection() {
     if (selectedItem->subMenu != nullptr) {
         _currentMenu = selectedItem->subMenu;
         _menuIndex = 0;
-        _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        _scrollOffsetFloat = 0;
-        _targetScrollOffset = 0;
+        // Initialize scroll to position first item at SELECTION_POSITION
+        _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+        _scrollOffsetFloat = _targetScrollOffset;
+        _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
         drawMenu();
         DEBUG_PRINTLN("Submenu selected");
     } else if (selectedItem->action != nullptr && _menuActions != nullptr) {
