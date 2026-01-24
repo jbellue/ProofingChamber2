@@ -2,6 +2,7 @@
 #include "DebugUtils.h"
 #include <Arduino.h>
 #include <driver/gpio.h>
+#include <cstdlib>
 
 InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin) :
         _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderClk((gpio_num_t)clkPin),
@@ -88,7 +89,7 @@ IInputManager::EncoderDirection InputManager::getEncoderDirection() {
 }
 
 int InputManager::getPendingSteps() const {
-    return abs(_pendingSteps);
+    return std::abs(_pendingSteps);
 }
 
 void IRAM_ATTR InputManager::isrEncoder(void* arg) {

@@ -68,7 +68,7 @@ private:
     static constexpr float SCROLL_RENDER_THRESHOLD = 0.01f;  // Fractional offset - render extra items when scrolling
     
     // Input processing
-    static const uint8_t MAX_ENCODER_STEPS_PER_UPDATE = 20;  // Safety limit for encoder step processing loop
+    static constexpr uint8_t MAX_ENCODER_STEPS_PER_UPDATE = 20;  // Safety limit for encoder step processing loop
 
     MenuActions* _menuActions;
     IDisplayManager* _display;
