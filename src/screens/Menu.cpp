@@ -87,11 +87,11 @@ bool Menu::update(bool forceRedraw) {
     // Check if we're currently animating
     const bool isAnimating = fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD;
     
-    // Always consume encoder input to prevent accumulation in _pendingSteps
-    // But only process it when not animating for smooth animation
+    // Always consume and process encoder input to ensure no steps are missed
+    // Animation will catch up to the new target position
     const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
     bool indexChanged = false;
-    if (!isAnimating && encoderDirection != IInputManager::EncoderDirection::None) {
+    if (encoderDirection != IInputManager::EncoderDirection::None) {
         if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
             _menuIndex = (_menuIndex + 1) % _currentMenuSize;
         } else {
