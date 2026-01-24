@@ -148,7 +148,8 @@ void Menu::drawMenu() {
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
     const float scrollFraction = _scrollOffsetFloat - _scrollOffset;
-    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
+    // Round scrollPixelOffset instead of truncating to prevent 1-pixel jitter during animation
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT + 0.5f);
     
     // Calculate selection box position (for alignment)
     const uint8_t displayHeight = _display->getDisplayHeight();
