@@ -43,7 +43,6 @@ private:
     static const uint8_t MAX_VISIBLE_ITEMS = 4;
     static const uint8_t SELECTION_POSITION = 2;  // Fixed position where selection is drawn (0-3, 2 = centered/third from top)
     static const uint8_t MENU_ITEM_HEIGHT = 16;
-    static const int8_t MENU_ITEM_Y_OFFSET = 5;  // Offset to center text vertically (font baseline adjustment)
     static const uint8_t MENU_ICON_X_OFFSET = 3;
     static const int8_t MENU_ICON_Y_OFFSET = -9;
     static const uint8_t MENU_ICON_WIDTH = 10;
@@ -54,9 +53,10 @@ private:
     static const uint8_t MENU_SELECTION_HEIGHT = 15;
     static const uint8_t MENU_SELECTION_RADIUS = 1;
     
-    // Pre-calculated integer positions (set in constructor)
+    // Pre-calculated integer positions (set in begin())
     int16_t _selectionCenterY = 0;  // Y coordinate of selection box center
     int16_t _itemBaseY = 0;  // Base Y position for menu items (where displayIndex=0 would be)
+    int8_t _menuItemYOffset = 0;  // Calculated offset to center text vertically (font baseline adjustment)
 
     static const uint8_t SCROLLBAR_WIDTH = 3;
     static const uint8_t SCROLLBAR_X_OFFSET = 2;

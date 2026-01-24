@@ -16,21 +16,12 @@ Menu::Menu(AppContext* ctx, MenuActions* menuActions) :
     _menuIndex(0),
     _scrollOffset(0),
     _scrollOffsetFloat(0),
-    _targetScrollOffset(0)
+    _targetScrollOffset(0),
+    _selectionCenterY(0),
+    _itemBaseY(0),
+    _menuItemYOffset(0)
 {
-    // Pre-calculate all integer positions from screen center
-    // This is done once and never changes
-    const uint8_t displayHeight = 64;  // SH1106 display height
-    const int16_t screenCenterY = displayHeight / 2;  // 32
-    
-    // Selection box center is at screen center
-    _selectionCenterY = screenCenterY;
-    
-    // Calculate where displayIndex=0 should be positioned
-    // so that displayIndex=SELECTION_POSITION lands at the selection center
-    // Item at SELECTION_POSITION has baseline at: _selectionCenterY + MENU_ITEM_Y_OFFSET
-    // Working backwards: baseY + SELECTION_POSITION * MENU_ITEM_HEIGHT = _selectionCenterY + MENU_ITEM_Y_OFFSET
-    _itemBaseY = _selectionCenterY + MENU_ITEM_Y_OFFSET - SELECTION_POSITION * MENU_ITEM_HEIGHT;
+    // Positions will be calculated in beginImpl() after display is available
 }
 
 void Menu::begin() {
@@ -45,10 +36,6 @@ void Menu::beginImpl() {
         _currentMenu = mainMenu;
         _menuIndex = 0;
         _currentMenuSize = getCurrentMenuSize();
-        // Initialize scroll to position first item at SELECTION_POSITION
-        _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
-        _scrollOffsetFloat = _targetScrollOffset;
-        _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -57,6 +44,40 @@ void Menu::beginImpl() {
         if (!_display) _display = SafePtr::resolve(ctx->display);
     }
     _display->clear();
+    
+    // Calculate all integer positions from screen center
+    // This must be done after display is available to get font metrics
+    const uint8_t displayHeight = _display->getDisplayHeight();  // 64 for SH1106
+    const int16_t screenCenterY = displayHeight / 2;  // 32
+    
+    // Selection box center is at screen center
+    _selectionCenterY = screenCenterY;
+    
+    // Set the font to get accurate font metrics
+    _display->setFont(u8g2_font_t0_11_tf);
+    
+    // Calculate text offset to center text vertically in the selection box
+    // Font metrics: ascent is pixels above baseline, descent is pixels below
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
+    
+    // Visual center of text is at: baseline - (ascent - descent) / 2
+    // To place visual center at selection center:
+    // baseline - (ascent - descent) / 2 = _selectionCenterY
+    // baseline = _selectionCenterY + (ascent - descent) / 2
+    // offset = baseline - _selectionCenterY = (ascent - descent) / 2
+    _menuItemYOffset = (ascent - descent) / 2;
+    
+    // Calculate where displayIndex=0 should be positioned
+    // so that displayIndex=SELECTION_POSITION lands at the selection center
+    // Item at SELECTION_POSITION has baseline at: _selectionCenterY + _menuItemYOffset
+    // Working backwards: baseY + SELECTION_POSITION * MENU_ITEM_HEIGHT = _selectionCenterY + _menuItemYOffset
+    _itemBaseY = _selectionCenterY + _menuItemYOffset - SELECTION_POSITION * MENU_ITEM_HEIGHT;
+    
+    // Initialize scroll to position first item at SELECTION_POSITION
+    _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+    _scrollOffsetFloat = _targetScrollOffset;
+    _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
 }
 
 // Update the menu
