@@ -161,22 +161,21 @@ void Menu::drawMenu() {
     _display->setBitmapMode(1);
     _display->setFont(u8g2_font_t0_11_tf); // Use a font that supports UTF-8
 
-    // Calculate scroll pixel offset - use floating point throughout for smoothness
-    // Each item scrolls by exactly scrollOffsetFloat * MENU_ITEM_HEIGHT pixels
-    const float scrollPixelOffset = _scrollOffsetFloat * MENU_ITEM_HEIGHT;
+    // Calculate scroll pixel offset from the fractional part of _scrollOffsetFloat
+    // scrollFraction varies from 0.0 to 0.999 as animation proceeds
+    const float scrollFraction = _scrollOffsetFloat - floorf(_scrollOffsetFloat);
+    const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
     // Draw menu items without looping
     // Show blank space above first item and below last item
     // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
     for (uint8_t displayIndex = 0; displayIndex <= MAX_VISIBLE_ITEMS; displayIndex++) {
         // Calculate which menu item would be at this display position
-        // virtualIndex tells us which menu item (by index) should appear at this displayIndex
-        const int16_t virtualIndex = static_cast<int16_t>(_scrollOffsetFloat + displayIndex);
+        // virtualIndex = floor(scrollOffsetFloat) + displayIndex
+        const int16_t virtualIndex = static_cast<int16_t>(floorf(_scrollOffsetFloat)) + displayIndex;
         
         // Calculate Y position: each display position has a fixed Y, then subtract scroll offset
-        // Item at displayIndex=SELECTION_POSITION should be at selectionCenterY when scrollPixelOffset=0
-        // baseY + displayIndex * MENU_ITEM_HEIGHT = item's fixed position
-        // Subtract scrollPixelOffset to create scrolling effect
+        // Item positions move uniformly as scrollPixelOffset increases
         const int16_t yPos = static_cast<int16_t>(_itemBaseY + displayIndex * MENU_ITEM_HEIGHT - scrollPixelOffset);
         
         // Only draw if virtualIndex is within valid menu range [0, menuSize-1]
@@ -199,12 +198,12 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw selection highlight around the selected item
-    // The selected item is always at displayIndex=SELECTION_POSITION (when scrollPixelOffset aligns)
-    // Calculate the Y position for that item
-    const int16_t selectionItemY = static_cast<int16_t>(_itemBaseY + SELECTION_POSITION * MENU_ITEM_HEIGHT - scrollPixelOffset);
+    // Draw selection highlight at FIXED position
+    // Selection box NEVER moves - items scroll past it
+    // The selection is always at the position calculated for displayIndex=SELECTION_POSITION with scrollPixelOffset=0
+    const int16_t selectionY = _itemBaseY + SELECTION_POSITION * MENU_ITEM_HEIGHT;
     _display->setDrawColor(2);
-    _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionItemY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
+    _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
 
     drawScrollbar();
