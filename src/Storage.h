@@ -2,7 +2,7 @@
 #define STORAGE_H
 
 #include <Arduino.h>
-#include <LittleFS.h>
+#include <Preferences.h>
 
 class Storage {
 public:

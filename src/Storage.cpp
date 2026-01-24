@@ -2,18 +2,40 @@
 #include "Storage.h"
 
 bool Storage::_initialized = false;
+static Preferences preferences;
+
+// Helper function to convert file path to preference key
+// Converts "/timezone.txt" -> "timezone"
+// Converts "/hot/lower_limit.txt" -> "hot_lower_limit"
+// Converts "/cold/higher_limit.txt" -> "cold_higher_limit"
+static String pathToKey(const char* path) {
+    String key = String(path);
+    // Remove leading slash
+    if (key.startsWith("/")) {
+        key = key.substring(1);
+    }
+    // Remove file extension
+    int dotIndex = key.lastIndexOf('.');
+    if (dotIndex > 0) {
+        key = key.substring(0, dotIndex);
+    }
+    // Replace slashes with underscores
+    key.replace('/', '_');
+    return key;
+}
 
 bool Storage::begin() {
     if (_initialized) {
         return true;
     }
 
-    if (!LittleFS.begin()) {
-        DEBUG_PRINTLN("Failed to mount LittleFS");
+    // Open Preferences with namespace "storage" in read-write mode
+    if (!preferences.begin("storage", false)) {
+        DEBUG_PRINTLN("Failed to initialize Preferences");
         return false;
     }
 
-    DEBUG_PRINTLN("LittleFS mounted successfully");
+    DEBUG_PRINTLN("Preferences initialized successfully");
     _initialized = true;
     return true;
 }
@@ -23,18 +45,11 @@ int Storage::readIntFromFile(const char* path, int defaultValue) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
     }
-    DEBUG_PRINT("Reading int from file ");
+    DEBUG_PRINT("Reading int from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
-        return defaultValue;
-    }
-
-    String content = file.readString();
-    file.close();
-    return content.toInt();
+    String key = pathToKey(path);
+    return preferences.getInt(key.c_str(), defaultValue);
 }
 
 float Storage::readFloatFromFile(const char* path, float defaultValue) {
@@ -42,25 +57,11 @@ float Storage::readFloatFromFile(const char* path, float defaultValue) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
     }
-    DEBUG_PRINT("Reading float from file ");
+    DEBUG_PRINT("Reading float from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
-        return defaultValue;
-    }
-
-    char buffer[32];
-    size_t len = file.readBytes(buffer, sizeof(buffer) - 1);
-    file.close();
-    
-    if (len == 0) {
-        return defaultValue;
-    }
-    
-    buffer[len] = '\0';
-    return atof(buffer);
+    String key = pathToKey(path);
+    return preferences.getFloat(key.c_str(), defaultValue);
 }
 
 bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSize, const char* defaultValue) {
@@ -70,28 +71,16 @@ bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSi
         buffer[bufferSize - 1] = '\0';
         return false;
     }
-    DEBUG_PRINT("Reading string from file ");
+    DEBUG_PRINT("Reading string from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
-        strncpy(buffer, defaultValue, bufferSize - 1);
-        buffer[bufferSize - 1] = '\0';
-        return false;
-    }
-
-    size_t len = file.readBytes(buffer, bufferSize - 1);
-    file.close();
+    String key = pathToKey(path);
+    String value = preferences.getString(key.c_str(), defaultValue);
     
-    if (len == 0) {
-        strncpy(buffer, defaultValue, bufferSize - 1);
-        buffer[bufferSize - 1] = '\0';
-        return false;
-    }
+    strncpy(buffer, value.c_str(), bufferSize - 1);
+    buffer[bufferSize - 1] = '\0';
     
-    buffer[len] = '\0';
-    return true;
+    return value.length() > 0;
 }
 
 bool Storage::writeIntToFile(const char* path, int value) {
@@ -99,9 +88,19 @@ bool Storage::writeIntToFile(const char* path, int value) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
     }
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%d", value);
-    return writeToFile(path, buffer);
+    DEBUG_PRINT("Writing int to key ");
+    DEBUG_PRINTLN(path);
+
+    String key = pathToKey(path);
+    size_t written = preferences.putInt(key.c_str(), value);
+    
+    if (written > 0) {
+        DEBUG_PRINTLN("Value written successfully");
+        return true;
+    } else {
+        DEBUG_PRINTLN("Write failed");
+        return false;
+    }
 }
 
 bool Storage::writeFloatToFile(const char* path, float value) {
@@ -109,9 +108,19 @@ bool Storage::writeFloatToFile(const char* path, float value) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
     }
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%.2f", value);
-    return writeToFile(path, buffer);
+    DEBUG_PRINT("Writing float to key ");
+    DEBUG_PRINTLN(path);
+
+    String key = pathToKey(path);
+    size_t written = preferences.putFloat(key.c_str(), value);
+    
+    if (written > 0) {
+        DEBUG_PRINTLN("Value written successfully");
+        return true;
+    } else {
+        DEBUG_PRINTLN("Write failed");
+        return false;
+    }
 }
 
 bool Storage::writeStringToFile(const char* path, const char* value) {
@@ -127,20 +136,14 @@ bool Storage::writeToFile(const char* path, const char* value) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
     }
-    DEBUG_PRINT("Writing to file ");
+    DEBUG_PRINT("Writing string to key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_WRITE);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for writing");
-        return false;
-    }
-
-    size_t written = file.print(value);
-    file.close();
+    String key = pathToKey(path);
+    size_t written = preferences.putString(key.c_str(), value);
     
     if (written > 0) {
-        DEBUG_PRINTLN("File written successfully");
+        DEBUG_PRINTLN("Value written successfully");
         return true;
     } else {
         DEBUG_PRINTLN("Write failed");
