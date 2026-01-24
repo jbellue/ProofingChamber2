@@ -16,7 +16,7 @@ static String pathToKey(const char* path) {
     }
     // Remove file extension
     int dotIndex = key.lastIndexOf('.');
-    if (dotIndex > 0) {
+    if (dotIndex >= 0) {
         key = key.substring(0, dotIndex);
     }
     // Replace slashes with underscores
@@ -75,12 +75,16 @@ bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSi
     DEBUG_PRINTLN(path);
 
     String key = pathToKey(path);
+    
+    // Check if the key exists in preferences
+    bool keyExists = preferences.isKey(key.c_str());
+    
     String value = preferences.getString(key.c_str(), defaultValue);
     
     strncpy(buffer, value.c_str(), bufferSize - 1);
     buffer[bufferSize - 1] = '\0';
     
-    return value.length() > 0;
+    return keyExists;
 }
 
 bool Storage::writeIntToFile(const char* path, int value) {
