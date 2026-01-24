@@ -34,7 +34,7 @@ bool PowerOffController::update(bool shouldRedraw) {
             return false;
         }
         performPowerOff();
-        // Should not reach here after deep sleep
+        // Should not reach here after light sleep and restart
     }
     return true;
 }
@@ -62,8 +62,16 @@ void PowerOffController::performPowerOff() {
     // ENCODER_SW is on GPIO10 as defined in main.cpp
     // GPIO10 is not in RTC domain on ESP32-C3, so we use light sleep instead of deep sleep
     // Light sleep still provides significant power savings and supports any GPIO
-    esp_sleep_enable_gpio_wakeup();
-    gpio_wakeup_enable(GPIO_NUM_10, GPIO_INTR_LOW_LEVEL);
+    esp_err_t err = esp_sleep_enable_gpio_wakeup();
+    if (err != ESP_OK) {
+        DEBUG_PRINT("Failed to enable GPIO wakeup: ");
+        DEBUG_PRINTLN(err);
+    }
+    err = gpio_wakeup_enable(GPIO_NUM_10, GPIO_INTR_LOW_LEVEL);
+    if (err != ESP_OK) {
+        DEBUG_PRINT("Failed to configure GPIO10 wakeup: ");
+        DEBUG_PRINTLN(err);
+    }
     
     DEBUG_PRINTLN("Entering light sleep mode. Press button to wake.");
     delay(100);  // Allow time for serial output
