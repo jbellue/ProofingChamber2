@@ -30,10 +30,11 @@ void Menu::beginImpl() {
     if (_currentMenu == nullptr) {
         _currentMenu = mainMenu;
         _menuIndex = 0;
-        _scrollOffset = 0;
         _currentMenuSize = getCurrentMenuSize();
-        _scrollOffsetFloat = 0;
-        _targetScrollOffset = 0;
+        // Initialize scroll to position first item at SELECTION_POSITION
+        _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+        _scrollOffsetFloat = _targetScrollOffset;
+        _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
     }
     initializeInputManager();
     // Late-bind context pointers
@@ -173,9 +174,17 @@ void Menu::drawMenu() {
         }
     }
     
-    // Draw selection highlight at FIXED position (SELECTION_POSITION)
-    // Items scroll around this fixed highlight
-    const int16_t selectionY = (SELECTION_POSITION + 1) * MENU_ITEM_HEIGHT + MENU_ITEM_Y_OFFSET;
+    // Draw selection highlight at screen center
+    // Calculate Y position so the center of the selection box is at screen center
+    const uint8_t displayHeight = _display->getDisplayHeight();
+    const int16_t screenCenter = displayHeight / 2;
+    // Selection box center should be at screenCenter
+    // Box is drawn at selectionY + MENU_SELECTION_Y_OFFSET with height MENU_SELECTION_HEIGHT
+    // Center is at: (selectionY + MENU_SELECTION_Y_OFFSET) + MENU_SELECTION_HEIGHT/2
+    // We want: (selectionY + MENU_SELECTION_Y_OFFSET) + MENU_SELECTION_HEIGHT/2 = screenCenter
+    // So: selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT/2
+    const int16_t selectionY = screenCenter - MENU_SELECTION_Y_OFFSET - MENU_SELECTION_HEIGHT / 2;
+    
     _display->setDrawColor(2);
     _display->drawRBox(MENU_SELECTION_X_OFFSET, selectionY + MENU_SELECTION_Y_OFFSET, _display->getDisplayWidth() - 10, MENU_SELECTION_HEIGHT, MENU_SELECTION_RADIUS);
     _display->setDrawColor(1);
@@ -214,9 +223,10 @@ void Menu::setCurrentMenu(MenuItem* menu) {
     if (!menu) return;
     _currentMenu = menu;
     _menuIndex = 0;
-    _scrollOffset = 0;
     _currentMenuSize = getCurrentMenuSize();
-    _scrollOffsetFloat = 0;
-    _targetScrollOffset = 0;
+    // Initialize scroll to position first item at SELECTION_POSITION
+    _targetScrollOffset = static_cast<float>(_menuIndex) - SELECTION_POSITION;
+    _scrollOffsetFloat = _targetScrollOffset;
+    _scrollOffset = static_cast<int16_t>(floorf(_scrollOffsetFloat));
     drawMenu();
 }
