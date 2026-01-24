@@ -1,7 +1,6 @@
 #include "PowerOffController.h"
 #include "../views/PowerOffView.h"
 #include "../../DebugUtils.h"
-#include "../../DisplayManager.h"
 #include "SafePtr.h"
 #include <esp_sleep.h>
 
@@ -53,20 +52,14 @@ void PowerOffController::performPowerOff() {
         if (ctx->display) {
             ctx->display->clearBuffer();
             ctx->display->sendBuffer();
-            
-            // Access the U8G2 display to put it into power save mode
-            DisplayManager* displayMgr = dynamic_cast<DisplayManager*>(ctx->display);
-            if (displayMgr && displayMgr->getDisplay()) {
-                displayMgr->getDisplay()->setPowerSave(1);  // 1 = power save on
-                DEBUG_PRINTLN("Display power save enabled");
-            }
+            DEBUG_PRINTLN("Display cleared");
         }
     }
     
-    // Configure button pin as wake-up source
-    // ENCODER_SW is on GPIO10 as defined in main.cpp - hardcoded here since 
-    // it's a hardware constant and we need the gpio_num_t type for ESP sleep API
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_10, 0);  // 0 = wake on LOW (button pressed)
+    // Configure button pin as wake-up source for ESP32-C3
+    // ENCODER_SW is on GPIO10 as defined in main.cpp
+    // Use GPIO wakeup with bitmask for ESP32-C3 (1ULL << pin_number)
+    esp_deep_sleep_enable_gpio_wakeup(1ULL << 10, ESP_GPIO_WAKEUP_GPIO_LOW);
     
     DEBUG_PRINTLN("Entering deep sleep mode. Press button to wake.");
     delay(100);  // Allow time for serial output
