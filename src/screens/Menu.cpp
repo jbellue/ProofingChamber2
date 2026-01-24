@@ -88,22 +88,25 @@ bool Menu::update(bool forceRedraw) {
     const bool isAnimating = fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD;
     
     // Always consume and process ALL encoder input to ensure no steps are missed
-    // Loop to drain all pending steps in a single update cycle
-    // Safety limit to prevent infinite loop if InputManager malfunctions
+    // Query how many steps are pending and consume exactly that many
     bool indexChanged = false;
-    const uint8_t MAX_STEPS_PER_UPDATE = 20;  // Reasonable limit for rapid scrolling
-    for (uint8_t i = 0; i < MAX_STEPS_PER_UPDATE; i++) {
-        const auto encoderDirection = inputManager ? inputManager->getEncoderDirection() : IInputManager::EncoderDirection::None;
-        if (encoderDirection == IInputManager::EncoderDirection::None) {
-            break;  // No more pending steps
-        }
+    if (inputManager) {
+        const int pendingSteps = inputManager->getPendingSteps();
+        const int stepsToProcess = min(pendingSteps, (int)MAX_ENCODER_STEPS_PER_UPDATE);
         
-        if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
-            _menuIndex = (_menuIndex + 1) % _currentMenuSize;
-        } else {
-            _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
+        for (int i = 0; i < stepsToProcess; i++) {
+            const auto encoderDirection = inputManager->getEncoderDirection();
+            if (encoderDirection == IInputManager::EncoderDirection::None) {
+                break;  // Shouldn't happen, but safety check
+            }
+            
+            if (encoderDirection == IInputManager::EncoderDirection::Clockwise) {
+                _menuIndex = (_menuIndex + 1) % _currentMenuSize;
+            } else {
+                _menuIndex = (_menuIndex - 1 + _currentMenuSize) % _currentMenuSize;
+            }
+            indexChanged = true;
         }
-        indexChanged = true;
     }
     
     // If menu index changed, calculate new target scroll offset

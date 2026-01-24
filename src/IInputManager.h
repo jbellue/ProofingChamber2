@@ -17,6 +17,7 @@ public:
     virtual void resetEncoderPosition() = 0;
     virtual bool isButtonPressed() = 0;
     virtual EncoderDirection getEncoderDirection() = 0;
+    virtual int getPendingSteps() const = 0;
     virtual void slowTemperaturePolling(bool slowPolling) = 0;
     virtual float getTemperature() const = 0;
 };

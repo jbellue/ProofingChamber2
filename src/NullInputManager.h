@@ -33,6 +33,11 @@ public:
         return EncoderDirection::None;
     }
 
+    int getPendingSteps() const override {
+        // Silent no-op - called frequently
+        return 0;
+    }
+
     void slowTemperaturePolling(bool slowPolling) override {
         DEBUG_PRINTLN("NullInputManager: slowTemperaturePolling() called - no-op");
     }

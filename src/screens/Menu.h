@@ -66,6 +66,9 @@ private:
     static constexpr float ANIMATION_SPEED = 0.25f;  // Interpolation factor (0-1, higher = faster)
     static constexpr float ANIMATION_CONVERGENCE_THRESHOLD = 0.1f;  // Pixels - stop animating when this close to target
     static constexpr float SCROLL_RENDER_THRESHOLD = 0.01f;  // Fractional offset - render extra items when scrolling
+    
+    // Input processing
+    static const uint8_t MAX_ENCODER_STEPS_PER_UPDATE = 20;  // Safety limit for encoder step processing loop
 
     MenuActions* _menuActions;
     IDisplayManager* _display;
