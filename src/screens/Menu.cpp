@@ -197,6 +197,16 @@ void Menu::drawMenu() {
     // and produces identical positions for the same scrollFraction value
     const int16_t scrollPixelOffset = static_cast<int16_t>(scrollFraction * MENU_ITEM_HEIGHT);
     
+    // DEBUG: Log scroll offset values
+    DEBUG_PRINT("scrollOffsetFloat: ");
+    DEBUG_PRINT(_scrollOffsetFloat);
+    DEBUG_PRINT(", floor: ");
+    DEBUG_PRINT(floorf(_scrollOffsetFloat));
+    DEBUG_PRINT(", fraction: ");
+    DEBUG_PRINT(scrollFraction);
+    DEBUG_PRINT(", pixelOffset: ");
+    DEBUG_PRINTLN(scrollPixelOffset);
+    
     // Draw menu items without looping
     // Show blank space above first item and below last item
     // We always draw MAX_VISIBLE_ITEMS + 1 items to handle scrolling transitions
