@@ -124,8 +124,8 @@ bool Menu::update(bool forceRedraw) {
     if (fabsf(_targetScrollOffset - _scrollOffsetFloat) > ANIMATION_CONVERGENCE_THRESHOLD) {
         _scrollOffsetFloat += (_targetScrollOffset - _scrollOffsetFloat) * ANIMATION_SPEED;
         redraw = true;
-    } else if (indexChanged) {
-        // Just reached target, snap to it
+    } else if (_scrollOffsetFloat != _targetScrollOffset) {
+        // Within threshold - snap to exact target value
         _scrollOffsetFloat = _targetScrollOffset;
         redraw = true;
     }
