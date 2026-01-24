@@ -43,7 +43,7 @@ private:
     static const uint8_t MAX_VISIBLE_ITEMS = 4;
     static const uint8_t SELECTION_POSITION = 2;  // Fixed position where selection is drawn (0-3, 2 = centered/third from top)
     static const uint8_t MENU_ITEM_HEIGHT = 16;
-    static const int8_t MENU_ITEM_Y_OFFSET = 4;  // Offset to center text vertically (font baseline adjustment)
+    static const int8_t MENU_ITEM_Y_OFFSET = 3;  // Offset to center text vertically (font baseline adjustment)
     static const uint8_t MENU_ICON_X_OFFSET = 3;
     static const int8_t MENU_ICON_Y_OFFSET = -9;
     static const uint8_t MENU_ICON_WIDTH = 10;
