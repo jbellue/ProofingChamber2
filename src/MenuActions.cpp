@@ -160,7 +160,7 @@ time_t MenuActions::calculateProofAtEndTime() {
 
 void MenuActions::saveTimezone(const char* posixString) {
     if (!_ctx || !_ctx->storage) return;
-    _ctx->storage->setCharArray("timezone", posixString);
+    _ctx->storage->setCharArray(storage::keys::TIMEZONE_KEY, posixString);
     DEBUG_PRINT("Timezone saved: ");
     DEBUG_PRINTLN(posixString);
 }
