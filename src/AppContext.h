@@ -1,5 +1,6 @@
 // Lightweight dependency container for wiring shared components and services
 #pragma once
+#include <stdint.h>
 
 class IDisplayManager;
 class IInputManager;
@@ -14,6 +15,7 @@ class RebootView;
 class WiFiResetView;
 class DataDisplayView;
 class ConfirmTimezoneView;
+class PowerOffView;
 namespace services { struct INetworkService; struct IStorage; }
 
 namespace services {
@@ -29,6 +31,9 @@ struct AppContext {
     services::INetworkService* networkService = nullptr;
     services::IStorage* storage = nullptr;
     
+    // Hardware configuration
+    uint8_t encoderButtonPin = 0;
+    
     // Static view instances
     AdjustValueView* adjustValueView = nullptr;
     AdjustTimeView* adjustTimeView = nullptr;
@@ -38,4 +43,5 @@ struct AppContext {
     WiFiResetView* wifiResetView = nullptr;
     DataDisplayView* dataDisplayView = nullptr;
     ConfirmTimezoneView* confirmTimezoneView = nullptr;
+    PowerOffView* powerOffView = nullptr;
 };
