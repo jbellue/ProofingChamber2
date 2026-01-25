@@ -131,7 +131,7 @@ When creating new screens:
 - **Interface & DI**: Access storage through `services::IStorage` for decoupling and testability; the concrete `services::StorageAdapter` forwards to `Storage`
 - **Initialization**: Call `begin()` once at startup before any read/write
 - **Static Storage API**: `getInt(key, default)`, `setInt(key, value)`, `getFloat(key, default)`, `setFloat(key, value)`, `getCharArray(key, buffer, size, default)`, `setCharArray(key, value)`
-- **IStorage interface API**: `readInt(key, default)`, `writeInt(key, value)`, `readFloat(key, default)`, `writeFloat(key, value)`, `readString(key, buffer, size, default)`, `writeString(key, value)`
+- **IStorage interface API**: `getInt(key, default)`, `setInt(key, value)`, `getFloat(key, default)`, `setFloat(key, value)`, `getCharArray(key, buffer, size, default)`, `setCharArray(key, value)`
 - **Defaults**: Always provide sensible defaults on reads; writes return `true/false` for success
 - **Null Object**: `services::NullStorage` provides a safe no-op implementation for testing or uninitialized contexts
 
