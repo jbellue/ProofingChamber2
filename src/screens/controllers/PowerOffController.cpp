@@ -1,8 +1,8 @@
+#include <esp_sleep.h>
 #include "PowerOffController.h"
 #include "../views/PowerOffView.h"
 #include "../../DebugUtils.h"
 #include "SafePtr.h"
-#include <esp_sleep.h>
 
 PowerOffController::PowerOffController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _onCancelButton(true) {}
@@ -42,7 +42,6 @@ void PowerOffController::performPowerOff() {
     
     AppContext* ctx = getContext();
     if (ctx) {
-        // Turn off temperature controller (relays)
         if (ctx->tempController) {
             ctx->tempController->setMode(ITemperatureController::OFF);
             DEBUG_PRINTLN("Temperature controller set to OFF");
@@ -57,7 +56,6 @@ void PowerOffController::performPowerOff() {
     }
     
     // Configure button pin as wake-up source for ESP32-C3
-    // Get the encoder button pin from AppContext instead of hardcoding
     uint8_t buttonPin = ctx ? ctx->encoderButtonPin : 5; // Default to 5 if context unavailable
     esp_err_t err = esp_deep_sleep_enable_gpio_wakeup(1ULL << buttonPin, ESP_GPIO_WAKEUP_GPIO_LOW);
     if (err != ESP_OK) {
@@ -68,6 +66,5 @@ void PowerOffController::performPowerOff() {
     DEBUG_PRINTLN("Entering deep sleep mode. Press button to wake.");
     delay(500);  // Allow time for serial output and button release
     
-    // Enter deep sleep
     esp_deep_sleep_start();
 }
