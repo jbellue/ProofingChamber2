@@ -1,5 +1,6 @@
 // Lightweight dependency container for wiring shared components and services
 #pragma once
+#include <stdint.h>
 
 class IDisplayManager;
 class IInputManager;
