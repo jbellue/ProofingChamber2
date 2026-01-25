@@ -66,26 +66,19 @@ void TemperatureController::setMode(Mode mode) {
 }
 
 void TemperatureController::loadTemperatureSettings() {
-    const char* lowerKey;
-    const char* upperKey;
-
     switch (_currentMode)
     {
         case HEATING:
-            lowerKey = storage::keys::HOT_LOWER_LIMIT_KEY;
-            upperKey = storage::keys::HOT_UPPER_LIMIT_KEY;
+
+            _lowerLimit = _storage->getInt(storage::keys::HOT_LOWER_LIMIT_KEY, storage::defaults::HOT_LOWER_LIMIT_DEFAULT);
+            _higherLimit = _storage->getInt(storage::keys::HOT_UPPER_LIMIT_KEY, storage::defaults::HOT_UPPER_LIMIT_DEFAULT);
             break;
         case COOLING:
-            lowerKey = storage::keys::COLD_LOWER_LIMIT_KEY;
-            upperKey = storage::keys::COLD_UPPER_LIMIT_KEY;
+            _lowerLimit = _storage->getInt(storage::keys::COLD_LOWER_LIMIT_KEY, storage::defaults::COLD_LOWER_LIMIT_DEFAULT);
+            _higherLimit = _storage->getInt(storage::keys::COLD_UPPER_LIMIT_KEY, storage::defaults::COLD_UPPER_LIMIT_DEFAULT);
             break;
         case OFF:
             return; // No need to load settings when off
-    }
-
-    if (_storage) {
-        _lowerLimit = _storage->getInt(lowerKey);
-        _higherLimit = _storage->getInt(upperKey);
     }
 
     DEBUG_PRINT("Mode: ");
