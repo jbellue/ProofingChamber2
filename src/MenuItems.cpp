@@ -3,6 +3,7 @@
 #include "TimezoneHelpers.h"
 #include "AppContext.h"
 #include "services/IStorage.h"
+#include "StorageConstants.h"
 #include <cstring>
 
 // MenuActions instance will be set at runtime; we use a pointer
@@ -71,7 +72,7 @@ namespace {
         // Try to read current timezone from storage
         char currentTimezone[64] = "";
         if (ctx && ctx->storage) {
-            ctx->storage->readString("/timezone.txt", currentTimezone, sizeof(currentTimezone), "");
+            ctx->storage->getCharArray(storage::keys::TIMEZONE_KEY, currentTimezone, sizeof(currentTimezone), "");
         }
         
         // Find which timezone is currently selected
@@ -167,7 +168,7 @@ void refreshTimezoneSelectionIcons(AppContext* ctx) {
     // Read current timezone
     char currentTimezone[64] = "";
     if (ctx && ctx->storage) {
-        ctx->storage->readString("/timezone.txt", currentTimezone, sizeof(currentTimezone), "");
+        ctx->storage->getCharArray(storage::keys::TIMEZONE_KEY, currentTimezone, sizeof(currentTimezone), "");
     }
     // Find indices
     const int currentTimezoneIndex = findCurrentTimezone(currentTimezone);

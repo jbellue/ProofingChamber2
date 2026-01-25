@@ -1,28 +1,9 @@
 #include "DebugUtils.h"
 #include "Storage.h"
+#include "StorageConstants.h"
 
 bool Storage::_initialized = false;
 static Preferences preferences;
-
-// Helper function to convert file path to preference key
-// Converts "/timezone.txt" -> "timezone"
-// Converts "/hot/lower_limit.txt" -> "hot_lower_limit"
-// Converts "/cold/higher_limit.txt" -> "cold_higher_limit"
-static String pathToKey(const char* path) {
-    String key = String(path);
-    // Remove leading slash
-    if (key.startsWith("/")) {
-        key = key.substring(1);
-    }
-    // Remove file extension
-    int dotIndex = key.lastIndexOf('.');
-    if (dotIndex >= 0) {
-        key = key.substring(0, dotIndex);
-    }
-    // Replace slashes with underscores
-    key.replace('/', '_');
-    return key;
-}
 
 bool Storage::begin() {
     if (_initialized) {
@@ -35,12 +16,18 @@ bool Storage::begin() {
         return false;
     }
 
+    InitKeyIfMissing(storage::keys::HOT_LOWER_LIMIT_KEY, storage::defaults::HOT_LOWER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::HOT_UPPER_LIMIT_KEY, storage::defaults::HOT_UPPER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::COLD_LOWER_LIMIT_KEY, storage::defaults::COLD_LOWER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::COLD_UPPER_LIMIT_KEY, storage::defaults::COLD_UPPER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::TIMEZONE_KEY, storage::defaults::TIMEZONE_DEFAULT);
+
     DEBUG_PRINTLN("Preferences initialized successfully");
     _initialized = true;
     return true;
 }
 
-int Storage::readIntFromFile(const char* path, int defaultValue) {
+int Storage::getInt(const char* path, const int defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
@@ -48,11 +35,10 @@ int Storage::readIntFromFile(const char* path, int defaultValue) {
     DEBUG_PRINT("Reading int from key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    return preferences.getInt(key.c_str(), defaultValue);
+    return preferences.getInt(path, defaultValue);
 }
 
-float Storage::readFloatFromFile(const char* path, float defaultValue) {
+float Storage::getFloat(const char* path, const float defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
@@ -60,11 +46,10 @@ float Storage::readFloatFromFile(const char* path, float defaultValue) {
     DEBUG_PRINT("Reading float from key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    return preferences.getFloat(key.c_str(), defaultValue);
+    return preferences.getFloat(path, defaultValue);
 }
 
-bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSize, const char* defaultValue) {
+bool Storage::getCharArray(const char* path, char* buffer, const size_t bufferSize, const char* defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         strncpy(buffer, defaultValue, bufferSize - 1);
@@ -74,20 +59,23 @@ bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSi
     DEBUG_PRINT("Reading string from key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    
     // Check if the key exists in preferences
-    bool keyExists = preferences.isKey(key.c_str());
+    bool keyExists = preferences.isKey(path);
     
-    String value = preferences.getString(key.c_str(), defaultValue);
-    
-    strncpy(buffer, value.c_str(), bufferSize - 1);
-    buffer[bufferSize - 1] = '\0';
+    if (keyExists) {
+        preferences.getString(path, buffer, bufferSize);
+        DEBUG_PRINT("Read string: ");
+        DEBUG_PRINTLN(buffer);
+    } else {
+        DEBUG_PRINTLN("Key not found, using default value");
+        strncpy(buffer, defaultValue, bufferSize - 1);
+        buffer[bufferSize - 1] = '\0';
+    }
     
     return keyExists;
 }
 
-bool Storage::writeIntToFile(const char* path, int value) {
+bool Storage::setInt(const char* path, const int value) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
@@ -95,8 +83,7 @@ bool Storage::writeIntToFile(const char* path, int value) {
     DEBUG_PRINT("Writing int to key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    size_t written = preferences.putInt(key.c_str(), value);
+    const size_t written = preferences.putInt(path, value);
     
     if (written > 0) {
         DEBUG_PRINTLN("Value written successfully");
@@ -107,7 +94,7 @@ bool Storage::writeIntToFile(const char* path, int value) {
     }
 }
 
-bool Storage::writeFloatToFile(const char* path, float value) {
+bool Storage::setFloat(const char* path, const float value) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
@@ -115,8 +102,7 @@ bool Storage::writeFloatToFile(const char* path, float value) {
     DEBUG_PRINT("Writing float to key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    size_t written = preferences.putFloat(key.c_str(), value);
+    const size_t written = preferences.putFloat(path, value);
     
     if (written > 0) {
         DEBUG_PRINTLN("Value written successfully");
@@ -127,7 +113,7 @@ bool Storage::writeFloatToFile(const char* path, float value) {
     }
 }
 
-bool Storage::writeStringToFile(const char* path, const char* value) {
+bool Storage::setCharArray(const char* path, const char* value) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
@@ -135,8 +121,7 @@ bool Storage::writeStringToFile(const char* path, const char* value) {
     DEBUG_PRINT("Writing string to key ");
     DEBUG_PRINTLN(path);
 
-    String key = pathToKey(path);
-    size_t written = preferences.putString(key.c_str(), value);
+    const size_t written = preferences.putString(path, value);
     
     if (written > 0) {
         DEBUG_PRINTLN("Value written successfully");
@@ -144,5 +129,16 @@ bool Storage::writeStringToFile(const char* path, const char* value) {
     } else {
         DEBUG_PRINTLN("Write failed");
         return false;
+    }
+}
+
+void Storage::InitKeyIfMissing(const char* key, const int defaultValue) {
+    if (!preferences.isKey(key)) {
+        preferences.putInt(key, defaultValue);
+    }
+}
+void Storage::InitKeyIfMissing(const char* key, const char* defaultValue) {
+    if (!preferences.isKey(key)) {
+        preferences.putString(key, defaultValue);
     }
 }

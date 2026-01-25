@@ -5,6 +5,7 @@
 #include "SafePtr.h"
 #include "../../screens/Menu.h"
 #include "../../MenuItems.h"
+#include <StorageConstants.h>
 
 ConfirmTimezoneController::ConfirmTimezoneController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr) {}
@@ -46,7 +47,7 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
         // Confirm timezone selection
         AppContext* ctx = getContext();
         if (ctx && ctx->storage && _timezonePosixString) {
-            ctx->storage->writeString("/timezone.txt", _timezonePosixString);
+            ctx->storage->setCharArray(storage::keys::TIMEZONE_KEY, _timezonePosixString);
             DEBUG_PRINT("Timezone confirmed and saved: ");
             DEBUG_PRINTLN(_timezonePosixString);
             

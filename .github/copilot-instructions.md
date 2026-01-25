@@ -49,7 +49,7 @@ ProofingChamber2 is an ESP32-based temperature controller for a bread proofing c
 - **Classes**: PascalCase (e.g., `DisplayManager`, `TemperatureController`)
 - **Methods**: camelCase (e.g., `begin()`, `getMode()`, `setActiveScreen()`)
 - **Private members**: Underscore prefix (e.g., `_heaterPin`, `_currentMode`, `_initialized`)
-- **Constants/Defines**: UPPER_SNAKE_CASE (e.g., `DS18B20_PIN`, `HEATING_RELAY_PIN`)
+- **Constants**: UPPER_SNAKE_CASE for general constants (e.g., `DS18B20_PIN`), and prefer `static constexpr` for storage keys/defaults in `src/StorageConstants.h`.
 - **Parameters**: camelCase (e.g., `heaterPin`, `coolerPin`, `currentTemp`)
 
 ### Code Style
@@ -125,12 +125,38 @@ When creating new screens:
 
 ## Storage/Persistence
 
-- Use `Storage` class static methods for all storage operations
-- Data is stored in ESP32 NVS (Non-Volatile Storage) using Preferences library
-- File paths are automatically converted to preference keys (e.g., `/hot/lower_limit.txt` → `hot_lower_limit`)
-- Available methods: `readIntFromFile()`, `writeIntToFile()`, `readFloatFromFile()`, `writeFloatToFile()`, `readStringFromFile()`, `writeStringToFile()`
-- Always provide default values when reading
-- Check return values when writing
+- **Backend**: ESP32 NVS (Preferences) via the static `Storage` class
+- **Keys, not paths**: Use preference keys directly (e.g., `hot_lower_limit`) — no path-to-key mapping
+- **Constants**: Define keys and defaults in `src/StorageConstants.h` using `static constexpr` (e.g., `HOT_LOWER_LIMIT_KEY`, `HOT_LOWER_LIMIT_DEFAULT`)
+- **Interface & DI**: Access storage through `services::IStorage` for decoupling and testability; the concrete `services::StorageAdapter` forwards to `Storage`
+- **Initialization**: Call `begin()` once at startup before any read/write
+- **Static Storage API**: `getInt(key, default)`, `setInt(key, value)`, `getFloat(key, default)`, `setFloat(key, value)`, `getCharArray(key, buffer, size, default)`, `setCharArray(key, value)`
+- **IStorage interface API**: `readInt(key, default)`, `writeInt(key, value)`, `readFloat(key, default)`, `writeFloat(key, value)`, `readString(key, buffer, size, default)`, `writeString(key, value)`
+- **Defaults**: Always provide sensible defaults on reads; writes return `true/false` for success
+- **Null Object**: `services::NullStorage` provides a safe no-op implementation for testing or uninitialized contexts
+
+Example usage:
+
+```cpp
+// Initialization (main.cpp)
+services::StorageAdapter storageAdapter;
+storageAdapter.begin();
+appContext.storage = &storageAdapter;
+
+// Reading values
+int hotLower = appContext.storage->getInt(storage::keys::HOT_LOWER_LIMIT_KEY, storage::defaults::HOT_LOWER_LIMIT_DEFAULT);
+int coldUpper = appContext.storage->getInt(storage::keys::COLD_UPPER_LIMIT_KEY, storage::defaults::COLD_UPPER_LIMIT_DEFAULT);
+
+// Writing values
+bool ok = appContext.storage->setInt(storage::keys::HOT_UPPER_LIMIT_KEY, 32);
+
+// Reading timezone string via IStorage
+char tz[64];
+appContext.storage->getCharArray(storage::keys::TIMEZONE_KEY, tz, sizeof(tz), storage::defaults::TIMEZONE_DEFAULT);
+
+// Or, using static Storage directly
+Storage::getCharArray(storage::keys::TIMEZONE_KEY, tz, sizeof(tz), storage::defaults::TIMEZONE_DEFAULT);
+```
 
 ## Display Guidelines
 
