@@ -66,7 +66,7 @@ void PowerOffController::performPowerOff() {
     }
     
     DEBUG_PRINTLN("Entering deep sleep mode. Press button to wake.");
-    delay(100);  // Allow time for serial output
+    delay(500);  // Allow time for serial output and button release
     
     // Enter deep sleep
     esp_deep_sleep_start();
