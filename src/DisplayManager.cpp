@@ -97,7 +97,7 @@ void DisplayManager::setBitmapMode(uint8_t mode) {
     _display.setBitmapMode(mode);
 }
 
-void DisplayManager::drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
+void DisplayManager::drawXBMP(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
     _display.drawXBMP(x, y, w, h, bitmap);
 }
 

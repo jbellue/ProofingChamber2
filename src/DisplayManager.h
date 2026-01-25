@@ -29,7 +29,7 @@ public:
     void drawVLine(uint8_t x, uint8_t y, uint8_t h) override;
     void setFontMode(uint8_t mode) override;
     void setBitmapMode(uint8_t mode) override;
-    void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override;
+    void drawXBMP(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override;
 
     void setCursor(const uint8_t x, const uint8_t y) override;
     void print(const char* str) override;

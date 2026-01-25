@@ -29,7 +29,7 @@ public:
     virtual void drawVLine(uint8_t x, uint8_t y, uint8_t h) = 0;
     virtual void setFontMode(uint8_t mode) = 0;
     virtual void setBitmapMode(uint8_t mode) = 0;
-    virtual void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) = 0;
+    virtual void drawXBMP(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) = 0;
     virtual void setCursor(const uint8_t x, const uint8_t y) = 0;
     virtual void print(const char* str) = 0;
     virtual uint8_t drawTitle(const char* title, const uint8_t y = 10) = 0;
