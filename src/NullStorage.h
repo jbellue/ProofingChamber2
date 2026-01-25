@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include "services/IStorage.h"
 
 namespace services {
@@ -15,34 +16,36 @@ public:
         return true;
     }
 
-    int readInt(const char* path, int defaultValue = 0) override {
+    int getInt(const char* path, int defaultValue = 0) override {
         (void)path;
         return defaultValue;
     }
 
-    float readFloat(const char* path, float defaultValue = 0.0f) override {
+    float getFloat(const char* path, float defaultValue = 0.0f) override {
         (void)path;
         return defaultValue;
     }
 
-    bool readString(const char* path, char* buffer, size_t bufferSize, const char* defaultValue = "") override {
+    bool getCharArray(const char* path, char* buffer, size_t bufferSize, const char* defaultValue = "") override {
         (void)path;
+        strncpy(buffer, defaultValue, bufferSize - 1);
+        buffer[bufferSize - 1] = '\0';
         return false;
     }
 
-    bool writeInt(const char* path, int value) override {
+    bool setInt(const char* path, int value) override {
         (void)path;
         (void)value;
         return false;
     }
 
-    bool writeFloat(const char* path, float value) override {
+    bool setFloat(const char* path, float value) override {
         (void)path;
         (void)value;
         return false;
     }
 
-    bool writeString(const char* path, const char* value) override {
+    bool setCharArray(const char* path, const char* value) override {
         (void)path;
         (void)value;
         return false;

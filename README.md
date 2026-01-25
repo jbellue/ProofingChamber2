@@ -73,18 +73,15 @@ Navigate with rotary encoder, select with push button:
 
 ### Data Storage
 
-Settings are persisted to LittleFS:
+Settings are persisted to ESP32 NVS (Non-Volatile Storage) using the Preferences library:
 
 ```
-/hot/
-  ├── lower_limit.txt
-  └── higher_limit.txt
-
-/cold/
-  ├── lower_limit.txt
-  └── higher_limit.txt
-
-/timezone.txt
+Preference Keys:
+  - h_lower
+  - h_upper
+  - c_lower
+  - c_upper
+  - timezone
 ```
 
 Default values:

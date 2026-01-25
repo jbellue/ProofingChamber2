@@ -24,7 +24,7 @@ void AdjustValueController::beginImpl() {
     }
     
     if (_storage) {
-        _currentValue = _storage->readInt(_path, 0);
+        _currentValue = _storage->getInt(_path, 0);
     } else {
         _currentValue = 0;
     }
@@ -38,7 +38,7 @@ bool AdjustValueController::update(bool shouldRedraw) {
     if (inputManager->isButtonPressed()) {
         DEBUG_PRINTLN("AdjustValue: Button pressed, saving value.");
         if (_storage) {
-            _storage->writeInt(_path, _currentValue);
+            _storage->setInt(_path, _currentValue);
         }
         DEBUG_PRINTLN("AdjustValue: Value saved, exiting screen.");
         return false;

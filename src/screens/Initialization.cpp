@@ -8,6 +8,7 @@
 #include "../services/INetworkService.h"
 // Storage interface to retrieve timezone configuration
 #include "../services/IStorage.h"
+#include "StorageConstants.h"
 
 Initialization::Initialization(AppContext* ctx) : BaseController(ctx), _display(nullptr), _networkService(nullptr), _storage(nullptr)
 {}
@@ -65,10 +66,8 @@ void Initialization::drawScreen() {
     _display->setCursor(0, 58);
 
     // Configure NTP via network service
-    const char* defaultTimezone = "CET-1CEST,M3.5.0,M10.5.0/3"; // Europe/Paris timezone
     char timezoneBuf[64];
-    _storage->readString("/timezone.txt", timezoneBuf, sizeof(timezoneBuf), defaultTimezone);
- 
+    _storage->getCharArray(storage::keys::TIMEZONE_KEY, timezoneBuf, sizeof(timezoneBuf), storage::defaults::TIMEZONE_DEFAULT);
     _networkService->configureNtp(timezoneBuf, "pool.ntp.org", "time.nist.gov");
     DEBUG_PRINT("Waiting for NTP time sync");
     const unsigned long timeout = millis() + 30000; // 30 sec timeout

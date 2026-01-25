@@ -2,6 +2,7 @@
 #include "../views/DataDisplayView.h"
 #include "DebugUtils.h"
 #include "services/IStorage.h"
+#include "StorageConstants.h"
 #include "../../SafePtr.h"
 
 void DataDisplayController::beginImpl() {
@@ -14,7 +15,7 @@ void DataDisplayController::beginImpl() {
     char buffer[50] = {0};
     services::IStorage* storage = ctx->storage;
     if (storage) {
-        storage->readString("/timezone.txt", buffer, sizeof(buffer));
+        storage->getCharArray(storage::keys::TIMEZONE_KEY, buffer, sizeof(buffer));
         _view->drawTimeZone(buffer);
     }
     _view->sendBuffer();

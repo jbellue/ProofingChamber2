@@ -1,149 +1,144 @@
 #include "DebugUtils.h"
 #include "Storage.h"
+#include "StorageConstants.h"
 
 bool Storage::_initialized = false;
+static Preferences preferences;
 
 bool Storage::begin() {
     if (_initialized) {
         return true;
     }
 
-    if (!LittleFS.begin()) {
-        DEBUG_PRINTLN("Failed to mount LittleFS");
+    // Open Preferences with namespace "storage" in read-write mode
+    if (!preferences.begin("storage", false)) {
+        DEBUG_PRINTLN("Failed to initialize Preferences");
         return false;
     }
 
-    DEBUG_PRINTLN("LittleFS mounted successfully");
+    InitKeyIfMissing(storage::keys::HOT_LOWER_LIMIT_KEY, storage::defaults::HOT_LOWER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::HOT_UPPER_LIMIT_KEY, storage::defaults::HOT_UPPER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::COLD_LOWER_LIMIT_KEY, storage::defaults::COLD_LOWER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::COLD_UPPER_LIMIT_KEY, storage::defaults::COLD_UPPER_LIMIT_DEFAULT);
+    InitKeyIfMissing(storage::keys::TIMEZONE_KEY, storage::defaults::TIMEZONE_DEFAULT);
+
+    DEBUG_PRINTLN("Preferences initialized successfully");
     _initialized = true;
     return true;
 }
 
-int Storage::readIntFromFile(const char* path, int defaultValue) {
+int Storage::getInt(const char* path, const int defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
     }
-    DEBUG_PRINT("Reading int from file ");
+    DEBUG_PRINT("Reading int from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
-        return defaultValue;
-    }
-
-    String content = file.readString();
-    file.close();
-    return content.toInt();
+    return preferences.getInt(path, defaultValue);
 }
 
-float Storage::readFloatFromFile(const char* path, float defaultValue) {
+float Storage::getFloat(const char* path, const float defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return defaultValue;
     }
-    DEBUG_PRINT("Reading float from file ");
+    DEBUG_PRINT("Reading float from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
-        return defaultValue;
-    }
-
-    char buffer[32];
-    size_t len = file.readBytes(buffer, sizeof(buffer) - 1);
-    file.close();
-    
-    if (len == 0) {
-        return defaultValue;
-    }
-    
-    buffer[len] = '\0';
-    return atof(buffer);
+    return preferences.getFloat(path, defaultValue);
 }
 
-bool Storage::readStringFromFile(const char* path, char* buffer, size_t bufferSize, const char* defaultValue) {
+bool Storage::getCharArray(const char* path, char* buffer, const size_t bufferSize, const char* defaultValue) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         strncpy(buffer, defaultValue, bufferSize - 1);
         buffer[bufferSize - 1] = '\0';
         return false;
     }
-    DEBUG_PRINT("Reading string from file ");
+    DEBUG_PRINT("Reading string from key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_READ);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for reading");
+    // Check if the key exists in preferences
+    bool keyExists = preferences.isKey(path);
+    
+    if (keyExists) {
+        preferences.getString(path, buffer, bufferSize);
+        DEBUG_PRINT("Read string: ");
+        DEBUG_PRINTLN(buffer);
+    } else {
+        DEBUG_PRINTLN("Key not found, using default value");
         strncpy(buffer, defaultValue, bufferSize - 1);
         buffer[bufferSize - 1] = '\0';
-        return false;
-    }
-
-    size_t len = file.readBytes(buffer, bufferSize - 1);
-    file.close();
-    
-    if (len == 0) {
-        strncpy(buffer, defaultValue, bufferSize - 1);
-        buffer[bufferSize - 1] = '\0';
-        return false;
     }
     
-    buffer[len] = '\0';
-    return true;
+    return keyExists;
 }
 
-bool Storage::writeIntToFile(const char* path, int value) {
+bool Storage::setInt(const char* path, const int value) {
     if (!_initialized) {
         DEBUG_PRINTLN("Storage not initialized");
         return false;
     }
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%d", value);
-    return writeToFile(path, buffer);
-}
-
-bool Storage::writeFloatToFile(const char* path, float value) {
-    if (!_initialized) {
-        DEBUG_PRINTLN("Storage not initialized");
-        return false;
-    }
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%.2f", value);
-    return writeToFile(path, buffer);
-}
-
-bool Storage::writeStringToFile(const char* path, const char* value) {
-    if (!_initialized) {
-        DEBUG_PRINTLN("Storage not initialized");
-        return false;
-    }
-    return writeToFile(path, value);
-}
-
-bool Storage::writeToFile(const char* path, const char* value) {
-    if (!_initialized) {
-        DEBUG_PRINTLN("Storage not initialized");
-        return false;
-    }
-    DEBUG_PRINT("Writing to file ");
+    DEBUG_PRINT("Writing int to key ");
     DEBUG_PRINTLN(path);
 
-    File file = LittleFS.open(path, FILE_WRITE);
-    if (!file) {
-        DEBUG_PRINTLN("Failed to open file for writing");
-        return false;
-    }
-
-    size_t written = file.print(value);
-    file.close();
+    const size_t written = preferences.putInt(path, value);
     
     if (written > 0) {
-        DEBUG_PRINTLN("File written successfully");
+        DEBUG_PRINTLN("Value written successfully");
         return true;
     } else {
         DEBUG_PRINTLN("Write failed");
         return false;
+    }
+}
+
+bool Storage::setFloat(const char* path, const float value) {
+    if (!_initialized) {
+        DEBUG_PRINTLN("Storage not initialized");
+        return false;
+    }
+    DEBUG_PRINT("Writing float to key ");
+    DEBUG_PRINTLN(path);
+
+    const size_t written = preferences.putFloat(path, value);
+    
+    if (written > 0) {
+        DEBUG_PRINTLN("Value written successfully");
+        return true;
+    } else {
+        DEBUG_PRINTLN("Write failed");
+        return false;
+    }
+}
+
+bool Storage::setCharArray(const char* path, const char* value) {
+    if (!_initialized) {
+        DEBUG_PRINTLN("Storage not initialized");
+        return false;
+    }
+    DEBUG_PRINT("Writing string to key ");
+    DEBUG_PRINTLN(path);
+
+    const size_t written = preferences.putString(path, value);
+    
+    if (written > 0) {
+        DEBUG_PRINTLN("Value written successfully");
+        return true;
+    } else {
+        DEBUG_PRINTLN("Write failed");
+        return false;
+    }
+}
+
+void Storage::InitKeyIfMissing(const char* key, const int defaultValue) {
+    if (!preferences.isKey(key)) {
+        preferences.putInt(key, defaultValue);
+    }
+}
+void Storage::InitKeyIfMissing(const char* key, const char* defaultValue) {
+    if (!preferences.isKey(key)) {
+        preferences.putString(key, defaultValue);
     }
 }

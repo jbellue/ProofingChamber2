@@ -1,6 +1,7 @@
 #include "TemperatureController.h"
 #include "DebugUtils.h"
 #include "services/IStorage.h"
+#include "StorageConstants.h"
 
 TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin, uint8_t proofingLedPin, uint8_t coolingLedPin)
     : _heaterPin(heaterPin)
@@ -65,26 +66,19 @@ void TemperatureController::setMode(Mode mode) {
 }
 
 void TemperatureController::loadTemperatureSettings() {
-    const char* lowerFile;
-    const char* higherFile;
-
     switch (_currentMode)
     {
         case HEATING:
-            lowerFile = "/hot/lower_limit.txt";
-            higherFile = "/hot/higher_limit.txt";
+
+            _lowerLimit = _storage->getInt(storage::keys::HOT_LOWER_LIMIT_KEY, storage::defaults::HOT_LOWER_LIMIT_DEFAULT);
+            _higherLimit = _storage->getInt(storage::keys::HOT_UPPER_LIMIT_KEY, storage::defaults::HOT_UPPER_LIMIT_DEFAULT);
             break;
         case COOLING:
-            lowerFile = "/cold/lower_limit.txt";
-            higherFile = "/cold/higher_limit.txt";
+            _lowerLimit = _storage->getInt(storage::keys::COLD_LOWER_LIMIT_KEY, storage::defaults::COLD_LOWER_LIMIT_DEFAULT);
+            _higherLimit = _storage->getInt(storage::keys::COLD_UPPER_LIMIT_KEY, storage::defaults::COLD_UPPER_LIMIT_DEFAULT);
             break;
         case OFF:
             return; // No need to load settings when off
-    }
-
-    if (_storage) {
-        _lowerLimit = _storage->readInt(lowerFile);
-        _higherLimit = _storage->readInt(higherFile);
     }
 
     DEBUG_PRINT("Mode: ");

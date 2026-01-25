@@ -5,6 +5,7 @@
 #include "screens/Menu.h"
 #include "Timezones.h"
 #include "TimezoneHelpers.h"
+#include "StorageConstants.h"
 
 // Static member definitions
 SimpleTime MenuActions::s_proofInTime(0, 0, 0);
@@ -69,7 +70,7 @@ void MenuActions::adjustHotLowerLimit() {
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Limite basse\n" "de chauffe", "/hot/lower_limit.txt");
+    _adjustValueController->prepare("Limite basse\n" "de chauffe", storage::keys::HOT_LOWER_LIMIT_KEY);
 }
 
 void MenuActions::adjustHotHigherLimit() {
@@ -78,7 +79,7 @@ void MenuActions::adjustHotHigherLimit() {
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Limite haute\n" "de chauffe", "/hot/higher_limit.txt");
+    _adjustValueController->prepare("Limite haute\n" "de chauffe", storage::keys::HOT_UPPER_LIMIT_KEY);
 }
 
 void MenuActions::adjustColdLowerLimit() {
@@ -87,7 +88,7 @@ void MenuActions::adjustColdLowerLimit() {
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Limite basse\n" "de froid", "/cold/lower_limit.txt");
+    _adjustValueController->prepare("Limite basse\n" "de froid", storage::keys::COLD_LOWER_LIMIT_KEY);
 }
 
 void MenuActions::adjustColdHigherLimit() {
@@ -96,7 +97,7 @@ void MenuActions::adjustColdHigherLimit() {
     if (!menu) return;
     menu->setNextScreen(_adjustValueController);
     _adjustValueController->setNextScreen(menu);
-    _adjustValueController->prepare("Limite haute\n" "de froid", "/cold/higher_limit.txt");
+    _adjustValueController->prepare("Limite haute\n" "de froid", storage::keys::COLD_UPPER_LIMIT_KEY);
 }
 
 void MenuActions::resetWiFiAndReboot() {
@@ -159,7 +160,7 @@ time_t MenuActions::calculateProofAtEndTime() {
 
 void MenuActions::saveTimezone(const char* posixString) {
     if (!_ctx || !_ctx->storage) return;
-    _ctx->storage->writeString("/timezone.txt", posixString);
+    _ctx->storage->setCharArray(storage::keys::TIMEZONE_KEY, posixString);
     DEBUG_PRINT("Timezone saved: ");
     DEBUG_PRINTLN(posixString);
 }
