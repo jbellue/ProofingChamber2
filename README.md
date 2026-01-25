@@ -77,10 +77,10 @@ Settings are persisted to ESP32 NVS (Non-Volatile Storage) using the Preferences
 
 ```
 Preference Keys:
-  - hot_lower_limit
-  - hot_higher_limit
-  - cold_lower_limit
-  - cold_higher_limit
+  - h_lower
+  - h_upper
+  - c_lower
+  - c_upper
   - timezone
 ```
 
