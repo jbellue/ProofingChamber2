@@ -10,13 +10,14 @@
 #include "screens/controllers/RebootController.h"
 #include "screens/controllers/DataDisplayController.h"
 #include "screens/controllers/ConfirmTimezoneController.h"
+#include "screens/controllers/PowerOffController.h"
 #include "AppContextDecl.h"
 
 class Menu;  // Forward declaration
 
 class MenuActions {
 public:
-    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* proofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, RebootController* reboot, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController);
+    MenuActions(AppContext* ctx, AdjustValueController* adjustValueController, AdjustTimeController* adjustTimeController, ProofingController* proofingController, CoolingController* coolingController, WiFiResetController* wifiResetController, RebootController* reboot, DataDisplayController* dataDisplayController, ConfirmTimezoneController* confirmTimezoneController, PowerOffController* powerOffController);
     
     // Set the Menu instance for context-aware actions
     void setMenu(Menu* menu) { _menu = menu; }
@@ -33,6 +34,7 @@ public:
     void adjustColdHigherLimit();
     void resetWiFiAndReboot();
     void reboot();
+    void powerOff();
     void showDataDisplay();
     
     // Generic timezone selection handler - uses Menu context to determine selection
@@ -51,6 +53,7 @@ private:
     CoolingController* _coolingController;
     WiFiResetController* _wifiResetController;
     RebootController* _rebootController;
+    PowerOffController* _powerOffController;
     DataDisplayController* _dataDisplayController;
     ConfirmTimezoneController* _confirmTimezoneController;
     
