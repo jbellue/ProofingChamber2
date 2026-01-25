@@ -126,7 +126,7 @@ When creating new screens:
 ## Storage/Persistence
 
 - **Backend**: ESP32 NVS (Preferences) via the static `Storage` class
-- **Keys, not paths**: Use preference keys directly (e.g., `hot_lower_limit`) — no path-to-key mapping
+- **Keys, not paths**: Use preference keys directly (e.g., `h_lower`, `h_upper`, `c_lower`, `c_upper`, `timezone`) — no path-to-key mapping
 - **Constants**: Define keys and defaults in `src/StorageConstants.h` using `static constexpr` (e.g., `HOT_LOWER_LIMIT_KEY`, `HOT_LOWER_LIMIT_DEFAULT`)
 - **Interface & DI**: Access storage through `services::IStorage` for decoupling and testability; the concrete `services::StorageAdapter` forwards to `Storage`
 - **Initialization**: Call `begin()` once at startup before any read/write

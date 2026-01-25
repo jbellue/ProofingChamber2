@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include "services/IStorage.h"
 
 namespace services {
@@ -27,6 +28,8 @@ public:
 
     bool getCharArray(const char* path, char* buffer, size_t bufferSize, const char* defaultValue = "") override {
         (void)path;
+        strncpy(buffer, defaultValue, bufferSize - 1);
+        buffer[bufferSize - 1] = '\0';
         return false;
     }
 
