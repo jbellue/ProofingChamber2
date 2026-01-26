@@ -49,13 +49,17 @@ bool DataDisplayView::drawTemperature(float temperatureC) {
     char tempBuffer[7] = {'\0'};
     snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°C", temperatureC);
     _display->setFont(u8g2_font_t0_11_tf);
+    
+    // Cache font metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
     const uint8_t tempWidth = _display->getUTF8Width("99.9°C");
-    const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t tempHeight = ascent - descent;
     const uint8_t tempX = (_display->getDisplayWidth() - tempWidth) / 2;
     const uint8_t tempY = 49;
 
     _display->setDrawColor(0);
-    _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
+    _display->drawBox(tempX, tempY - ascent, tempWidth, tempHeight);
     _display->setDrawColor(1);
 
     _display->drawUTF8(tempX, tempY, tempBuffer);
@@ -72,13 +76,17 @@ bool DataDisplayView::drawTime(const tm &now) {
              now.tm_mday, now.tm_mon + 1, now.tm_year % 100);
 
     _display->setFont(u8g2_font_t0_11_tf);
+    
+    // Cache font metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
     const uint8_t timeWidth = _display->getUTF8Width(timeBuffer);
-    const uint8_t timeHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t timeHeight = ascent - descent;
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
     const uint8_t timeY = 23;
 
     _display->setDrawColor(0);
-    _display->drawBox(timeX, timeY - _display->getAscent(), timeWidth, timeHeight);
+    _display->drawBox(timeX, timeY - ascent, timeWidth, timeHeight);
     _display->setDrawColor(1);
 
     _display->drawUTF8(timeX, timeY, timeBuffer);

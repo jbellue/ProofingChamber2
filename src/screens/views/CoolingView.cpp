@@ -21,14 +21,20 @@ bool CoolingView::drawTime(const int remainingSeconds) {
     formatTimeString(timeBuffer, sizeof(timeBuffer), remainingSeconds);
     _display->setFont(u8g2_font_t0_11_tf);
 
+    // Cache font metrics and calculate width first
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
+    const uint8_t newWidth = _display->getUTF8Width(timeBuffer);
     const uint8_t timeX = 2;
     const uint8_t timeY = 42;
-    const uint8_t fontHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t fontHeight = ascent - descent;
 
+    // Clear using the maximum of old and new width to avoid artifacts
+    const uint8_t clearWidth = newWidth > _timeWidth ? newWidth : _timeWidth;
     _display->setDrawColor(0);
-    _display->drawBox(timeX, timeY - _display->getAscent(), _timeWidth, fontHeight);
+    _display->drawBox(timeX, timeY - ascent, clearWidth, fontHeight);
 
-    _timeWidth = _display->getUTF8Width(timeBuffer);
+    _timeWidth = newWidth;
 
     _display->setDrawColor(1);
     _display->drawUTF8(timeX, timeY, timeBuffer);
@@ -43,13 +49,17 @@ bool CoolingView::drawTemperature(const float currentTemp) {
     char tempBuffer[7] = {'\0'};
     snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", currentTemp);
     _display->setFont(u8g2_font_t0_11_tf);
+    
+    // Cache font metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
     const uint8_t tempWidth = _display->getUTF8Width("99.9°");
-    const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t tempHeight = ascent - descent;
     const uint8_t tempX = _display->getDisplayWidth() - tempWidth;
     const uint8_t tempY = 32;
 
     _display->setDrawColor(0);
-    _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
+    _display->drawBox(tempX, tempY - ascent, tempWidth, tempHeight);
     _display->setDrawColor(1);
 
     _display->drawUTF8(tempX, tempY, tempBuffer);

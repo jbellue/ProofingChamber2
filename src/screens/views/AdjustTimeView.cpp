@@ -4,13 +4,17 @@ void AdjustTimeView::drawTime(const SimpleTime& time, uint8_t valueY) {
     _display->setFont(u8g2_font_ncenB18_tf);
     char timeBuffer[6];
     sprintf(timeBuffer, "%02d:%02d", time.hours, time.minutes);
+    
+    // Cache width and metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
     const uint8_t timeWidth = _display->getStrWidth("00:00");
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
     const uint8_t timeY = valueY + 2;
     const uint8_t clearWidth = _display->getWidth();
-    const uint8_t clearHeight = _display->getAscent();
+    const uint8_t clearHeight = ascent;
+    
     _display->setDrawColor(0);
-    _display->drawBox(timeX, timeY - _display->getAscent(), clearWidth, clearHeight);
+    _display->drawBox(timeX, timeY - ascent, clearWidth, clearHeight);
     _display->setDrawColor(1);
     _display->drawStr(timeX, timeY, timeBuffer);
     if(time.days > 0) {
@@ -22,18 +26,22 @@ void AdjustTimeView::drawTime(const SimpleTime& time, uint8_t valueY) {
 
 void AdjustTimeView::drawHighlight(uint8_t selectedItem, uint8_t valueY) {
     _display->setFont(u8g2_font_ncenB18_tf);
+    
+    // Cache width calculations - same font as drawTime
     const uint8_t timeWidth = _display->getStrWidth("00:00");
+    const uint8_t colonWidth = _display->getStrWidth("00:");
+    const uint8_t digitPairWidth = _display->getStrWidth("00");
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
     const uint8_t timeY = valueY + 2;
-    const uint8_t lineLength = _display->getStrWidth("00");
+    
     _display->setDrawColor(0);
     _display->drawBox(timeX, timeY + 2, timeWidth, 2);
     if (selectedItem == 0) {
         _display->setDrawColor(1);
-        _display->drawHLine(timeX, timeY + 2, lineLength);
+        _display->drawHLine(timeX, timeY + 2, digitPairWidth);
     } else if (selectedItem == 1) {
         _display->setDrawColor(1);
-        _display->drawHLine(timeX + _display->getStrWidth("00:"), timeY + 2, lineLength);
+        _display->drawHLine(timeX + colonWidth, timeY + 2, digitPairWidth);
     }
 }
 
