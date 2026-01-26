@@ -103,7 +103,7 @@ public:
         // Silent no-op
     }
 
-    void drawXBMP(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override {
+    void drawXBMP(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override {
         // Silent no-op
     }
 
