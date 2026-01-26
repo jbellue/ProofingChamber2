@@ -39,4 +39,9 @@ public:
     U8G2* getDisplay() { return &_display; }
 private:
     U8G2_SH1106_128X64_NONAME_F_HW_I2C _display;
+    
+    // Font metrics cache to avoid repeated getAscent()/getDescent() calls
+    const uint8_t* _cachedFont = nullptr;
+    uint8_t _cachedAscent = 0;
+    uint8_t _cachedDescent = 0;
 };

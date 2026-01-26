@@ -6,6 +6,10 @@ void DisplayManager::begin() {
     _display.begin();
 }
 
+// Note: This method is not currently used. It provides a page-mode rendering loop
+// for potential future optimization if memory becomes constrained. The current
+// implementation uses full-frame buffer mode (_F_) which is more suitable for
+// ESP32-C3's 400KB RAM and provides flicker-free rendering.
 void DisplayManager::update() {
     _display.firstPage();
     do {
@@ -54,10 +58,18 @@ uint8_t DisplayManager::getWidth() {
 }
 
 uint8_t DisplayManager::getAscent() {
+    // Return cached value if font hasn't changed
+    if (_cachedFont != nullptr) {
+        return _cachedAscent;
+    }
     return _display.getAscent();
 }
 
 uint8_t DisplayManager::getDescent() {
+    // Return cached value if font hasn't changed
+    if (_cachedFont != nullptr) {
+        return _cachedDescent;
+    }
     return _display.getDescent();
 }
 
@@ -74,7 +86,13 @@ void DisplayManager::sendBuffer() {
 }
 
 void DisplayManager::setFont(const uint8_t* font) {
-    _display.setFont(font);
+    // Only update cache if font actually changes
+    if (_cachedFont != font) {
+        _display.setFont(font);
+        _cachedFont = font;
+        _cachedAscent = _display.getAscent();
+        _cachedDescent = _display.getDescent();
+    }
 }
 
 void DisplayManager::drawUTF8(uint8_t x, uint8_t y, const char* str) {
