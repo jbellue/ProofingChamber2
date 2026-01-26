@@ -63,8 +63,9 @@ private:
     static const uint8_t SCROLLBAR_Y_MARGIN = 2;
     
     // Smooth scrolling animation
+    // Optimized values to reduce I2C traffic while maintaining smooth feel
     static constexpr float ANIMATION_SPEED = 0.25f;  // Interpolation factor (0-1, higher = faster)
-    static constexpr float ANIMATION_CONVERGENCE_THRESHOLD = 0.1f;  // Pixels - stop animating when this close to target
+    static constexpr float ANIMATION_CONVERGENCE_THRESHOLD = 0.5f;  // Pixels - stop animating when this close to target (increased from 0.1 to reduce redraws)
     static constexpr float SCROLL_RENDER_THRESHOLD = 0.01f;  // Fractional offset - render extra items when scrolling
     
     // Input processing

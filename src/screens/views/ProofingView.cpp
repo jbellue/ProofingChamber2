@@ -30,13 +30,16 @@ bool ProofingView::drawTime(const time_t diffSeconds) {
     }
     setFont(u8g2_font_ncenB18_tf);
 
+    // Cache font metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
     const uint8_t timeWidth = _display->getStrWidth(timeBuffer);
     const uint8_t timeX = (_display->getDisplayWidth() - timeWidth) / 2;
     const uint8_t timeY = 36;
-    const uint8_t fontHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t fontHeight = ascent - descent;
 
     _display->setDrawColor(0);
-    _display->drawBox(timeX, timeY - _display->getAscent(), timeWidth, fontHeight);
+    _display->drawBox(timeX, timeY - ascent, timeWidth, fontHeight);
 
     _display->setDrawColor(1);
     _display->drawUTF8(timeX, timeY, timeBuffer);
@@ -52,13 +55,17 @@ bool ProofingView::drawTemperature(const float currentTemp) {
     snprintf(tempBuffer, sizeof(tempBuffer), "%.1f°", currentTemp);
 
     setFont(u8g2_font_t0_11_tf);
+    
+    // Cache font metrics to avoid repeated calls
+    const uint8_t ascent = _display->getAscent();
+    const uint8_t descent = _display->getDescent();
     const uint8_t tempWidth = _display->getUTF8Width("99.9°");
-    const uint8_t tempHeight = _display->getAscent() - _display->getDescent();
+    const uint8_t tempHeight = ascent - descent;
     const uint8_t tempX = _display->getDisplayWidth() - tempWidth;
     const uint8_t tempY = 44;
 
     _display->setDrawColor(0);
-    _display->drawBox(tempX, tempY - _display->getAscent(), tempWidth, tempHeight);
+    _display->drawBox(tempX, tempY - ascent, tempWidth, tempHeight);
     _display->setDrawColor(1);
 
     _display->drawUTF8(tempX, tempY, tempBuffer);

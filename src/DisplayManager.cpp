@@ -6,6 +6,10 @@ void DisplayManager::begin() {
     _display.begin();
 }
 
+// Note: This method is not currently used. It provides a page-mode rendering loop
+// for potential future optimization if memory becomes constrained. The current
+// implementation uses full-frame buffer mode (_F_) which is more suitable for
+// ESP32-C3's 400KB RAM and provides flicker-free rendering.
 void DisplayManager::update() {
     _display.firstPage();
     do {
