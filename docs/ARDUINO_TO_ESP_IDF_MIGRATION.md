@@ -942,6 +942,12 @@ However, several factors work in your favor:
 - **Simple Storage:** Preferences → NVS is trivial
 - **Mature Libraries:** LVGL, esp-idf-owb are production-ready
 
-**Recommendation:** Proceed with migration in phases. Start with low-risk components (Arduino Core APIs, NVS) to build confidence, then tackle display and WiFi provisioning last. Budget **10-12 weeks** for complete migration including testing.
+**Recommendation:** Proceed with migration in phases:
+1. Start with low-risk components (Arduino Core APIs, NVS) to build confidence
+2. Migrate sensor and input hardware (encoder, DS18B20)
+3. Replace WiFi provisioning
+4. Finally tackle the display migration
+
+Budget **10-12 weeks** for complete migration including testing.
 
 The end result will be a leaner, faster, more maintainable codebase with full access to ESP-IDF's advanced features. Good luck! 🚀

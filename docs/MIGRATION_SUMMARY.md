@@ -312,7 +312,11 @@ nvs_commit(nvs_handle);
 - Quick delivery (10-12 weeks is significant)
 - Minimal risk (display migration has unknowns)
 
-**The bottom line:** The project is **partially migrated already**. The main hurdles are **display (U8G2 → LVGL)** and **WiFi provisioning**. Everything else is straightforward. If you tackle those two components carefully, the migration is very achievable.
+**The bottom line:** 
+- The project is **partially migrated already**
+- Main hurdles are **display (U8G2 → LVGL)** and **WiFi provisioning**
+- Everything else is straightforward
+- If you tackle those two components carefully, the migration is very achievable
 
 ---
 
