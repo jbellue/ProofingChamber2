@@ -208,26 +208,21 @@ if (redraw && pixelDeltaSignificant) {
 
 ---
 
-### Priority 3: Cache Font Metrics 📊
+### Priority 3: Cache Font Metrics 📊 - REMOVED
 
 **Problem**: Repeated `getAscent()`/`getDescent()` calls.
 
-**Solution**: Cache after `setFont()` in a view member variable.
+**Initial Solution**: Cache after `setFont()` in DisplayManager.
 
-**Implementation**:
-```cpp
-// In view class
-uint8_t _cachedAscent;
-uint8_t _cachedDescent;
+**Issue Identified**: Cannot guarantee cache validity because:
+- `getDisplay()` exposes underlying U8G2 object
+- Graph class uses direct U8G2 access
+- U8G2 doesn't provide `getFont()` to verify current font
+- Cache could become stale if font set directly on U8G2 object
 
-void setFont(const uint8_t* font) {
-    _display->setFont(font);
-    _cachedAscent = _display->getAscent();
-    _cachedDescent = _display->getDescent();
-}
-```
+**Final Decision**: Remove caching to prioritize correctness over minor performance gain.
 
-**Impact**: Minor performance gain, cleaner code.
+**Rationale**: This is a safety-critical system (heating/cooling control). Correctness > micro-optimization.
 
 ---
 

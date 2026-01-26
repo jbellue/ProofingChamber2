@@ -58,18 +58,10 @@ uint8_t DisplayManager::getWidth() {
 }
 
 uint8_t DisplayManager::getAscent() {
-    // Return cached value if font hasn't changed
-    if (_cachedFont != nullptr) {
-        return _cachedAscent;
-    }
     return _display.getAscent();
 }
 
 uint8_t DisplayManager::getDescent() {
-    // Return cached value if font hasn't changed
-    if (_cachedFont != nullptr) {
-        return _cachedDescent;
-    }
     return _display.getDescent();
 }
 
@@ -86,13 +78,7 @@ void DisplayManager::sendBuffer() {
 }
 
 void DisplayManager::setFont(const uint8_t* font) {
-    // Only update cache if font actually changes
-    if (_cachedFont != font) {
-        _display.setFont(font);
-        _cachedFont = font;
-        _cachedAscent = _display.getAscent();
-        _cachedDescent = _display.getDescent();
-    }
+    _display.setFont(font);
 }
 
 void DisplayManager::drawUTF8(uint8_t x, uint8_t y, const char* str) {
