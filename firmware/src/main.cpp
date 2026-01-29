@@ -115,9 +115,15 @@ void setup() {
     inputManager.begin();
     temperatureController.begin();
 
-    // Initialize LED pins as outputs
-    pinMode(COOLING_LED_PIN, OUTPUT);
-    pinMode(PROOFING_LED_PIN, OUTPUT);
+    // Initialize output pin
+    gpio_reset_pin(COOLING_LED_PIN);
+    gpio_set_direction(COOLING_LED_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(PROOFING_LED_PIN);
+    gpio_set_direction(PROOFING_LED_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(HEATING_RELAY_PIN);
+    gpio_set_direction(HEATING_RELAY_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(COOLING_RELAY_PIN);
+    gpio_set_direction(COOLING_RELAY_PIN, GPIO_MODE_OUTPUT);
 
     // Populate global AppContext so components can access shared services
     appContext.display = &displayManager;

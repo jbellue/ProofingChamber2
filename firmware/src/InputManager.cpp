@@ -1,13 +1,13 @@
 #include "InputManager.h"
 #include "DebugUtils.h"
-#include <Arduino.h>
+#include <esp_timer.h>
 #include <driver/gpio.h>
 
 InputManager::InputManager(const gpio_num_t clkPin, gpio_num_t dtPin, gpio_num_t swPin, gpio_num_t ds18b20Pin) :
         _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderClk(clkPin),
         _encoderDt(dtPin), _encoderSWPin(swPin), _buttonPressed(false),
-        _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin),
-        _initialized(false), _lastEncoderPosition(0), _pendingSteps(0), _buttonIrq(false), _lastRawButtonReading(HIGH)
+        _lastButtonState(1), _buttonState(1), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin),
+        _initialized(false), _lastEncoderPosition(0), _pendingSteps(0), _buttonIrq(false), _lastRawButtonReading(1)
 {
     _encoder.setPosition(0);
 }
@@ -60,12 +60,12 @@ void InputManager::update() {
     // Handle button press with ISR edge gating and debounce
     if (_buttonIrq) {
         _buttonIrq = false;
-        _lastDebounceTime = millis();
+        _lastDebounceTime = (unsigned long)(esp_timer_get_time() / 1000ULL);
     }
-    if ((millis() - _lastDebounceTime) > _debounceDelay) {
+    if (((unsigned long)(esp_timer_get_time() / 1000ULL) - _lastDebounceTime) > _debounceDelay) {
         if (_lastRawButtonReading != _buttonState) {
             _buttonState = _lastRawButtonReading;
-            if (_buttonState == LOW) {
+            if (_buttonState == 0) {
                 _buttonPressed = true;
             }
         }

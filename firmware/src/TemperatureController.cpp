@@ -30,10 +30,6 @@ void TemperatureController::setDefaultLimits(int8_t lower, int8_t higher) {
 }
 
 void TemperatureController::begin() {
-    pinMode(_heaterPin, OUTPUT);
-    pinMode(_coolerPin, OUTPUT);
-    pinMode(_proofingLedPin, OUTPUT);
-    pinMode(_coolingLedPin, OUTPUT);
     turnHeater(false);
     turnCooler(false);
 }
@@ -51,16 +47,16 @@ void TemperatureController::setMode(Mode mode) {
     // Control LEDs based on mode
     switch (_currentMode) {
         case HEATING:
-            gpio_set_level(_proofingLedPin, HIGH);
-            gpio_set_level(_coolingLedPin, LOW);
+            gpio_set_level(_proofingLedPin, 1);
+            gpio_set_level(_coolingLedPin, 0);
             break;
         case COOLING:
-            gpio_set_level(_proofingLedPin, LOW);
-            gpio_set_level(_coolingLedPin, HIGH);
+            gpio_set_level(_proofingLedPin, 0);
+            gpio_set_level(_coolingLedPin, 1);
             break;
         case OFF:
-            gpio_set_level(_proofingLedPin, LOW);
-            gpio_set_level(_coolingLedPin, LOW);
+            gpio_set_level(_proofingLedPin, 0);
+            gpio_set_level(_coolingLedPin, 0);
             break;
     }
 }
@@ -154,11 +150,11 @@ bool TemperatureController::isCooling() const {
 }
 
 void TemperatureController::turnHeater(bool on) {
-    gpio_set_level(_heaterPin, on ? HIGH : LOW);
+    gpio_set_level(_heaterPin, on ? 1 : 0);
     _isHeating = on;
 }
 
 void TemperatureController::turnCooler(bool on) {
-    gpio_set_level(_coolerPin, on ? HIGH : LOW);
+    gpio_set_level(_coolerPin, on ? 1 : 0);
     _isCooling = on;
 }

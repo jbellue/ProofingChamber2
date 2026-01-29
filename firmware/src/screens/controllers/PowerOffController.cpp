@@ -1,4 +1,6 @@
 #include <esp_sleep.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <driver/gpio.h>
 #include "PowerOffController.h"
 #include "../views/PowerOffView.h"
@@ -44,7 +46,7 @@ void gpioOff(const gpio_num_t pin) {
         return;
     }
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
-    gpio_set_level(pin, LOW);
+    gpio_set_level(pin, 0);
     gpio_pullup_dis(pin);
     gpio_pulldown_dis(pin);
     gpio_hold_en(pin);
@@ -80,7 +82,7 @@ void PowerOffController::performPowerOff() {
     gpio_deep_sleep_hold_en();
 
     DEBUG_PRINTLN("Entering deep sleep mode. Press button to wake.");
-    delay(500);  // Allow time for serial output and button release
+    vTaskDelay(pdMS_TO_TICKS(500));  // Allow time for serial output and button release
     
     esp_deep_sleep_start();
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Arduino.h>
+#include <driver/gpio.h>
 #include "services/IStorage.h"
 #include "ITemperatureController.h"
 
