@@ -1,4 +1,5 @@
 #include <U8g2lib.h>
+#include <driver/gpio.h>
 #include "DebugUtils.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
@@ -33,14 +34,14 @@
 #include "TemperatureController.h"
 #include "AppContextDecl.h"
 
-#define DS18B20_PIN       0
-#define COOLING_RELAY_PIN 1
-#define HEATING_RELAY_PIN 2
-#define COOLING_LED_PIN   10
-#define PROOFING_LED_PIN  6
-#define ENCODER_CLK       3
-#define ENCODER_DT        4
-#define ENCODER_SW        5
+#define DS18B20_PIN       GPIO_NUM_0
+#define COOLING_RELAY_PIN GPIO_NUM_1
+#define HEATING_RELAY_PIN GPIO_NUM_2
+#define ENCODER_CLK       GPIO_NUM_3
+#define ENCODER_DT        GPIO_NUM_4
+#define ENCODER_SW        GPIO_NUM_5
+#define PROOFING_LED_PIN  GPIO_NUM_6
+#define COOLING_LED_PIN   GPIO_NUM_10
 
 // Global objects
 DisplayManager displayManager(U8G2_R0);
@@ -98,6 +99,13 @@ void setup() {
     // Initialize serial communication
     Serial.begin(115200);
 #endif
+
+    // Release any deep-sleep GPIO holds from previous power-off
+    gpio_deep_sleep_hold_dis();
+    gpio_hold_dis(COOLING_LED_PIN);
+    gpio_hold_dis(PROOFING_LED_PIN);
+    gpio_hold_dis(HEATING_RELAY_PIN);
+    gpio_hold_dis(COOLING_RELAY_PIN);
     if (!storageAdapter.begin()) {
         DEBUG_PRINTLN("Storage initialization failed - using safe defaults");
         // Set safe default temperatures (moderate room temperature range)
@@ -120,6 +128,10 @@ void setup() {
     appContext.networkService = &networkService;
     appContext.storage = &storageAdapter;
     appContext.encoderButtonPin = ENCODER_SW;
+    appContext.heaterRelayPin = HEATING_RELAY_PIN;
+    appContext.coolerRelayPin = COOLING_RELAY_PIN;
+    appContext.proofingLedPin = PROOFING_LED_PIN;
+    appContext.coolingLedPin = COOLING_LED_PIN;
     
     // Add view pointers to AppContext
     appContext.adjustValueView = &adjustValueView;

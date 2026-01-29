@@ -3,7 +3,7 @@
 #include "services/IStorage.h"
 #include "StorageConstants.h"
 
-TemperatureController::TemperatureController(uint8_t heaterPin, uint8_t coolerPin, uint8_t proofingLedPin, uint8_t coolingLedPin)
+TemperatureController::TemperatureController(const gpio_num_t heaterPin, const gpio_num_t coolerPin, const gpio_num_t proofingLedPin, const gpio_num_t coolingLedPin)
     : _heaterPin(heaterPin)
     , _coolerPin(coolerPin)
     , _proofingLedPin(proofingLedPin)

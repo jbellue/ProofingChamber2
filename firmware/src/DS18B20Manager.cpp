@@ -3,7 +3,7 @@
 #include "DS18B20Manager.h"
 #include "DebugUtils.h"
 
-DS18B20Manager::DS18B20Manager(const uint8_t oneWirePin):
+DS18B20Manager::DS18B20Manager(const gpio_num_t oneWirePin):
         _oneWire(oneWirePin), _sensors(&_oneWire), _lastTemperature(0.0),
         _currentResolution(9), _currentState(State::STOPPED),
         _lastErrorTime(0), _errorRetryCount(0), _slowPolling(true) { }

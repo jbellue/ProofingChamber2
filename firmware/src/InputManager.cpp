@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <driver/gpio.h>
 
-InputManager::InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin) :
-        _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderClk((gpio_num_t)clkPin),
-        _encoderDt((gpio_num_t)dtPin), _encoderSWPin((gpio_num_t)swPin), _buttonPressed(false),
+InputManager::InputManager(const gpio_num_t clkPin, gpio_num_t dtPin, gpio_num_t swPin, gpio_num_t ds18b20Pin) :
+        _encoder(clkPin, dtPin, RotaryEncoder::LatchMode::FOUR3), _encoderClk(clkPin),
+        _encoderDt(dtPin), _encoderSWPin(swPin), _buttonPressed(false),
         _lastButtonState(HIGH), _buttonState(HIGH), _lastDebounceTime(0), _ds18b20Manager(ds18b20Pin),
         _initialized(false), _lastEncoderPosition(0), _pendingSteps(0), _buttonIrq(false), _lastRawButtonReading(HIGH)
 {

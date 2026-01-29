@@ -6,7 +6,7 @@
 
 class TemperatureController : public ITemperatureController {
 public:
-    TemperatureController(const uint8_t heaterPin, const uint8_t coolerPin, const uint8_t proofingLedPin, const uint8_t coolingLedPin);
+    TemperatureController(const gpio_num_t heaterPin, const gpio_num_t coolerPin, const gpio_num_t proofingLedPin, const gpio_num_t coolingLedPin);
     void setStorage(services::IStorage* storage);
     void setDefaultLimits(int8_t lower, int8_t higher);
 
@@ -19,10 +19,10 @@ public:
     bool isCooling() const override;
 
 private:
-    const uint8_t _heaterPin;
-    const uint8_t _coolerPin;
-    const uint8_t _proofingLedPin;
-    const uint8_t _coolingLedPin;
+    const gpio_num_t _heaterPin;
+    const gpio_num_t _coolerPin;
+    const gpio_num_t _proofingLedPin;
+    const gpio_num_t _coolingLedPin;
     Mode _currentMode;
     services::IStorage* _storage;
 

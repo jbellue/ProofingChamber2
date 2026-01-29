@@ -7,7 +7,7 @@
 
 class InputManager : public IInputManager {
 public:
-    InputManager(uint8_t clkPin, uint8_t dtPin, uint8_t swPin, uint8_t ds18b20Pin);
+    InputManager(const gpio_num_t clkPin, gpio_num_t dtPin, gpio_num_t swPin, gpio_num_t ds18b20Pin);
     void begin() override;
     void initialiseEncoderISR();
     void update() override;

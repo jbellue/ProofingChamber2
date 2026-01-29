@@ -1,6 +1,7 @@
 // Lightweight dependency container for wiring shared components and services
 #pragma once
 #include <stdint.h>
+#include <driver/gpio.h>
 
 class IDisplayManager;
 class IInputManager;
@@ -32,7 +33,11 @@ struct AppContext {
     services::IStorage* storage = nullptr;
     
     // Hardware configuration
-    uint8_t encoderButtonPin = 0;
+    gpio_num_t encoderButtonPin = GPIO_NUM_NC;
+    gpio_num_t heaterRelayPin = GPIO_NUM_NC;
+    gpio_num_t coolerRelayPin = GPIO_NUM_NC;
+    gpio_num_t proofingLedPin = GPIO_NUM_NC;
+    gpio_num_t coolingLedPin = GPIO_NUM_NC;
     
     // Static view instances
     AdjustValueView* adjustValueView = nullptr;

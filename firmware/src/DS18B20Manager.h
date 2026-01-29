@@ -5,7 +5,7 @@
 
 class DS18B20Manager {
 public:
-    DS18B20Manager(const uint8_t oneWirePin);
+    DS18B20Manager(const gpio_num_t oneWirePin);
     void begin();
     void update();
     float getTemperature() const;
