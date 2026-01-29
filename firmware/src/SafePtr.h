@@ -5,9 +5,11 @@
 #include "IDisplayManager.h"
 #include "services/INetworkService.h"
 #include "services/IStorage.h"
+#include "services/IRebootService.h"
 #include "NullInputManager.h"
 #include "NullTemperatureController.h"
 #include "NullDisplayManager.h"
+#include "NullRebootService.h"
 #include "NullNetworkService.h"
 #include "NullStorage.h"
 

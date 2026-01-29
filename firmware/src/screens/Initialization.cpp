@@ -1,5 +1,8 @@
 #include <time.h>
 #include <U8g2lib.h>
+#include <esp_timer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "DebugUtils.h"
 #include "Initialization.h"
 #include "icons.h"
@@ -70,16 +73,16 @@ void Initialization::drawScreen() {
     _storage->getCharArray(storage::keys::TIMEZONE_KEY, timezoneBuf, sizeof(timezoneBuf), storage::defaults::TIMEZONE_DEFAULT);
     _networkService->configureNtp(timezoneBuf, "pool.ntp.org", "time.nist.gov");
     DEBUG_PRINT("Waiting for NTP time sync");
-    const unsigned long timeout = millis() + 30000; // 30 sec timeout
+    const uint64_t timeout_us = esp_timer_get_time() + 30000000ULL; // 30 sec timeout
     while (!_networkService->isTimeSyncReady(1000000000)) {
-        if (millis() > timeout) {
+        if (esp_timer_get_time() > timeout_us) {
             DEBUG_PRINTLN("NTP timeout - continuing anyway");
             break;
         }
-        yield(); // Feed watchdog
-        delay(500);
+        vTaskDelay(pdMS_TO_TICKS(500));
         _display->print(".");
         _display->sendBuffer();
+        taskYIELD();
     }
     DEBUG_PRINTLN("\nTime synced with NTP");
 }

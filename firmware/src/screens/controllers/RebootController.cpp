@@ -2,6 +2,8 @@
 #include "../views/RebootView.h"
 #include "../../DebugUtils.h"
 #include "SafePtr.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 RebootController::RebootController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _rebootService(nullptr), _onCancelButton(true) {}
@@ -35,7 +37,7 @@ bool RebootController::update(bool shouldRedraw) {
             DEBUG_PRINTLN("RebootController: invoking reboot service");
             _rebootService->reboot();
         }
-        delay(2000);
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
     return true;
 }

@@ -2,6 +2,7 @@
 #include <DallasTemperature.h>
 #include "DS18B20Manager.h"
 #include "DebugUtils.h"
+#include <esp_timer.h>
 
 DS18B20Manager::DS18B20Manager(const gpio_num_t oneWirePin):
         _oneWire(oneWirePin), _sensors(&_oneWire), _lastTemperature(0.0),
@@ -24,7 +25,7 @@ void DS18B20Manager::begin() {
 void DS18B20Manager::startConversion() {
     _lastErrorTime = 0;
     _errorRetryCount = 0;
-    _lastUpdateTime = millis();
+    _lastUpdateTime = (unsigned long)(esp_timer_get_time() / 1000ULL);
     _sensors.requestTemperatures();
 }
 
@@ -47,7 +48,7 @@ void DS18B20Manager::stopPolling() {
 void DS18B20Manager::handleState() {
     switch (_currentState) {
         case State::WAITING_CONVERSION: {
-            const uint32_t currentMillis = millis();
+            const uint32_t currentMillis = (uint32_t)(esp_timer_get_time() / 1000ULL);
             if (currentMillis - _lastUpdateTime >= getConversionDelay()) {
                 _currentState = State::READING_TEMP;
                 _lastUpdateTime = currentMillis;
@@ -69,13 +70,13 @@ void DS18B20Manager::handleState() {
 
                 startConversion();
                 _currentState = State::WAITING_CONVERSION;
-                _lastUpdateTime = millis();
+                _lastUpdateTime = (unsigned long)(esp_timer_get_time() / 1000ULL);
             }
             break;
         }
 
         case State::ERROR: {
-            const uint32_t currentMillis = millis();
+            const uint32_t currentMillis = (uint32_t)(esp_timer_get_time() / 1000ULL);
             // Only attempt recovery after delay and if under max retries
             if (currentMillis - _lastErrorTime >= _errorRetryDelay && _errorRetryCount < _maxErrorRetries) {
                 DEBUG_PRINTLN("Attempting to recover from error...");
@@ -118,7 +119,8 @@ int DS18B20Manager::getConversionDelay() const
 
 // Set resolution (9-12 bits)
 void DS18B20Manager::setResolution(uint8_t bits) {
-    bits = constrain(bits, 9, 12);
+    if (bits < 9) bits = 9;
+    else if (bits > 12) bits = 12;
     _sensors.setResolution(_deviceAddress, bits);
     _currentResolution = bits;
 }
