@@ -2,7 +2,6 @@
 #include "../views/ConfirmTimezoneView.h"
 #include "../../DebugUtils.h"
 #include "../../services/IStorage.h"
-#include "SafePtr.h"
 #include "../../screens/Menu.h"
 #include "../../MenuItems.h"
 #include <StorageConstants.h>

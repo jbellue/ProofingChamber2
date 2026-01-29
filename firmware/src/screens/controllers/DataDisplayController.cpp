@@ -3,7 +3,6 @@
 #include "DebugUtils.h"
 #include "services/IStorage.h"
 #include "StorageConstants.h"
-#include "../../SafePtr.h"
 
 void DataDisplayController::beginImpl() {
     DEBUG_PRINTLN("DataDisplayController::beginImpl called");

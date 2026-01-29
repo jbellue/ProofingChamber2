@@ -1,6 +1,5 @@
 #include "WiFiResetController.h"
 #include "../views/WiFiResetView.h"
-#include "SafePtr.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -17,9 +16,7 @@ void WiFiResetController::beginImpl() {
     if (ctx) {
         if (!_networkService) _networkService = ctx->networkService;
         if (!_rebootService) _rebootService = ctx->rebootService;
-        if (!_view) {
-            _view = ctx->wifiResetView;
-        }
+        if (!_view) _view = ctx->wifiResetView;
     }
     _onCancelButton = true;
     _view->start();
@@ -42,14 +39,10 @@ bool WiFiResetController::update(bool forceRedraw) {
         if (_onCancelButton) {
             return false;
         }
-        if (_networkService) {
-            _networkService->resetSettings();
-        }
+        _networkService->resetSettings();
         _view->showResetMessage();
         vTaskDelay(pdMS_TO_TICKS(2000));
-        if (_rebootService) {
-            _rebootService->reboot();
-        }
+        _rebootService->reboot();
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
     return true;

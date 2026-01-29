@@ -26,8 +26,8 @@ namespace services {
 struct AppContext {
     IDisplayManager* display = nullptr;
     IInputManager* input = nullptr;
-    ScreensManager* screens = nullptr;
     ITemperatureController* tempController = nullptr;
+    ScreensManager* screens = nullptr;
     services::IRebootService* rebootService = nullptr;
     services::INetworkService* networkService = nullptr;
     services::IStorage* storage = nullptr;

@@ -1,7 +1,6 @@
 #include "RebootController.h"
 #include "../views/RebootView.h"
 #include "../../DebugUtils.h"
-#include "SafePtr.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 

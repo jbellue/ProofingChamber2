@@ -1,7 +1,6 @@
 #include "CoolingController.h"
 #include "DebugUtils.h"
 #include "../views/CoolingView.h"
-#include "SafePtr.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
@@ -12,7 +11,7 @@ void CoolingController::beginImpl() {
     
     AppContext* ctx = getContext();
     if (ctx) {
-        if (!_temperatureController) _temperatureController = SafePtr::resolve(ctx->tempController);
+        if (!_temperatureController) _temperatureController = ctx->tempController;
         if (!_view) _view = ctx->coolingView;
     }
     

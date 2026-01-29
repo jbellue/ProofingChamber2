@@ -5,7 +5,7 @@
 #include "PowerOffController.h"
 #include "../views/PowerOffView.h"
 #include "../../DebugUtils.h"
-#include "SafePtr.h"
+#include "ITemperatureController.h"
 
 PowerOffController::PowerOffController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _onCancelButton(true) {}
@@ -57,11 +57,11 @@ void PowerOffController::performPowerOff() {
     
     AppContext* ctx = getContext();
     if (ctx) {
-        SafePtr::resolve(ctx->tempController)->setMode(ITemperatureController::OFF);
+        ctx->tempController->setMode(ITemperatureController::OFF);
         DEBUG_PRINTLN("Temperature controller set to OFF");
  
-        SafePtr::resolve(ctx->display)->clearBuffer();
-        SafePtr::resolve(ctx->display)->sendBuffer();
+        ctx->display->clearBuffer();
+        ctx->display->sendBuffer();
         DEBUG_PRINTLN("Display cleared");
 
         gpioOff(ctx->proofingLedPin);

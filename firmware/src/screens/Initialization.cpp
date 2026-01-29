@@ -6,7 +6,6 @@
 #include "DebugUtils.h"
 #include "Initialization.h"
 #include "icons.h"
-#include "SafePtr.h"
 // Need the concrete service definition to call methods like autoConnect()/configureNtp()
 #include "../services/INetworkService.h"
 // Storage interface to retrieve timezone configuration
@@ -23,9 +22,9 @@ void Initialization::begin() {
 void Initialization::beginImpl() {
     AppContext* ctx = getContext();
     if (ctx) {
-        if (!_display) _display = SafePtr::resolve(ctx->display);
-        if (!_networkService) _networkService = SafePtr::resolve(ctx->networkService);
-        if (!_storage) _storage = SafePtr::resolve(ctx->storage);
+        if (!_display) _display = ctx->display;
+        if (!_networkService) _networkService = ctx->networkService;
+        if (!_storage) _storage = ctx->storage;
     }
     _display->clear();
 }

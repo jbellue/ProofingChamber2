@@ -3,7 +3,6 @@
 #include "../../icons.h"
 #include "../views/ProofingView.h"
 #include "../../ITemperatureController.h"
-#include "../../SafePtr.h"
 
 ProofingController::ProofingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _startTime(0),
@@ -15,7 +14,7 @@ void ProofingController::beginImpl() {
     initializeInputManager();
     
     AppContext* ctx = getContext();
-    _temperatureController = SafePtr::resolve(ctx->tempController);
+    _temperatureController = ctx->tempController;
     _view = ctx->proofingView;
     
     struct tm startTime;

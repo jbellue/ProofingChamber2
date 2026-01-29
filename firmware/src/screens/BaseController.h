@@ -10,7 +10,6 @@ struct AppContext;
  * 
  * Provides common infrastructure for screen management and input handling:
  * - Automatic AppContext storage and access
- * - Null-safe input manager initialization via SafePtr pattern
  * - Screen navigation chain management
  * - Common encoder position reset on screen entry
  * 
@@ -45,10 +44,9 @@ protected:
     }
 
     /**
-     * @brief Initialize input manager with SafePtr resolution and reset encoder.
+     * @brief Initialize input manager and reset encoder.
      * 
      * Call this at the start of your beginImpl() to ensure:
-     * - _inputManager is never null (resolves to NullInputManager if needed)
      * - Encoder position is reset to prevent carryover from previous screen
      */
     void initializeInputManager();
