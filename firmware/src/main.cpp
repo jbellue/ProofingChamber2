@@ -1,5 +1,6 @@
 #include <U8g2lib.h>
 #include <driver/gpio.h>
+#include <esp_log.h>
 #include "DebugUtils.h"
 #include "DisplayManager.h"
 #include "InputManager.h"
@@ -95,11 +96,12 @@ static ConfirmTimezoneView confirmTimezoneView(&displayManager);
 static PowerOffView powerOffView(&displayManager);
 
 void setup() {
-#if DEBUG
+#if defined CORE_DEBUG_LEVEL && CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO
     // Initialize serial communication
     Serial.begin(115200);
+    // Ensure ESP-IDF logging is visible at INFO level
+    esp_log_level_set("*", ESP_LOG_INFO);
 #endif
-
     // Release any deep-sleep GPIO holds from previous power-off
     gpio_deep_sleep_hold_dis();
     gpio_hold_dis(COOLING_LED_PIN);
