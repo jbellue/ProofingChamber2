@@ -2238,22 +2238,12 @@
 		(uuid "9bf28072-9ca8-4807-a145-e46aad515867")
 	)
 	(no_connect
-		(at 156.21 106.68)
-		(uuid "ce228836-980c-4aad-9f25-cf40185727ff")
+		(at 120.65 101.6)
+		(uuid "f3ac5256-3c36-4f97-97aa-cb57133cad88")
 	)
 	(no_connect
 		(at 156.21 96.52)
 		(uuid "f8de7b6b-9c27-48aa-b90a-7c71fb65e64c")
-	)
-	(wire
-		(pts
-			(xy 116.84 99.06) (xy 120.65 99.06)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "01d77b8f-6c16-423e-ad29-bbed089b0138")
 	)
 	(wire
 		(pts
@@ -2277,6 +2267,16 @@
 	)
 	(wire
 		(pts
+			(xy 116.84 99.06) (xy 120.65 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3a9685c6-b7dd-426f-874c-cf39c944583a")
+	)
+	(wire
+		(pts
 			(xy 194.31 31.75) (xy 219.71 31.75)
 		)
 		(stroke
@@ -2284,6 +2284,16 @@
 			(type default)
 		)
 		(uuid "444478b4-4a37-4dd4-91d8-1af820298b9e")
+	)
+	(wire
+		(pts
+			(xy 156.21 106.68) (xy 160.02 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4fe9978c-85da-48b1-841c-a1498541155f")
 	)
 	(wire
 		(pts
@@ -2417,16 +2427,6 @@
 	)
 	(wire
 		(pts
-			(xy 116.84 101.6) (xy 120.65 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d1e1f317-a021-43c0-b18e-73cbbe73d44b")
-	)
-	(wire
-		(pts
 			(xy 116.84 109.22) (xy 120.65 109.22)
 		)
 		(stroke
@@ -2465,16 +2465,6 @@
 		)
 		(uuid "1f1bf885-ba01-4e1f-a336-9558c9b51c8b")
 	)
-	(label "COOLING_RELAY"
-		(at 116.84 99.06 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "20c2b7f7-1fd1-4da5-9027-2e0e3728bfe7")
-	)
 	(label "SDA"
 		(at 160.02 99.06 0)
 		(effects
@@ -2484,16 +2474,6 @@
 			(justify left bottom)
 		)
 		(uuid "2a807132-d370-4da8-94f6-249ce729040b")
-	)
-	(label "PROOFING_LED"
-		(at 116.84 111.76 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "2e898a33-8733-4389-99fe-714b1b492ad0")
 	)
 	(label "ENCODER_BTN"
 		(at 186.69 36.83 180)
@@ -2505,16 +2485,6 @@
 		)
 		(uuid "2f157578-47c2-4d6d-a08f-7dc6b338f227")
 	)
-	(label "PROOFING_RELAY"
-		(at 116.84 101.6 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "377e52ac-d6cd-4b50-97ab-4e0995b211ae")
-	)
 	(label "ENCODER_B"
 		(at 201.93 36.83 0)
 		(effects
@@ -2524,6 +2494,26 @@
 			(justify left bottom)
 		)
 		(uuid "56e84195-a850-43e5-b345-d1a04d1966e5")
+	)
+	(label "COOLING_RELAY"
+		(at 160.02 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5a536d5c-a121-430d-8db0-2f1e38aca7bc")
+	)
+	(label "PROOFING_RELAY"
+		(at 116.84 111.76 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "60b57857-51a0-453b-be39-6297546e54cd")
 	)
 	(label "COOLING_RELAY"
 		(at 55.88 100.33 180)
@@ -2544,6 +2534,16 @@
 			(justify right bottom)
 		)
 		(uuid "7dfb8aca-ba40-4e6f-9239-39e4bb433d7a")
+	)
+	(label "PROOFING_LED"
+		(at 116.84 99.06 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "82fdb567-e35a-4a10-8c27-2070cfb95bfb")
 	)
 	(label "COOLING_LED"
 		(at 160.02 104.14 0)

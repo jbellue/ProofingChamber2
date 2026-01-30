@@ -36,12 +36,12 @@
 #include "AppContextDecl.h"
 
 #define DS18B20_PIN       GPIO_NUM_0
-#define COOLING_RELAY_PIN GPIO_NUM_1
-#define HEATING_RELAY_PIN GPIO_NUM_2
+#define COOLING_RELAY_PIN GPIO_NUM_20 //update prototype
+#define HEATING_RELAY_PIN GPIO_NUM_6  //update prototype
 #define ENCODER_CLK       GPIO_NUM_3
 #define ENCODER_DT        GPIO_NUM_4
 #define ENCODER_SW        GPIO_NUM_5
-#define PROOFING_LED_PIN  GPIO_NUM_6
+#define PROOFING_LED_PIN  GPIO_NUM_1 //update prototype
 #define COOLING_LED_PIN   GPIO_NUM_10
 
 // Global objects

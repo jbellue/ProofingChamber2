@@ -8,3 +8,5 @@
 hardware/*.lck
 hardware/#auto_saved_files#
 hardware/proofingChamber-backups
+hardware/fp-info-cache
+hardware/proofingChamber.kicad_prl
