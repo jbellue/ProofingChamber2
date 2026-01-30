@@ -5,3 +5,6 @@
 .vscode/settings.json
 .vscode/launch.json
 .vscode/ipch
+hardware/*.lck
+hardware/#auto_saved_files#
+hardware/proofingChamber-backups
