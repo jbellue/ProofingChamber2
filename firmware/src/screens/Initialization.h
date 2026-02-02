@@ -1,8 +1,8 @@
 #pragma once
 
 #include "BaseController.h"
-#include "IDisplayManager.h"
-#include "AppContextDecl.h"
+#include "../IDisplayManager.h"
+#include "../AppContextDecl.h"
 // Storage interface for reading saved timezone
 #include "../services/IStorage.h"
 

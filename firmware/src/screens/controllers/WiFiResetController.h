@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../BaseController.h"
-#include "AppContextDecl.h"
+#include "../../AppContextDecl.h"
 #include "../../services/INetworkService.h"
 #include "../../services/IRebootService.h"
-#include "IInputManager.h"
+#include "../../IInputManager.h"
 #include "../views/WiFiResetView.h"
 
 class WiFiResetController : public BaseController {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../BaseController.h"
-#include "AppContextDecl.h"
+#include "../../AppContextDecl.h"
 #include "../../services/IRebootService.h"
 
 // Forward declarations

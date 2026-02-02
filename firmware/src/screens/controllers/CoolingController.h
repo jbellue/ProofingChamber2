@@ -1,9 +1,9 @@
 #pragma once
-#include "AppContextDecl.h"
+#include "../../AppContextDecl.h"
 #include "../BaseController.h"
 #include "../views/CoolingView.h"
-#include "IInputManager.h"
-#include "ITemperatureController.h"
+#include "../../IInputManager.h"
+#include "../../ITemperatureController.h"
 #include <ctime>
 
 class CoolingController : public BaseController {

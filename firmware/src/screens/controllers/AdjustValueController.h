@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../BaseController.h"
-#include "IDisplayManager.h"
-#include "IInputManager.h"
-#include "services/IStorage.h"
+#include "../../IDisplayManager.h"
+#include "../../IInputManager.h"
+#include "../../services/IStorage.h"
 
 #include "../views/AdjustValueView.h"
-#include "AppContextDecl.h"
+#include "../../AppContextDecl.h"
 
 class AdjustValueController : public BaseController {
 public:

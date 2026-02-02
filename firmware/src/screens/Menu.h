@@ -2,12 +2,12 @@
 
 #include <Arduino.h>
 #include <functional>
-#include "screens/BaseController.h"
-#include "IDisplayManager.h"
-#include "IInputManager.h"
-#include "ScreensManager.h"
-#include "MenuActions.h"
-#include "AppContextDecl.h"
+#include "../screens/BaseController.h"
+#include "../IDisplayManager.h"
+#include "../IInputManager.h"
+#include "../ScreensManager.h"
+#include "../MenuActions.h"
+#include "../AppContextDecl.h"
 
 class Menu : public BaseController {
 public:

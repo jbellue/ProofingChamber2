@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IInputManager.h"
+#include "../IInputManager.h"
 
 // Forward declarations
 struct AppContext;

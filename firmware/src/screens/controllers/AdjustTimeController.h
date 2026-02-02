@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../BaseController.h"
-#include "AppContextDecl.h"
-#include "IInputManager.h"
-#include "SimpleTime.h"
+#include "../../AppContextDecl.h"
+#include "../../IInputManager.h"
+#include "../../SimpleTime.h"
 #include "../views/AdjustTimeView.h"
 
-#include "CoolingController.h"
+#include "./CoolingController.h"
 
 enum class TimeMode {
     ProofIn,

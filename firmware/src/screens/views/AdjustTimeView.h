@@ -1,6 +1,6 @@
 #pragma once
 #include "IBaseView.h"
-#include "SimpleTime.h"
+#include "../../SimpleTime.h"
 
 class AdjustTimeView : public IBaseView {
 public:
