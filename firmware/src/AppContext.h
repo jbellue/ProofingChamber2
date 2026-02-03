@@ -19,6 +19,8 @@ class ConfirmTimezoneView;
 class PowerOffView;
 class ProofingController;
 class CoolingController;
+class MenuActions;
+class Menu;
 namespace services { struct INetworkService; struct IStorage; struct IWebServerService; }
 
 namespace services {
@@ -56,4 +58,8 @@ struct AppContext {
     // Controller instances
     ProofingController* proofingController = nullptr;
     CoolingController* coolingController = nullptr;
+    
+    // Menu and actions
+    MenuActions* menuActions = nullptr;
+    Menu* menu = nullptr;
 };

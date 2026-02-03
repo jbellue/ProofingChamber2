@@ -170,6 +170,10 @@ void setup() {
     static Menu menuInstance(&appContext, menuActions);
     menu = &menuInstance;
     
+    // Add menu and menuActions to AppContext for web access
+    appContext.menuActions = menuActions;
+    appContext.menu = menu;
+    
     // Initialize dynamic timezone menus
     initializeAllMenus(&appContext);
     

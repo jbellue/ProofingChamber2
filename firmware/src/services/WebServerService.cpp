@@ -7,6 +7,9 @@
 #include "../DebugUtils.h"
 #include "../screens/controllers/ProofingController.h"
 #include "../screens/controllers/CoolingController.h"
+#include "../MenuActions.h"
+#include "../screens/Menu.h"
+#include "../ScreensManager.h"
 #include <ArduinoJson.h>
 
 namespace services {
@@ -147,20 +150,34 @@ void WebServerService::handleSetMode(AsyncWebServerRequest* request) {
     
     String mode = request->getParam("mode", true)->value();
     
-    if (!_ctx->tempController) {
-        request->send(500, "application/json", "{\"error\":\"Temperature controller not available\"}");
+    if (!_ctx->menuActions || !_ctx->screens || !_ctx->menu) {
+        request->send(500, "application/json", "{\"error\":\"Menu system not available\"}");
         return;
     }
     
     if (mode == "heating") {
-        _ctx->tempController->setMode(ITemperatureController::HEATING);
-        request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"heating\"}");
+        // Use menu action to start proofing (heating mode)
+        _ctx->menuActions->proofNowAction();
+        request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"heating\",\"message\":\"Started proofing via menu action\"}");
     } else if (mode == "cooling") {
-        _ctx->tempController->setMode(ITemperatureController::COOLING);
-        request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"cooling\"}");
+        // Cooling requires time configuration, so we can't directly trigger it
+        // For now, return an informative error
+        request->send(400, "application/json", "{\"error\":\"Cooling mode requires time configuration. Use physical interface or schedule via dedicated endpoint.\"}");
     } else if (mode == "off") {
-        _ctx->tempController->setMode(ITemperatureController::OFF);
-        request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"off\"}");
+        // Navigate back to menu which stops current operation
+        BaseController* currentScreen = _ctx->screens->getActiveScreen();
+        if (currentScreen != _ctx->menu) {
+            // Turn off temperature control
+            if (_ctx->tempController) {
+                _ctx->tempController->setMode(ITemperatureController::OFF);
+            }
+            // Return to menu
+            _ctx->screens->setActiveScreen(_ctx->menu);
+            request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"off\",\"message\":\"Returned to menu\"}");
+        } else {
+            // Already at menu
+            request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"off\",\"message\":\"Already at menu\"}");
+        }
     } else {
         request->send(400, "application/json", "{\"error\":\"Invalid mode. Use 'heating', 'cooling', or 'off'\"}");
     }
@@ -639,7 +656,9 @@ String WebServerService::getWebPageHtml() {
                 });
                 
                 if (response.ok) {
-                    showAlert('statusAlert', `Mode changed to ${mode}`, 'success');
+                    const result = await response.json();
+                    const message = result.message || `Mode changed to ${mode}`;
+                    showAlert('statusAlert', message, 'success');
                     updateStatus();
                 } else {
                     const error = await response.json();
