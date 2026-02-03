@@ -2,6 +2,17 @@
 
 The ProofingChamber2 now includes a web interface that allows you to monitor and control the device from any browser on your local network.
 
+## Screenshot / Appearance
+
+The web interface features a modern, gradient purple background with white cards containing:
+- **Header**: Large "🍞 Proofing Chamber" title with "Temperature Control System" subtitle
+- **Current Status Card**: Displays large temperature reading and current mode with animated indicator
+- **Mode Control Card**: Three prominent buttons for Heating (🔥), Cooling (❄️), and Off (⏸️)
+- **Temperature Settings Card**: Input fields for adjusting heating and cooling limits
+- **Footer**: Version information
+
+The interface is fully responsive and works on desktop, tablet, and mobile devices.
+
 ## Features
 
 The web interface provides the same functionality as the physical OLED display and rotary encoder:
@@ -59,10 +70,27 @@ Settings are saved to non-volatile storage and persist across reboots.
 
 The web interface and physical interface (OLED + rotary encoder) work together seamlessly:
 
-- You can start heating from the web interface and stop it using the button
 - Settings changed via web are immediately available on the physical interface
 - Temperature readings are shared between both interfaces
-- Mode changes from either interface are reflected in real-time
+- Mode changes are synchronized between interfaces
+
+### Important Notes
+
+**Starting Operations:**
+- Both interfaces can start heating or cooling modes independently
+- Changes take effect immediately regardless of which interface initiates them
+
+**Stopping Operations:**
+- When actively running a heating or cooling cycle (screen showing temperature graph):
+  - The physical button press will stop the cycle and return to menu
+  - Web interface mode changes will stop heating/cooling but won't automatically exit the screen
+  - To fully exit a cycle started via physical interface, use the physical button
+  
+**Best Practices:**
+- If you start a cycle via the physical interface (menu), stop it via the physical button for proper screen navigation
+- If you start a cycle via the web interface, you can stop it via web
+- Settings can be changed from either interface at any time
+- The web interface is best for monitoring and remote control when not actively using the physical interface
 
 ## API Endpoints
 

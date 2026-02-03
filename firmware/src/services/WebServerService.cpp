@@ -159,25 +159,37 @@ void WebServerService::handleSetSettings(AsyncWebServerRequest* request) {
     // Handle heating settings
     if (request->hasParam("heating_lower", true)) {
         int value = request->getParam("heating_lower", true)->value().toInt();
-        _ctx->storage->setInt(storage::keys::HOT_LOWER_LIMIT_KEY, value);
-        updated = true;
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::HOT_LOWER_LIMIT_KEY, value);
+            updated = true;
+        }
     }
     if (request->hasParam("heating_upper", true)) {
         int value = request->getParam("heating_upper", true)->value().toInt();
-        _ctx->storage->setInt(storage::keys::HOT_UPPER_LIMIT_KEY, value);
-        updated = true;
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::HOT_UPPER_LIMIT_KEY, value);
+            updated = true;
+        }
     }
     
     // Handle cooling settings
     if (request->hasParam("cooling_lower", true)) {
         int value = request->getParam("cooling_lower", true)->value().toInt();
-        _ctx->storage->setInt(storage::keys::COLD_LOWER_LIMIT_KEY, value);
-        updated = true;
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::COLD_LOWER_LIMIT_KEY, value);
+            updated = true;
+        }
     }
     if (request->hasParam("cooling_upper", true)) {
         int value = request->getParam("cooling_upper", true)->value().toInt();
-        _ctx->storage->setInt(storage::keys::COLD_UPPER_LIMIT_KEY, value);
-        updated = true;
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::COLD_UPPER_LIMIT_KEY, value);
+            updated = true;
+        }
     }
     
     if (updated) {
@@ -454,11 +466,11 @@ String WebServerService::getWebPageHtml() {
                 <h3>🔥 Heating Mode</h3>
                 <div class="input-group">
                     <label>Lower Limit (°C):</label>
-                    <input type="number" id="heatingLower" value="23">
+                    <input type="number" id="heatingLower" value="23" min="-50" max="100">
                 </div>
                 <div class="input-group">
                     <label>Upper Limit (°C):</label>
-                    <input type="number" id="heatingUpper" value="32">
+                    <input type="number" id="heatingUpper" value="32" min="-50" max="100">
                 </div>
             </div>
             
@@ -466,11 +478,11 @@ String WebServerService::getWebPageHtml() {
                 <h3>❄️ Cooling Mode</h3>
                 <div class="input-group">
                     <label>Lower Limit (°C):</label>
-                    <input type="number" id="coolingLower" value="2">
+                    <input type="number" id="coolingLower" value="2" min="-50" max="100">
                 </div>
                 <div class="input-group">
                     <label>Upper Limit (°C):</label>
-                    <input type="number" id="coolingUpper" value="7">
+                    <input type="number" id="coolingUpper" value="7" min="-50" max="100">
                 </div>
             </div>
             
