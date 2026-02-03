@@ -120,3 +120,15 @@ void InputManager::slowTemperaturePolling(bool slowPolling) {
 float InputManager::getTemperature() const {
     return _ds18b20Manager.getTemperature();
 }
+
+// Virtual input injection for web interface
+void InputManager::injectButtonPress() {
+    // Simulate a button press by setting the flag
+    _buttonPressed = true;
+}
+
+void InputManager::injectEncoderSteps(int steps) {
+    // Add steps to pending steps counter
+    // Positive for clockwise, negative for counter-clockwise
+    _pendingSteps += steps;
+}

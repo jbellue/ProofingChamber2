@@ -34,6 +34,9 @@ public:
 
     // Set the next screen
     void setNextScreen(BaseController* screen) { _nextScreen = screen; }
+    
+    // Get screen name for identification (for web interface)
+    virtual const char* getScreenName() const { return "Unknown"; }
 
 protected:
     virtual void beginImpl() = 0;

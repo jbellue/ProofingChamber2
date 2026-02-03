@@ -15,6 +15,8 @@ public:
     bool update(bool forceRedraw = false) override;
     void prepare(TimeCalculatorCallback callback, BaseController* proofingController, BaseController* menuScreen);
     
+    const char* getScreenName() const override { return "Cooling"; }
+    
     // Getters for web interface
     time_t getEndTime() const { return _endTime; }
     bool isActive() const { return _endTime != 0; }

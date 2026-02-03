@@ -20,4 +20,8 @@ public:
     virtual int getPendingSteps() const = 0;
     virtual void slowTemperaturePolling(bool slowPolling) = 0;
     virtual float getTemperature() const = 0;
+    
+    // Virtual input injection for web interface
+    virtual void injectButtonPress() = 0;
+    virtual void injectEncoderSteps(int steps) = 0;
 };

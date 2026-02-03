@@ -24,6 +24,11 @@ namespace services {
         void handleScheduleCooling(AsyncWebServerRequest* request);
         void handleGetRoot(AsyncWebServerRequest* request);
         
+        // New virtual input endpoints
+        void handleInjectButton(AsyncWebServerRequest* request);
+        void handleInjectEncoder(AsyncWebServerRequest* request);
+        void handleGetDisplayState(AsyncWebServerRequest* request);
+        
         String getWebPageHtml();
     };
 }

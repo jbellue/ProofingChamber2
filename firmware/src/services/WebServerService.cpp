@@ -54,6 +54,19 @@ void WebServerService::setupRoutes() {
     _server.on("/api/cooling/schedule", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleScheduleCooling(request);
     });
+    
+    // New virtual input endpoints
+    _server.on("/api/input/button", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleInjectButton(request);
+    });
+    
+    _server.on("/api/input/encoder", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleInjectEncoder(request);
+    });
+    
+    _server.on("/api/display/state", HTTP_GET, [this](AsyncWebServerRequest* request) {
+        handleGetDisplayState(request);
+    });
 }
 
 void WebServerService::handleGetRoot(AsyncWebServerRequest* request) {
@@ -251,6 +264,90 @@ void WebServerService::handleScheduleCooling(AsyncWebServerRequest* request) {
     // This is a placeholder for future implementation
     // The full cooling schedule logic would require more integration with the screen controllers
     request->send(501, "application/json", "{\"error\":\"Cooling schedule not yet implemented via web interface\"}");
+}
+
+// Virtual input injection handlers
+void WebServerService::handleInjectButton(AsyncWebServerRequest* request) {
+    if (!_ctx->input) {
+        request->send(500, "application/json", "{\"error\":\"Input manager not available\"}");
+        return;
+    }
+    
+    // Inject a button press
+    _ctx->input->injectButtonPress();
+    request->send(200, "application/json", "{\"status\":\"ok\",\"action\":\"button_press\"}");
+}
+
+void WebServerService::handleInjectEncoder(AsyncWebServerRequest* request) {
+    if (!request->hasParam("steps", true)) {
+        request->send(400, "application/json", "{\"error\":\"Missing 'steps' parameter\"}");
+        return;
+    }
+    
+    if (!_ctx->input) {
+        request->send(500, "application/json", "{\"error\":\"Input manager not available\"}");
+        return;
+    }
+    
+    int steps = request->getParam("steps", true)->value().toInt();
+    
+    // Validate steps are reasonable (-10 to 10)
+    if (steps < -10 || steps > 10) {
+        request->send(400, "application/json", "{\"error\":\"Steps must be between -10 and 10\"}");
+        return;
+    }
+    
+    // Inject encoder steps
+    _ctx->input->injectEncoderSteps(steps);
+    
+    JsonDocument doc;
+    doc["status"] = "ok";
+    doc["action"] = "encoder_turn";
+    doc["steps"] = steps;
+    
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
+    JsonDocument doc;
+    
+    if (!_ctx->screens) {
+        request->send(500, "application/json", "{\"error\":\"Screen manager not available\"}");
+        return;
+    }
+    
+    BaseController* currentScreen = _ctx->screens->getActiveScreen();
+    if (currentScreen) {
+        doc["screen"] = currentScreen->getScreenName();
+    } else {
+        doc["screen"] = "None";
+    }
+    
+    // Add temperature and mode info for convenience
+    if (_ctx->input) {
+        doc["temperature"] = _ctx->input->getTemperature();
+    }
+    
+    if (_ctx->tempController) {
+        ITemperatureController::Mode mode = _ctx->tempController->getMode();
+        switch (mode) {
+            case ITemperatureController::HEATING:
+                doc["mode"] = "heating";
+                break;
+            case ITemperatureController::COOLING:
+                doc["mode"] = "cooling";
+                break;
+            case ITemperatureController::OFF:
+                doc["mode"] = "off";
+                break;
+        }
+    }
+    
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
 }
 
 String WebServerService::getWebPageHtml() {
