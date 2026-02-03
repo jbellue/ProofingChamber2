@@ -11,6 +11,7 @@ bool NetworkService::autoConnect(const char* portalSsid,
     // Make reconnection more reliable and give the user enough time to enter credentials
     WiFi.setAutoReconnect(true);
     WiFi.persistent(true);
+    // Note: setCleanConnect clears connection attempts, NOT saved credentials
     wifiManager.setCleanConnect(true);          // forget any half-open connection attempts
     wifiManager.setConnectTimeout(20);          // seconds to wait for WiFi association
     wifiManager.setConfigPortalTimeout(60);     // keep portal up long enough for user input without hanging too long
