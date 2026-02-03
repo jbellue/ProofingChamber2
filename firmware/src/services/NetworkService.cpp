@@ -69,13 +69,19 @@ bool NetworkService::autoConnect(const char* portalSsid,
         DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
     }
     
+    // CRITICAL: Reset WiFiManager settings to ensure clean state
+    // This is especially important after flash erase or if stuck
+    DEBUG_PRINTLN("Resetting WiFiManager to clean state...");
+    _wifiManager->resetSettings();
+    DEBUG_PRINTLN("  ✓ WiFiManager settings cleared");
+    
     // Configure WiFiManager before autoConnect
     // WiFiManager handles ALL WiFi persistence and reconnection internally
     // We should NOT call WiFi.persistent() or WiFi.setAutoReconnect() ourselves
     DEBUG_PRINTLN("Configuring WiFiManager...");
     _wifiManager->setCleanConnect(true);          // forget any half-open connection attempts
     _wifiManager->setConnectTimeout(20);          // seconds to wait for WiFi association
-    _wifiManager->setConfigPortalTimeout(0);      // 0 = NO TIMEOUT - portal stays open until configured
+    _wifiManager->setConfigPortalTimeout(180);    // 3 minute timeout to prevent infinite blocking
     _wifiManager->setWiFiAutoReconnect(true);     // WiFiManager will set auto-reconnect
     _wifiManager->setBreakAfterConfig(true);      // exit once credentials are saved
     _wifiManager->setSaveConfigCallback([]() {
