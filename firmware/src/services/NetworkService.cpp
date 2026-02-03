@@ -44,6 +44,15 @@ bool NetworkService::autoConnect(const char* portalSsid,
     
     if (onPortalStarted) {
         wifiManager.setAPCallback([onPortalStarted](WiFiManager* wm) {
+            // CRITICAL FIX: When portal starts after failed connection attempts,
+            // the WiFi radio may be in a bad state (still in STA mode or transitioning).
+            // We must explicitly reset to AP+STA mode for the AP to be visible.
+            DEBUG_PRINTLN("Portal starting - ensuring WiFi is in AP+STA mode...");
+            WiFi.mode(WIFI_OFF);
+            delay(100);  // Let radio fully power down
+            WiFi.mode(WIFI_AP_STA);  // Explicitly set to AP+STA mode
+            delay(200);  // Give extra time for AP to become visible
+            
             String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
             IPAddress apIp = WiFi.softAPIP();
             DEBUG_PRINTLN("╔════════════════════════════════════════╗");
@@ -53,7 +62,10 @@ bool NetworkService::autoConnect(const char* portalSsid,
             DEBUG_PRINTLN(apName.c_str());
             DEBUG_PRINT("  AP IP: ");
             DEBUG_PRINTLN(apIp.toString().c_str());
+            DEBUG_PRINT("  WiFi Mode: ");
+            DEBUG_PRINTLN(WiFi.getMode() == WIFI_AP_STA ? "AP+STA (correct)" : "WRONG MODE!");
             DEBUG_PRINTLN("  Connect to this network and configure WiFi");
+            DEBUG_PRINTLN("  The network should now be visible on your device");
             onPortalStarted(apName.c_str());
         });
     }
@@ -142,6 +154,13 @@ bool NetworkService::startConfigPortal(const char* portalSsid,
     
     if (onPortalStarted) {
         wifiManager.setAPCallback([onPortalStarted](WiFiManager* wm) {
+            // CRITICAL: Ensure WiFi is in AP+STA mode when forced portal starts
+            DEBUG_PRINTLN("Forced portal starting - ensuring WiFi is in AP+STA mode...");
+            WiFi.mode(WIFI_OFF);
+            delay(100);
+            WiFi.mode(WIFI_AP_STA);
+            delay(200);
+            
             String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
             IPAddress apIp = WiFi.softAPIP();
             DEBUG_PRINTLN("╔════════════════════════════════════════╗");
