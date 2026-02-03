@@ -7,6 +7,18 @@
 
 namespace services {
 
+NetworkService::NetworkService() : _wifiManager(nullptr) {
+    DEBUG_PRINTLN("NetworkService created");
+}
+
+NetworkService::~NetworkService() {
+    DEBUG_PRINTLN("NetworkService destroyed - cleaning up WiFiManager");
+    if (_wifiManager) {
+        delete _wifiManager;
+        _wifiManager = nullptr;
+    }
+}
+
 bool NetworkService::autoConnect(const char* portalSsid,
                                  std::function<void(const char* apName)> onPortalStarted) {
     DEBUG_PRINTLN("╔════════════════════════════════════════════════════╗");
@@ -45,27 +57,35 @@ bool NetworkService::autoConnect(const char* portalSsid,
     DEBUG_PRINTLN(String(WiFi.getMode()).c_str());
     
     DEBUG_PRINTLN("\n📡 Creating WiFiManager instance...");
-    WiFiManager wifiManager;
+    // CRITICAL FIX: Keep WiFiManager as member variable so it stays alive
+    // If created as local variable, it gets destroyed when function returns,
+    // which shuts down the AP even if portal is still needed!
+    if (!_wifiManager) {
+        _wifiManager = new WiFiManager();
+        DEBUG_PRINTLN("  ✓ New WiFiManager instance created (will persist)");
+    } else {
+        DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
+    }
     
     // Configure WiFiManager before autoConnect
     // WiFiManager handles ALL WiFi persistence and reconnection internally
     // We should NOT call WiFi.persistent() or WiFi.setAutoReconnect() ourselves
     DEBUG_PRINTLN("Configuring WiFiManager...");
-    wifiManager.setCleanConnect(true);          // forget any half-open connection attempts
-    wifiManager.setConnectTimeout(20);          // seconds to wait for WiFi association
-    wifiManager.setConfigPortalTimeout(0);      // 0 = NO TIMEOUT - portal stays open until configured
-    wifiManager.setWiFiAutoReconnect(true);     // WiFiManager will set auto-reconnect
-    wifiManager.setBreakAfterConfig(true);      // exit once credentials are saved
-    wifiManager.setSaveConfigCallback([]() {
+    _wifiManager->setCleanConnect(true);          // forget any half-open connection attempts
+    _wifiManager->setConnectTimeout(20);          // seconds to wait for WiFi association
+    _wifiManager->setConfigPortalTimeout(0);      // 0 = NO TIMEOUT - portal stays open until configured
+    _wifiManager->setWiFiAutoReconnect(true);     // WiFiManager will set auto-reconnect
+    _wifiManager->setBreakAfterConfig(true);      // exit once credentials are saved
+    _wifiManager->setSaveConfigCallback([]() {
         DEBUG_PRINTLN("✓ WiFiManager saved credentials to NVS");
     });
     
     // Enable debug output to help diagnose issues
-    wifiManager.setDebugOutput(true);
+    _wifiManager->setDebugOutput(true);
     DEBUG_PRINTLN("WiFiManager debug output enabled");
     
     if (onPortalStarted) {
-        wifiManager.setAPCallback([onPortalStarted](WiFiManager* wm) {
+        _wifiManager->setAPCallback([onPortalStarted](WiFiManager* wm) {
             // CRITICAL FIX: When portal starts after failed connection attempts,
             // the WiFi radio may be in a bad state (still in STA mode or transitioning).
             // We must explicitly reset to AP+STA mode for the AP to be visible.
@@ -99,9 +119,9 @@ bool NetworkService::autoConnect(const char* portalSsid,
     
     bool connected = false;
     if (portalSsid && portalSsid[0] != '\0') {
-        connected = wifiManager.autoConnect(portalSsid);
+        connected = _wifiManager->autoConnect(portalSsid);
     } else {
-        connected = wifiManager.autoConnect();
+        connected = _wifiManager->autoConnect();
     }
     
     if (connected) {
@@ -159,23 +179,29 @@ bool NetworkService::startConfigPortal(const char* portalSsid,
     WiFi.mode(WIFI_AP_STA); // Set to AP+STA mode for portal
     delay(100);             // Give WiFi time to initialize
     
-    DEBUG_PRINTLN("Creating WiFiManager instance...");
-    WiFiManager wifiManager;
+    DEBUG_PRINTLN("Creating/reusing WiFiManager instance...");
+    // CRITICAL FIX: Keep WiFiManager as member variable so it stays alive
+    if (!_wifiManager) {
+        _wifiManager = new WiFiManager();
+        DEBUG_PRINTLN("  ✓ New WiFiManager instance created (will persist)");
+    } else {
+        DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
+    }
     
     // Configure WiFiManager
     DEBUG_PRINTLN("Configuring WiFiManager...");
-    wifiManager.setConfigPortalTimeout(0);      // No timeout - stay open until configured
-    wifiManager.setBreakAfterConfig(true);      // exit once credentials are saved
-    wifiManager.setSaveConfigCallback([]() {
+    _wifiManager->setConfigPortalTimeout(0);      // No timeout - stay open until configured
+    _wifiManager->setBreakAfterConfig(true);      // exit once credentials are saved
+    _wifiManager->setSaveConfigCallback([]() {
         DEBUG_PRINTLN("✓ WiFiManager saved credentials to NVS");
     });
     
     // Enable debug output
-    wifiManager.setDebugOutput(true);
+    _wifiManager->setDebugOutput(true);
     DEBUG_PRINTLN("WiFiManager debug output enabled");
     
     if (onPortalStarted) {
-        wifiManager.setAPCallback([onPortalStarted](WiFiManager* wm) {
+        _wifiManager->setAPCallback([onPortalStarted](WiFiManager* wm) {
             // CRITICAL: Ensure WiFi is in AP+STA mode when forced portal starts
             DEBUG_PRINTLN("Forced portal starting - ensuring WiFi is in AP+STA mode...");
             WiFi.mode(WIFI_OFF);
@@ -205,9 +231,9 @@ bool NetworkService::startConfigPortal(const char* portalSsid,
     
     bool connected = false;
     if (portalSsid && portalSsid[0] != '\0') {
-        connected = wifiManager.startConfigPortal(portalSsid);
+        connected = _wifiManager->startConfigPortal(portalSsid);
     } else {
-        connected = wifiManager.startConfigPortal();
+        connected = _wifiManager->startConfigPortal();
     }
     
     if (connected) {
@@ -245,8 +271,15 @@ void NetworkService::resetSettings() {
     delay(100);
     
     // Reset WiFiManager settings (erases NVS)
-    WiFiManager wifiManager;
-    wifiManager.resetSettings();
+    // Use member instance if available, otherwise create temporary one
+    if (_wifiManager) {
+        _wifiManager->resetSettings();
+        DEBUG_PRINTLN("  Used existing WiFiManager instance");
+    } else {
+        WiFiManager tempManager;
+        tempManager.resetSettings();
+        DEBUG_PRINTLN("  Used temporary WiFiManager instance");
+    }
     
     DEBUG_PRINTLN("✓ WiFi settings reset complete");
     DEBUG_PRINTLN("  All credentials erased from NVS");
