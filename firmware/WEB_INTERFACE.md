@@ -26,20 +26,26 @@ The web interface provides the same functionality as the physical OLED display a
 
 Once your ProofingChamber is connected to WiFi:
 
-1. Find the IP address of your device (check your router's DHCP client list or the device display during boot)
-2. Open a web browser on any device connected to the same network
-3. Navigate to: `http://[DEVICE_IP_ADDRESS]`
+1. The IP address will be displayed on the OLED screen after boot (for 3 seconds)
+2. Note down the IP address shown on the display
+3. Open a web browser on any device connected to the same network
+4. Navigate to: `http://[DEVICE_IP_ADDRESS]`
 
 For example: `http://192.168.1.100`
+
+Alternatively, you can find the IP address by checking your router's DHCP client list.
 
 ## Usage
 
 ### Monitor Status
 
 The **Current Status** card displays:
-- Current temperature reading
+- Current temperature reading (updates every 2 seconds)
 - Active mode (Heating, Cooling, or Off)
 - Visual indicator showing the current state
+- **Timing information** (when active):
+  - **Proofing mode**: Shows elapsed time since proofing started
+  - **Cooling mode**: Shows countdown until proofing starts and the scheduled start time
 
 ### Control Mode
 
@@ -103,7 +109,21 @@ Returns current device status:
   "temperature": 25.5,
   "mode": "heating",
   "isHeating": true,
-  "isCooling": false
+  "isCooling": false,
+  "proofingStartTime": 1738599600,
+  "proofingElapsedSeconds": 932
+}
+```
+
+When cooling with scheduled proofing:
+```json
+{
+  "temperature": 5.2,
+  "mode": "cooling",
+  "isHeating": false,
+  "isCooling": true,
+  "coolingEndTime": 1738607700,
+  "coolingRemainingSeconds": 8144
 }
 ```
 
