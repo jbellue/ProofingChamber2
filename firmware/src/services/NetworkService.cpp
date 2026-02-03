@@ -9,20 +9,42 @@ namespace services {
 
 bool NetworkService::autoConnect(const char* portalSsid,
                                  std::function<void(const char* apName)> onPortalStarted) {
-    DEBUG_PRINTLN("=== WiFi Connection Starting ===");
+    DEBUG_PRINTLN("╔════════════════════════════════════════════════════╗");
+    DEBUG_PRINTLN("║   WiFi Connection Starting - Diagnostics          ║");
+    DEBUG_PRINTLN("╚════════════════════════════════════════════════════╝");
+    
+    // DIAGNOSTICS: Verify WiFi hardware is functional
+    DEBUG_PRINTLN("📊 WiFi Hardware Diagnostics:");
+    DEBUG_PRINT("  Chip Model: ");
+    DEBUG_PRINTLN(ESP.getChipModel());
+    DEBUG_PRINT("  WiFi MAC: ");
+    DEBUG_PRINTLN(WiFi.macAddress().c_str());
+    
+    // Test if WiFi can scan - this verifies hardware works
+    DEBUG_PRINTLN("  Testing WiFi scan capability...");
+    int networks = WiFi.scanNetworks();
+    DEBUG_PRINT("  Networks found: ");
+    DEBUG_PRINTLN(String(networks).c_str());
+    if (networks > 0) {
+        DEBUG_PRINTLN("  ✓ WiFi hardware is functional");
+    } else {
+        DEBUG_PRINTLN("  ⚠️ WARNING: WiFi scan found no networks - possible hardware issue!");
+    }
     
     // CRITICAL: Ensure clean WiFi state before starting
     // This is essential for WiFiManager to work correctly
-    DEBUG_PRINTLN("Stopping any existing WiFi...");
+    DEBUG_PRINTLN("\n🔄 Resetting WiFi to clean state...");
     WiFi.disconnect(true);  // Disconnect and erase credentials from RAM
     WiFi.mode(WIFI_OFF);    // Turn off WiFi completely
     delay(100);             // Give WiFi time to fully shut down
     
-    DEBUG_PRINTLN("Setting WiFi mode to STA...");
+    DEBUG_PRINTLN("  Setting WiFi mode to STA...");
     WiFi.mode(WIFI_STA);    // Set to station mode (required for WiFiManager)
     delay(100);             // Give WiFi time to initialize
+    DEBUG_PRINT("  Current WiFi mode: ");
+    DEBUG_PRINTLN(String(WiFi.getMode()).c_str());
     
-    DEBUG_PRINTLN("Creating WiFiManager instance...");
+    DEBUG_PRINTLN("\n📡 Creating WiFiManager instance...");
     WiFiManager wifiManager;
     
     // Configure WiFiManager before autoConnect
