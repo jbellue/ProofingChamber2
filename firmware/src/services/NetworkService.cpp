@@ -8,15 +8,18 @@ namespace services {
 bool NetworkService::autoConnect(const char* portalSsid,
                                  std::function<void(const char* apName)> onPortalStarted) {
     WiFiManager wifiManager;
-    // Make reconnection more reliable and give the user enough time to enter credentials
-    WiFi.setAutoReconnect(true);
-    WiFi.persistent(true);
-    // Note: setCleanConnect clears connection attempts, NOT saved credentials
+    
+    // Configure WiFiManager before autoConnect
+    // Let WiFiManager handle WiFi settings internally to avoid conflicts
     wifiManager.setCleanConnect(true);          // forget any half-open connection attempts
     wifiManager.setConnectTimeout(20);          // seconds to wait for WiFi association
-    wifiManager.setConfigPortalTimeout(60);     // keep portal up long enough for user input without hanging too long
-    wifiManager.setWiFiAutoReconnect(true);
-    wifiManager.setBreakAfterConfig(true);      // exit once credentials are saved (even if connect fails now)
+    wifiManager.setConfigPortalTimeout(180);    // 3 minutes for portal - was too short at 60s
+    wifiManager.setWiFiAutoReconnect(true);     // enable auto-reconnect after successful connection
+    wifiManager.setBreakAfterConfig(true);      // exit once credentials are saved
+    
+    // IMPORTANT: Don't set WiFi.persistent() or WiFi.setAutoReconnect() here
+    // Let WiFiManager control WiFi state to ensure captive portal can start properly
+    
     if (onPortalStarted) {
         wifiManager.setAPCallback([onPortalStarted](WiFiManager* wm) {
             String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
@@ -24,10 +27,22 @@ bool NetworkService::autoConnect(const char* portalSsid,
             onPortalStarted(apName.c_str());
         });
     }
+    
+    // Try to connect; if no credentials exist, portal will start automatically
+    bool connected = false;
     if (portalSsid && portalSsid[0] != '\0') {
-        return wifiManager.autoConnect(portalSsid);
+        connected = wifiManager.autoConnect(portalSsid);
+    } else {
+        connected = wifiManager.autoConnect();
     }
-    return wifiManager.autoConnect();
+    
+    // After successful connection, enable persistence for future boots
+    if (connected) {
+        WiFi.setAutoReconnect(true);
+        WiFi.persistent(true);
+    }
+    
+    return connected;
 }
 
 void NetworkService::resetSettings() {
