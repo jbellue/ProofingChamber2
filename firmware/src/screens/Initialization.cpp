@@ -90,21 +90,37 @@ void Initialization::drawScreen() {
     
     // Start the web server after WiFi is connected
     if (_webServerService && wifiConnected) {
+        DEBUG_PRINTLN("Starting web server...");
         _webServerService->begin();
-        DEBUG_PRINTLN("Web server started");
+        DEBUG_PRINTLN("Web server started successfully");
         
-        // Display IP address
+        // Display IP address and access information
         _display->clearBuffer();
         _display->setFont(u8g2_font_t0_11_tf);
         _display->drawStr(0, 10, "Serveur web actif");
-        _display->drawStr(0, 22, "Adresse IP:");
+        _display->drawStr(0, 22, "Acces via:");
         
         // Get and display IP address
         String ipAddress = WiFi.localIP().toString();
         _display->drawStr(0, 34, ipAddress.c_str());
+        
+        // Also show mDNS hostname
+        _display->drawStr(0, 46, "ou:");
+        _display->drawStr(0, 58, "proofingchamber.local");
         _display->sendBuffer();
         
-        // Wait 3 seconds to let user see the IP
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        // Wait 5 seconds to let user see the information
+        DEBUG_PRINTLN("========================================");
+        DEBUG_PRINT("Web interface available at: http://");
+        DEBUG_PRINTLN(ipAddress.c_str());
+        DEBUG_PRINTLN("Also accessible via: http://proofingchamber.local");
+        DEBUG_PRINTLN("========================================");
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    } else {
+        if (!wifiConnected) {
+            DEBUG_PRINTLN("Web server not started - no WiFi connection");
+        } else {
+            DEBUG_PRINTLN("Web server not started - service not available");
+        }
     }
 }

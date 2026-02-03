@@ -31,12 +31,21 @@ void WebServerService::begin() {
     // Create the server now, after WiFi connection is established
     // This avoids port conflict with WiFiManager captive portal
     if (!_server) {
+        DEBUG_PRINTLN("Creating AsyncWebServer on port 80...");
         _server = new AsyncWebServer(80);
+        if (!_server) {
+            DEBUG_PRINTLN("ERROR: Failed to create AsyncWebServer!");
+            return;
+        }
     }
     
+    DEBUG_PRINTLN("Setting up web server routes...");
     setupRoutes();
+    
+    DEBUG_PRINTLN("Starting web server...");
     _server->begin();
-    DEBUG_PRINTLN("Web server started on port 80");
+    DEBUG_PRINTLN("✓ Web server started successfully on port 80");
+    DEBUG_PRINTLN("  Access via IP address or http://proofingchamber.local");
 }
 
 void WebServerService::update() {
