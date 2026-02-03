@@ -15,12 +15,27 @@
 namespace services {
 
 WebServerService::WebServerService(AppContext* ctx)
-    : _ctx(ctx), _server(80) {
+    : _ctx(ctx), _server(nullptr) {
+    // Don't create AsyncWebServer here - delays port 80 allocation
+    // until after WiFi captive portal completes
+}
+
+WebServerService::~WebServerService() {
+    if (_server) {
+        delete _server;
+        _server = nullptr;
+    }
 }
 
 void WebServerService::begin() {
+    // Create the server now, after WiFi connection is established
+    // This avoids port conflict with WiFiManager captive portal
+    if (!_server) {
+        _server = new AsyncWebServer(80);
+    }
+    
     setupRoutes();
-    _server.begin();
+    _server->begin();
     DEBUG_PRINTLN("Web server started on port 80");
 }
 
@@ -29,42 +44,44 @@ void WebServerService::update() {
 }
 
 void WebServerService::setupRoutes() {
+    if (!_server) return;  // Safety check
+    
     // Serve the main web page
-    _server.on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    _server->on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetRoot(request);
     });
     
     // API endpoints
-    _server.on("/api/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetStatus(request);
     });
     
-    _server.on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetSettings(request);
     });
     
-    _server.on("/api/mode", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/mode", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleSetMode(request);
     });
     
-    _server.on("/api/settings", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/settings", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleSetSettings(request);
     });
     
-    _server.on("/api/cooling/schedule", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/cooling/schedule", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleScheduleCooling(request);
     });
     
     // New virtual input endpoints
-    _server.on("/api/input/button", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/input/button", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleInjectButton(request);
     });
     
-    _server.on("/api/input/encoder", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/input/encoder", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleInjectEncoder(request);
     });
     
-    _server.on("/api/display/state", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    _server->on("/api/display/state", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetDisplayState(request);
     });
 }

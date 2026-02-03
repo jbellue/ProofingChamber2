@@ -9,12 +9,13 @@ namespace services {
     class WebServerService : public IWebServerService {
     public:
         explicit WebServerService(AppContext* ctx);
+        ~WebServerService();
         void begin() override;
         void update() override;
 
     private:
         AppContext* _ctx;
-        AsyncWebServer _server;
+        AsyncWebServer* _server;  // Pointer to delay port 80 allocation
         
         void setupRoutes();
         void handleGetStatus(AsyncWebServerRequest* request);
