@@ -182,4 +182,3 @@ Uses Null Object Pattern via `SafePtr` to prevent null pointer crashes:
 IInputManager* input = SafePtr::resolve(ctx->input);
 // Safe! Returns NullInputManager if ctx->input is nullptr
 ```
-# Clean optimizations commit
