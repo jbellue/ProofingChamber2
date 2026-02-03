@@ -74,29 +74,58 @@ Settings are saved to non-volatile storage and persist across reboots.
 
 ## Concurrent Operation
 
-The web interface and physical interface (OLED + rotary encoder) work together seamlessly:
+The web interface and physical interface (OLED + rotary encoder) now work together seamlessly with **full synchronization**:
 
 - Settings changed via web are immediately available on the physical interface
 - Temperature readings are shared between both interfaces
-- Mode changes are synchronized between interfaces
+- **Mode changes trigger proper screen transitions** - physical display stays in sync!
+
+### How It Works
+
+**Starting Proofing from Web:**
+1. Click "🔥 Heating" button on web interface
+2. Device transitions to proofing screen (same as pressing button on menu)
+3. Physical OLED shows proofing screen with temperature and timer
+4. Both interfaces show synchronized state ✅
+
+**Stopping from Web:**
+1. Click "⏸️ Off" button on web interface
+2. Device returns to menu screen
+3. Physical OLED shows menu
+4. Temperature control stops
+5. Everything stays in sync ✅
+
+**Stopping from Physical Button:**
+1. Press physical button while proofing/cooling
+2. Returns to menu
+3. Web interface reflects the change on next update (within 2 seconds)
 
 ### Important Notes
 
-**Starting Operations:**
-- Both interfaces can start heating or cooling modes independently
-- Changes take effect immediately regardless of which interface initiates them
+**Heating Mode:**
+- ✅ Fully supported via web interface
+- ✅ Triggers proper screen transition to proofing screen
+- ✅ Physical display shows proofing progress
+- ✅ Can be stopped from either web or physical button
 
-**Stopping Operations:**
-- When actively running a heating or cooling cycle (screen showing temperature graph):
-  - The physical button press will stop the cycle and return to menu
-  - Web interface mode changes will stop heating/cooling but won't automatically exit the screen
-  - To fully exit a cycle started via physical interface, use the physical button
-  
-**Best Practices:**
-- If you start a cycle via the physical interface (menu), stop it via the physical button for proper screen navigation
-- If you start a cycle via the web interface, you can stop it via web
-- Settings can be changed from either interface at any time
-- The web interface is best for monitoring and remote control when not actively using the physical interface
+**Cooling Mode:**
+- ⚠️ Not directly available via web (requires time configuration)
+- ✅ Can be started via physical interface
+- ✅ Web interface can monitor cooling status and timing
+- ✅ Web interface can stop cooling operation
+- Future enhancement: Add dedicated cooling schedule endpoint
+
+**Off Mode:**
+- ✅ Fully supported via web interface
+- ✅ Returns device to menu screen
+- ✅ Physical display shows menu
+- ✅ Stops any active operation
+
+### Best Practices
+- Use web interface to start/stop heating and monitor remotely
+- Use physical interface for cooling with scheduled proofing (requires time setup)
+- Both interfaces always show consistent state
+- No more screen desynchronization issues!
 
 ## API Endpoints
 
