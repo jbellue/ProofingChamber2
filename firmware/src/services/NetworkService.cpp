@@ -45,9 +45,11 @@ bool NetworkService::autoConnect(const char* portalSsid,
     
     // CRITICAL: Ensure clean WiFi state before starting
     // This is essential for WiFiManager to work correctly
+    // NOTE: We do NOT call WiFi.disconnect(true) here because that would
+    // erase saved credentials from RAM, preventing auto-reconnect!
+    // WiFiManager loads credentials from NVS automatically.
     DEBUG_PRINTLN("\n🔄 Resetting WiFi to clean state...");
-    WiFi.disconnect(true);  // Disconnect and erase credentials from RAM
-    WiFi.mode(WIFI_OFF);    // Turn off WiFi completely
+    WiFi.mode(WIFI_OFF);    // Turn off WiFi completely (preserves credentials)
     delay(100);             // Give WiFi time to fully shut down
     
     DEBUG_PRINTLN("  Setting WiFi mode to STA...");
