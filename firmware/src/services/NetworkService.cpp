@@ -31,7 +31,7 @@ bool NetworkService::autoConnect(const char* portalSsid,
     DEBUG_PRINTLN("Configuring WiFiManager...");
     wifiManager.setCleanConnect(true);          // forget any half-open connection attempts
     wifiManager.setConnectTimeout(20);          // seconds to wait for WiFi association
-    wifiManager.setConfigPortalTimeout(300);    // 5 minutes for portal (increased)
+    wifiManager.setConfigPortalTimeout(0);      // 0 = NO TIMEOUT - portal stays open until configured
     wifiManager.setWiFiAutoReconnect(true);     // WiFiManager will set auto-reconnect
     wifiManager.setBreakAfterConfig(true);      // exit once credentials are saved
     wifiManager.setSaveConfigCallback([]() {
