@@ -5,6 +5,8 @@
 #include "../StorageConstants.h"
 #include "../services/IStorage.h"
 #include "../DebugUtils.h"
+#include "../screens/controllers/ProofingController.h"
+#include "../screens/controllers/CoolingController.h"
 #include <ArduinoJson.h>
 
 namespace services {
