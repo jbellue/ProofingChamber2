@@ -152,6 +152,10 @@ void setup() {
     appContext.dataDisplayView = &dataDisplayView;
     appContext.confirmTimezoneView = &confirmTimezoneView;
     appContext.powerOffView = &powerOffView;
+    
+    // Add controller pointers to AppContext
+    appContext.proofingController = proofingController;
+    appContext.coolingController = coolingController;
 
     // Provide storage to TemperatureController now that AppContext.storage is set
     temperatureController.setStorage(appContext.storage);

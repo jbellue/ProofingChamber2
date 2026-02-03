@@ -85,6 +85,23 @@ void WebServerService::handleGetStatus(AsyncWebServerRequest* request) {
         doc["isCooling"] = false;
     }
     
+    // Add timing information
+    struct tm now;
+    getLocalTime(&now);
+    time_t currentTime = mktime(&now);
+    
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        time_t startTime = _ctx->proofingController->getStartTime();
+        doc["proofingStartTime"] = (long)startTime;
+        doc["proofingElapsedSeconds"] = (long)difftime(currentTime, startTime);
+    }
+    
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        time_t endTime = _ctx->coolingController->getEndTime();
+        doc["coolingEndTime"] = (long)endTime;
+        doc["coolingRemainingSeconds"] = (long)difftime(endTime, currentTime);
+    }
+    
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);
@@ -441,6 +458,10 @@ String WebServerService::getWebPageHtml() {
                     </div>
                 </div>
             </div>
+            <div id="timingInfo" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; display: none;">
+                <div id="proofingTime" style="margin-bottom: 5px;"></div>
+                <div id="coolingTime"></div>
+            </div>
         </div>
 
         <div class="card">
@@ -509,6 +530,24 @@ String WebServerService::getWebPageHtml() {
             }, 3000);
         }
 
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hrs > 0) {
+                return `${hrs}h ${mins}m ${secs}s`;
+            } else if (mins > 0) {
+                return `${mins}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+
         async function updateStatus() {
             try {
                 const response = await fetch('/api/status');
@@ -523,6 +562,35 @@ String WebServerService::getWebPageHtml() {
                 
                 const indicator = document.getElementById('modeIndicator');
                 indicator.className = `indicator ${currentMode}`;
+                
+                // Update timing information
+                const timingInfo = document.getElementById('timingInfo');
+                const proofingTime = document.getElementById('proofingTime');
+                const coolingTime = document.getElementById('coolingTime');
+                
+                let hasTimingInfo = false;
+                
+                if (data.proofingElapsedSeconds !== undefined) {
+                    proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(data.proofingElapsedSeconds)} elapsed`;
+                    proofingTime.style.display = 'block';
+                    hasTimingInfo = true;
+                } else {
+                    proofingTime.style.display = 'none';
+                }
+                
+                if (data.coolingRemainingSeconds !== undefined) {
+                    const remaining = Math.max(0, data.coolingRemainingSeconds);
+                    coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
+                    if (data.coolingEndTime) {
+                        coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(data.coolingEndTime)}</small>`;
+                    }
+                    coolingTime.style.display = 'block';
+                    hasTimingInfo = true;
+                } else {
+                    coolingTime.style.display = 'none';
+                }
+                
+                timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
                 
                 // Update button states
                 document.querySelectorAll('.mode-buttons .btn').forEach(btn => {

@@ -17,6 +17,8 @@ class WiFiResetView;
 class DataDisplayView;
 class ConfirmTimezoneView;
 class PowerOffView;
+class ProofingController;
+class CoolingController;
 namespace services { struct INetworkService; struct IStorage; struct IWebServerService; }
 
 namespace services {
@@ -50,4 +52,8 @@ struct AppContext {
     DataDisplayView* dataDisplayView = nullptr;
     ConfirmTimezoneView* confirmTimezoneView = nullptr;
     PowerOffView* powerOffView = nullptr;
+    
+    // Controller instances
+    ProofingController* proofingController = nullptr;
+    CoolingController* coolingController = nullptr;
 };

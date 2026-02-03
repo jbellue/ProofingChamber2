@@ -14,6 +14,10 @@ public:
     explicit ProofingController(AppContext* ctx);
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
+    
+    // Getters for web interface
+    time_t getStartTime() const { return _startTime; }
+    bool isActive() const { return _startTime != 0; }
 
 private:
     ProofingView* _view;

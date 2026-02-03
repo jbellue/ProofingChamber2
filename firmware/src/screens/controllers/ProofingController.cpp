@@ -34,6 +34,7 @@ bool ProofingController::update(bool shouldRedraw) {
         inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(ITemperatureController::OFF);
         _view->reset();
+        _startTime = 0; // Reset when exiting
         return false;
     }
 

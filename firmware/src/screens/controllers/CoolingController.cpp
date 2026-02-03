@@ -38,6 +38,7 @@ bool CoolingController::update(bool shouldRedraw) {
     if (inputManager->isButtonPressed() || timesUp) {
         inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(ITemperatureController::OFF);
+        _endTime = 0; // Reset when exiting
         bool goingToProofScreen = !_onCancelButton || timesUp;
         BaseController* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
         setNextScreen(nextScreen);

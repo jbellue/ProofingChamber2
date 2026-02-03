@@ -3,6 +3,7 @@
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <WiFi.h>
 #include "DebugUtils.h"
 #include "Initialization.h"
 #include "icons.h"
@@ -89,9 +90,21 @@ void Initialization::drawScreen() {
     
     // Start the web server after WiFi is connected
     if (_webServerService && wifiConnected) {
-        _display->drawStr(0, 46, "Démarrage serveur web...");
-        _display->sendBuffer();
         _webServerService->begin();
         DEBUG_PRINTLN("Web server started");
+        
+        // Display IP address
+        _display->clearBuffer();
+        _display->setFont(u8g2_font_t0_11_tf);
+        _display->drawStr(0, 10, "Serveur web actif");
+        _display->drawStr(0, 22, "Adresse IP:");
+        
+        // Get and display IP address
+        String ipAddress = WiFi.localIP().toString();
+        _display->drawStr(0, 34, ipAddress.c_str());
+        _display->sendBuffer();
+        
+        // Wait 3 seconds to let user see the IP
+        vTaskDelay(pdMS_TO_TICKS(3000));
     }
 }
