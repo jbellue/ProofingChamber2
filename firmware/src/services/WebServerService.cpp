@@ -567,6 +567,10 @@ String WebServerService::getWebPageHtml() {
                     <div class="status-value temperature" id="temperature">--</div>
                 </div>
                 <div class="status-item">
+                    <div class="status-label">Current Screen</div>
+                    <div class="status-value" id="currentScreen">--</div>
+                </div>
+                <div class="status-item">
                     <div class="status-label">Mode</div>
                     <div class="status-value" id="mode">
                         <span id="modeText">--</span>
@@ -581,16 +585,34 @@ String WebServerService::getWebPageHtml() {
         </div>
 
         <div class="card">
-            <h2>Mode Control</h2>
+            <h2>Virtual Controls</h2>
+            <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                These buttons simulate physical interface interactions
+            </p>
+            <div class="mode-buttons">
+                <button class="btn btn-primary" onclick="encoderUp()">
+                    ⬆️ Up
+                </button>
+                <button class="btn btn-primary" onclick="encoderDown()">
+                    ⬇️ Down
+                </button>
+                <button class="btn btn-primary" onclick="pressButton()">
+                    ✓ Select
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Quick Actions (Legacy)</h2>
+            <p style="color: #999; margin-bottom: 10px; font-size: 0.85em;">
+                Note: These may not work correctly. Use Virtual Controls above for reliable operation.
+            </p>
             <div class="mode-buttons">
                 <button class="btn btn-heating" onclick="setMode('heating')">
-                    🔥 Heating
-                </button>
-                <button class="btn btn-cooling" onclick="setMode('cooling')">
-                    ❄️ Cooling
+                    🔥 Start Heating
                 </button>
                 <button class="btn btn-off" onclick="setMode('off')">
-                    ⏸️ Off
+                    ⏸️ Stop
                 </button>
             </div>
         </div>
@@ -666,6 +688,13 @@ String WebServerService::getWebPageHtml() {
 
         async function updateStatus() {
             try {
+                // Fetch display state to show current screen
+                const displayResponse = await fetch('/api/display/state');
+                const displayData = await displayResponse.json();
+                
+                document.getElementById('currentScreen').textContent = displayData.screen || '--';
+                
+                // Fetch regular status
                 const response = await fetch('/api/status');
                 const data = await response.json();
                 
@@ -707,18 +736,6 @@ String WebServerService::getWebPageHtml() {
                 }
                 
                 timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
-                
-                // Update button states
-                document.querySelectorAll('.mode-buttons .btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                if (currentMode === 'heating') {
-                    document.querySelector('.btn-heating').classList.add('active');
-                } else if (currentMode === 'cooling') {
-                    document.querySelector('.btn-cooling').classList.add('active');
-                } else {
-                    document.querySelector('.btn-off').classList.add('active');
-                }
             } catch (error) {
                 console.error('Failed to update status:', error);
             }
@@ -760,6 +777,66 @@ String WebServerService::getWebPageHtml() {
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to change mode', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        // Virtual control functions
+        async function encoderUp() {
+            try {
+                const formData = new FormData();
+                formData.append('steps', '-1');  // Negative = up/counter-clockwise
+                
+                const response = await fetch('/api/input/encoder', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    setTimeout(updateStatus, 100);  // Quick refresh
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function encoderDown() {
+            try {
+                const formData = new FormData();
+                formData.append('steps', '1');  // Positive = down/clockwise
+                
+                const response = await fetch('/api/input/encoder', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    setTimeout(updateStatus, 100);  // Quick refresh
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function pressButton() {
+            try {
+                const response = await fetch('/api/input/button', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    setTimeout(updateStatus, 100);  // Quick refresh
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
                 }
             } catch (error) {
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');
