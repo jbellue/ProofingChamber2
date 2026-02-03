@@ -1,6 +1,20 @@
 # Proofing Chamber
 
-A smart temperature-controlled proofing chamber controller, built with ESP32-C3 and a 128x64 OLED display.
+A smart temperature-controlled proofing chamber controller, built with ESP32-C3 and a 128x64 OLED display, with both physical controls and a web interface.
+
+## Interfaces
+
+### Physical Interface
+- **Display**: SH1106 128x64 OLED (I2C interface)
+- **Input**: Rotary encoder with push-button switch for menu navigation
+- **LEDs**: Visual indicators for heating (GPIO 6) and cooling (GPIO 5) modes
+
+### Web Interface
+- **Access**: Browser-based control panel accessible on local network
+- **Features**: Live temperature monitoring, mode control, settings adjustment
+- **Documentation**: See [WEB_INTERFACE.md](WEB_INTERFACE.md)
+
+Both interfaces work concurrently and share the same device state.
 
 ## Hardware
 
@@ -91,8 +105,14 @@ Default values:
 ### Network Features
 
 - WiFi Manager for easy WiFi configuration
-- NTP time synchronization (Europe/Paris timezone)
+- NTP time synchronization (configurable timezone)
 - WiFi reset option available in advanced settings
+- **Web Interface**: Browser-based control panel on port 80
+  - Real-time temperature monitoring
+  - Remote mode switching (heating/cooling/off)
+  - Temperature settings adjustment
+  - Works concurrently with physical interface
+  - See [WEB_INTERFACE.md](WEB_INTERFACE.md) for details
 
 ## Installation & Setup
 
