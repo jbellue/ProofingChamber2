@@ -17,7 +17,7 @@ class WiFiResetView;
 class DataDisplayView;
 class ConfirmTimezoneView;
 class PowerOffView;
-namespace services { struct INetworkService; struct IStorage; }
+namespace services { struct INetworkService; struct IStorage; struct IWebServerService; }
 
 namespace services {
     struct IRebootService;
@@ -31,6 +31,7 @@ struct AppContext {
     services::IRebootService* rebootService = nullptr;
     services::INetworkService* networkService = nullptr;
     services::IStorage* storage = nullptr;
+    services::IWebServerService* webServerService = nullptr;
     
     // Hardware configuration
     gpio_num_t encoderButtonPin = GPIO_NUM_NC;

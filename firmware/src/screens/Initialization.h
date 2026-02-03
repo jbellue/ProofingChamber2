@@ -16,6 +16,7 @@ private:
     IDisplayManager* _display;
     services::INetworkService* _networkService;
     services::IStorage* _storage;
+    services::IWebServerService* _webServerService;
     void drawScreen();
     void beginImpl() override;
 };

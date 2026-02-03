@@ -12,6 +12,7 @@
 #include "services/NetworkService.h"
 #include "services/StorageAdapter.h"
 #include "services/IStorage.h"
+#include "services/WebServerService.h"
 #include "screens/controllers/ProofingController.h"
 #include "screens/controllers/AdjustTimeController.h"
 #include "screens/controllers/AdjustValueController.h"
@@ -83,6 +84,7 @@ Menu* menu = nullptr; // Created in setup
 // Network and reboot services
 services::NetworkService networkService;
 services::RebootService rebootService;
+services::WebServerService webServerService(&appContext);
 
 // Static view instances (allocated on stack)
 static AdjustValueView adjustValueView(&displayManager);
@@ -133,6 +135,7 @@ void setup() {
     appContext.rebootService = &rebootService;
     appContext.networkService = &networkService;
     appContext.storage = &storageAdapter;
+    appContext.webServerService = &webServerService;
     appContext.encoderButtonPin = ENCODER_SW;
     appContext.heaterRelayPin = HEATING_RELAY_PIN;
     appContext.coolerRelayPin = COOLING_RELAY_PIN;

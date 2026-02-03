@@ -1,0 +1,131 @@
+# Web Interface
+
+The ProofingChamber2 now includes a web interface that allows you to monitor and control the device from any browser on your local network.
+
+## Features
+
+The web interface provides the same functionality as the physical OLED display and rotary encoder:
+
+1. **Live Temperature Monitoring**: Real-time temperature display updated every 2 seconds
+2. **Mode Control**: Switch between Heating, Cooling, and Off modes
+3. **Temperature Settings**: Adjust upper and lower temperature limits for both heating and cooling modes
+4. **Visual Status**: Clear indicators showing current mode and heating/cooling state
+
+## Access
+
+Once your ProofingChamber is connected to WiFi:
+
+1. Find the IP address of your device (check your router's DHCP client list or the device display during boot)
+2. Open a web browser on any device connected to the same network
+3. Navigate to: `http://[DEVICE_IP_ADDRESS]`
+
+For example: `http://192.168.1.100`
+
+## Usage
+
+### Monitor Status
+
+The **Current Status** card displays:
+- Current temperature reading
+- Active mode (Heating, Cooling, or Off)
+- Visual indicator showing the current state
+
+### Control Mode
+
+Use the **Mode Control** buttons to:
+- **🔥 Heating**: Start heating mode (maintains temperature between heating limits)
+- **❄️ Cooling**: Start cooling mode (maintains temperature between cooling limits)  
+- **⏸️ Off**: Turn off all heating/cooling
+
+The active mode button is highlighted.
+
+### Adjust Settings
+
+In the **Temperature Settings** card:
+
+1. **Heating Mode Settings**:
+   - Lower Limit: Temperature at which heating turns ON
+   - Upper Limit: Temperature at which heating turns OFF
+   
+2. **Cooling Mode Settings**:
+   - Lower Limit: Temperature at which cooling turns OFF
+   - Upper Limit: Temperature at which cooling turns ON
+
+3. Click **💾 Save Settings** to apply changes
+
+Settings are saved to non-volatile storage and persist across reboots.
+
+## Concurrent Operation
+
+The web interface and physical interface (OLED + rotary encoder) work together seamlessly:
+
+- You can start heating from the web interface and stop it using the button
+- Settings changed via web are immediately available on the physical interface
+- Temperature readings are shared between both interfaces
+- Mode changes from either interface are reflected in real-time
+
+## API Endpoints
+
+For advanced users or integration with other systems, the following REST API endpoints are available:
+
+### GET /api/status
+Returns current device status:
+```json
+{
+  "temperature": 25.5,
+  "mode": "heating",
+  "isHeating": true,
+  "isCooling": false
+}
+```
+
+### GET /api/settings
+Returns temperature settings:
+```json
+{
+  "heating": {
+    "lowerLimit": 23,
+    "upperLimit": 32
+  },
+  "cooling": {
+    "lowerLimit": 2,
+    "upperLimit": 7
+  }
+}
+```
+
+### POST /api/mode
+Change operating mode:
+- Parameter: `mode` = `heating`, `cooling`, or `off`
+- Returns: `{"status":"ok","mode":"heating"}`
+
+### POST /api/settings
+Update temperature settings:
+- Parameters: `heating_lower`, `heating_upper`, `cooling_lower`, `cooling_upper`
+- Returns: `{"status":"ok","message":"Settings updated"}`
+
+## Troubleshooting
+
+**Can't access the web interface:**
+- Verify your device is connected to WiFi (check display during initialization)
+- Ensure your computer/phone is on the same network
+- Try accessing via IP address rather than hostname
+- Check that port 80 is not blocked by firewall
+
+**Settings not saving:**
+- Ensure you click the "Save Settings" button
+- Check that values are valid integers
+- Verify storage is working (settings should persist after reboot)
+
+**Temperature not updating:**
+- Check that the DS18B20 sensor is properly connected
+- Verify sensor is reading correctly on the OLED display
+- Refresh the browser page
+
+## Technical Details
+
+- Web server runs on port 80
+- Uses ESPAsyncWebServer for efficient async request handling
+- Updates status every 2 seconds via AJAX
+- Responsive design works on desktop and mobile devices
+- All data persisted using ESP32 NVS (Preferences)

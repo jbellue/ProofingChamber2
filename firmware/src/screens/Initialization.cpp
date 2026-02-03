@@ -8,11 +8,12 @@
 #include "icons.h"
 // Need the concrete service definition to call methods like autoConnect()/configureNtp()
 #include "../services/INetworkService.h"
+#include "../services/IWebServerService.h"
 // Storage interface to retrieve timezone configuration
 #include "../services/IStorage.h"
 #include "StorageConstants.h"
 
-Initialization::Initialization(AppContext* ctx) : BaseController(ctx), _display(nullptr), _networkService(nullptr), _storage(nullptr)
+Initialization::Initialization(AppContext* ctx) : BaseController(ctx), _display(nullptr), _networkService(nullptr), _storage(nullptr), _webServerService(nullptr)
 {}
 
 void Initialization::begin() {
@@ -25,6 +26,7 @@ void Initialization::beginImpl() {
         if (!_display) _display = ctx->display;
         if (!_networkService) _networkService = ctx->networkService;
         if (!_storage) _storage = ctx->storage;
+        if (!_webServerService) _webServerService = ctx->webServerService;
     }
     _display->clear();
 }
@@ -84,4 +86,12 @@ void Initialization::drawScreen() {
         taskYIELD();
     }
     DEBUG_PRINTLN("\nTime synced with NTP");
+    
+    // Start the web server after WiFi is connected
+    if (_webServerService && wifiConnected) {
+        _display->drawStr(0, 46, "Démarrage serveur web...");
+        _display->sendBuffer();
+        _webServerService->begin();
+        DEBUG_PRINTLN("Web server started");
+    }
 }
