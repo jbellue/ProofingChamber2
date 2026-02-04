@@ -50,11 +50,11 @@ bool NetworkService::autoConnect(const char* portalSsid,
     // WiFiManager loads credentials from NVS automatically.
     DEBUG_PRINTLN("\n🔄 Resetting WiFi to clean state...");
     WiFi.mode(WIFI_OFF);    // Turn off WiFi completely (preserves credentials)
-    delay(200);             // Longer delay for ESP32-C3 stability
+    delay(100);             // Let WiFi power down
     
     DEBUG_PRINTLN("  Setting WiFi mode to STA...");
     WiFi.mode(WIFI_STA);    // Set to station mode (required for WiFiManager)
-    delay(200);             // Longer delay for ESP32-C3 stability
+    delay(100);             // Let mode transition complete
     DEBUG_PRINT("  Current WiFi mode: ");
     DEBUG_PRINTLN(String(WiFi.getMode()).c_str());
     
@@ -69,19 +69,13 @@ bool NetworkService::autoConnect(const char* portalSsid,
         DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
     }
     
-    // CRITICAL: Reset WiFiManager settings to ensure clean state
-    // This is especially important after flash erase or if stuck
-    DEBUG_PRINTLN("Resetting WiFiManager to clean state...");
-    _wifiManager->resetSettings();
-    DEBUG_PRINTLN("  ✓ WiFiManager settings cleared");
-    
     // Configure WiFiManager before autoConnect
     // WiFiManager handles ALL WiFi persistence and reconnection internally
     // We should NOT call WiFi.persistent() or WiFi.setAutoReconnect() ourselves
     DEBUG_PRINTLN("Configuring WiFiManager...");
     _wifiManager->setCleanConnect(true);          // forget any half-open connection attempts
     _wifiManager->setConnectTimeout(20);          // seconds to wait for WiFi association
-    _wifiManager->setConfigPortalTimeout(180);    // 3 minute timeout to prevent infinite blocking
+    _wifiManager->setConfigPortalTimeout(0);      // 0 = NO TIMEOUT - portal stays open until configured
     _wifiManager->setWiFiAutoReconnect(true);     // WiFiManager will set auto-reconnect
     _wifiManager->setBreakAfterConfig(true);      // exit once credentials are saved
     _wifiManager->setSaveConfigCallback([]() {
@@ -94,28 +88,17 @@ bool NetworkService::autoConnect(const char* portalSsid,
     
     if (onPortalStarted) {
         _wifiManager->setAPCallback([onPortalStarted](WiFiManager* wm) {
-            // CRITICAL FIX FOR ESP32-C3: When portal starts after failed connection attempts,
-            // the WiFi radio may be in a bad state. We must aggressively reset and configure AP mode.
-            DEBUG_PRINTLN("Portal starting - AGGRESSIVE WiFi reset for ESP32-C3...");
+            // When portal starts after failed connection attempts,
+            // ensure WiFi is in correct AP+STA mode
+            DEBUG_PRINTLN("Portal starting - ensuring WiFi is in AP+STA mode...");
             
             // Step 1: Complete WiFi shutdown
             WiFi.mode(WIFI_OFF);
-            delay(300);  // Longer delay for ESP32-C3 to fully power down
+            delay(100);  // Let radio power down
             
             // Step 2: Explicitly set to AP+STA mode
             WiFi.mode(WIFI_AP_STA);
-            delay(300);  // Longer delay for ESP32-C3 mode transition
-            
-            // Step 3: Force explicit AP configuration (ESP32-C3 sometimes needs this)
-            WiFi.softAPConfig(
-                IPAddress(192, 168, 4, 1),   // AP IP
-                IPAddress(192, 168, 4, 1),   // Gateway (same as IP)
-                IPAddress(255, 255, 255, 0)  // Subnet mask
-            );
-            delay(200);  // Let configuration apply
-            
-            // Step 4: Give extra time for beacon broadcasting to stabilize
-            delay(500);  // ESP32-C3 needs time for AP to become discoverable
+            delay(200);  // Let mode transition complete
             
             String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
             IPAddress apIp = WiFi.softAPIP();
@@ -132,8 +115,6 @@ bool NetworkService::autoConnect(const char* portalSsid,
             DEBUG_PRINT(String(mode).c_str());
             DEBUG_PRINTLN(mode == WIFI_AP_STA ? " (AP+STA - correct)" : " (WRONG MODE!)");
             DEBUG_PRINTLN("  Connect to this network and configure WiFi");
-            DEBUG_PRINTLN("  ⚠️  ESP32-C3 Note: AP may take 10-15 seconds to appear in scan");
-            DEBUG_PRINTLN("  The network should now be visible on your device");
             
             onPortalStarted(apName.c_str());
         });
