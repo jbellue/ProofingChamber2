@@ -82,13 +82,24 @@ void ProofingController::startProofing() {
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     
     DEBUG_PRINTLN("[ProofingController] Started proofing from web API");
+    
+    // Navigate display to show proofing screen
+    if (ctx->screens) {
+        ctx->screens->setActiveScreen(this);
+    }
 }
 
 void ProofingController::stopProofing() {
+    AppContext* ctx = getContext();
     if (_temperatureController) {
         _temperatureController->setMode(ITemperatureController::OFF);
     }
     _startTime = 0;
     
     DEBUG_PRINTLN("[ProofingController] Stopped proofing from web API");
+    
+    // Navigate back to menu
+    if (ctx && ctx->screens && ctx->menu) {
+        ctx->screens->setActiveScreen(ctx->menu);
+    }
 }

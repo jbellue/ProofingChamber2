@@ -98,6 +98,11 @@ void CoolingController::startCooling(time_t endTime) {
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     
     DEBUG_PRINTLN("[CoolingController] Started cooling from web API");
+    
+    // Navigate display to show cooling screen
+    if (ctx->screens) {
+        ctx->screens->setActiveScreen(this);
+    }
 }
 
 void CoolingController::startCoolingWithDelay(int hours) {
@@ -109,10 +114,16 @@ void CoolingController::startCoolingWithDelay(int hours) {
 }
 
 void CoolingController::stopCooling() {
+    AppContext* ctx = getContext();
     if (_temperatureController) {
         _temperatureController->setMode(ITemperatureController::OFF);
     }
     _endTime = 0;
     
     DEBUG_PRINTLN("[CoolingController] Stopped cooling from web API");
+    
+    // Navigate back to menu
+    if (ctx && ctx->screens && ctx->menu) {
+        ctx->screens->setActiveScreen(ctx->menu);
+    }
 }
