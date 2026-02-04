@@ -351,31 +351,24 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
         // Add screen-specific content based on screen type
         const char* screenName = currentScreen->getScreenName();
         
-        // Menu screen
+        // Menu screen - show ALL menu items for better web UX
         if (strcmp(screenName, "Menu") == 0 && _ctx->menu) {
             Menu* menu = _ctx->menu;
             Menu::MenuItem* currentMenu = menu->getCurrentMenu();
             uint8_t menuIndex = menu->getCurrentMenuIndex();
             
-            // Build array of visible menu items
+            // Build array of ALL menu items (not just visible ones)
             JsonArray items = doc["menuItems"].to<JsonArray>();
             
-            // Count menu size
+            // Count menu size and add all items
             uint8_t menuSize = 0;
             Menu::MenuItem* item = currentMenu;
             while (item && item->name) {
+                JsonObject itemObj = items.add<JsonObject>();
+                itemObj["name"] = item->name;
+                itemObj["selected"] = (menuSize == menuIndex);
                 menuSize++;
                 item++;
-            }
-            
-            // Add up to 5 items centered around current selection
-            int startIdx = max(0, (int)menuIndex - 2);
-            int endIdx = min((int)menuSize, startIdx + 5);
-            
-            for (int i = startIdx; i < endIdx; i++) {
-                JsonObject itemObj = items.add<JsonObject>();
-                itemObj["name"] = currentMenu[i].name;
-                itemObj["selected"] = (i == menuIndex);
             }
             
             doc["menuIndex"] = menuIndex;
@@ -399,6 +392,22 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
                 doc["endTime"] = cooling->getEndTime();
                 time_t now = time(nullptr);
                 doc["remainingSeconds"] = (int)(cooling->getEndTime() - now);
+            }
+        }
+        // Generic handling for other screen types
+        else {
+            // For screens we don't have specific handlers for, provide basic info
+            doc["screenType"] = "generic";
+            doc["screenName"] = screenName;
+            
+            // Try to identify common screen types by name patterns
+            if (strstr(screenName, "Adjust") || strstr(screenName, "Settings")) {
+                doc["screenType"] = "settings";
+            } else if (strstr(screenName, "Confirm") || strstr(screenName, "Reset") || 
+                       strstr(screenName, "Reboot") || strstr(screenName, "PowerOff")) {
+                doc["screenType"] = "action";
+            } else if (strstr(screenName, "Display") || strstr(screenName, "Data")) {
+                doc["screenType"] = "display";
             }
         }
     } else {
@@ -767,15 +776,25 @@ String WebServerService::getWebPageHtml() {
                 // Update screen content based on screen type
                 const screenContent = document.getElementById('screenContent');
                 if (displayData.menuItems && displayData.menuItems.length > 0) {
-                    // Menu screen - show menu items
-                    let html = '<div style="font-size: 0.95em;">';
-                    displayData.menuItems.forEach(item => {
+                    // Menu screen - show ALL menu items with scrolling
+                    let html = '<div style="font-size: 0.95em; max-height: 300px; overflow-y: auto;" id="menuItemsList">';
+                    displayData.menuItems.forEach((item, index) => {
                         const prefix = item.selected ? '► ' : '  ';
                         const style = item.selected ? 'color: #00f2fe; font-weight: bold;' : '';
-                        html += `<div style="${style}">${prefix}${item.name}</div>`;
+                        const id = item.selected ? 'id="selectedMenuItem"' : '';
+                        html += `<div ${id} style="${style}; padding: 2px 0;">${prefix}${item.name}</div>`;
                     });
                     html += '</div>';
+                    html += `<div style="margin-top: 8px; color: #666; font-size: 0.85em;">Item ${displayData.menuIndex + 1} of ${displayData.menuSize}</div>`;
                     screenContent.innerHTML = html;
+                    
+                    // Scroll selected item into view
+                    setTimeout(() => {
+                        const selectedItem = document.getElementById('selectedMenuItem');
+                        if (selectedItem) {
+                            selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 50);
                 } else if (displayData.screen === 'Proofing' && displayData.isActive) {
                     // Proofing screen
                     const elapsed = formatTime(displayData.elapsedSeconds || 0);
@@ -793,8 +812,28 @@ String WebServerService::getWebPageHtml() {
                         <div style="margin-top: 5px; font-size: 0.9em; color: #aaa;">Temperature: ${displayData.temperature ? displayData.temperature.toFixed(1) + '°C' : '--'}</div>
                     `;
                 } else {
-                    // Other screens or inactive
-                    screenContent.innerHTML = '<div style="color: #888;">Screen active</div>';
+                    // Other screens - show generic info
+                    let html = '';
+                    if (displayData.screenType === 'action') {
+                        html = '<div style="font-size: 1.1em;">⚠️ Confirmation Screen</div>';
+                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Use virtual controls to confirm or cancel</div>';
+                    } else if (displayData.screenType === 'settings') {
+                        html = '<div style="font-size: 1.1em;">⚙️ Adjusting Settings</div>';
+                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Use encoder to change value, button to confirm</div>';
+                    } else if (displayData.screenType === 'display') {
+                        html = '<div style="font-size: 1.1em;">📊 Viewing Data</div>';
+                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Press button to go back</div>';
+                    } else if (displayData.screen === 'Proofing') {
+                        html = '<div style="color: #888;">Proofing mode ready</div>';
+                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Not currently active</div>';
+                    } else if (displayData.screen === 'Cooling') {
+                        html = '<div style="color: #888;">Cooling mode ready</div>';
+                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Not currently active</div>';
+                    } else {
+                        html = `<div style="color: #888;">${displayData.screen || 'Screen'} active</div>`;
+                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Use virtual controls to navigate</div>';
+                    }
+                    screenContent.innerHTML = html;
                 }
                 
                 // Fetch regular status
