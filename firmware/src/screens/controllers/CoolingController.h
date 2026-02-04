@@ -20,6 +20,11 @@ public:
     // Getters for web interface
     time_t getEndTime() const { return _endTime; }
     bool isActive() const { return _endTime != 0; }
+    
+    // Direct API methods for web interface
+    void startCooling(time_t endTime);
+    void startCoolingWithDelay(int hours);
+    void stopCooling();
 
 private:
     CoolingView* _view;

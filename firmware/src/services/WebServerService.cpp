@@ -463,28 +463,14 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
 }
 
 void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
-    // Navigate to Proofing screen and start
-    if (!_ctx->screens || !_ctx->input) {
-        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+    // Start proofing directly without navigation simulation
+    if (!_ctx->proofingController) {
+        request->send(500, "application/json", "{\"error\":\"Proofing controller not available\"}");
         return;
     }
     
-    // Inject sequence: Navigate to Menu -> Proofing -> Start
-    // This simulates the user navigating and pressing buttons
-    _ctx->input->injectButtonPress();  // Go to menu
-    delay(100);
-    
-    // Navigate to Proofing item (usually first or second in main menu)
-    // We'll press down a couple times to find it, then select
-    for (int i = 0; i < 5; i++) {  // Try a few positions
-        _ctx->input->injectEncoderSteps(1);  // Down
-        delay(50);
-    }
-    _ctx->input->injectButtonPress();  // Select Proofing
-    delay(100);
-    _ctx->input->injectButtonPress();  // Start proofing
-    
-    request->send(200, "application/json", "{\"success\":true}");
+    _ctx->proofingController->startProofing();
+    request->send(200, "application/json", "{\"success\":true,\"message\":\"Proofing started\"}");
 }
 
 void WebServerService::handleProofAt(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
@@ -499,11 +485,38 @@ void WebServerService::handleProofAt(AsyncWebServerRequest* request, uint8_t* da
     int hour = doc["hour"];
     int minute = doc["minute"];
     
-    // TODO: Navigate to schedule screen and set time
-    // For now, just acknowledge
+    // Calculate target time
+    struct tm targetTime;
+    getLocalTime(&targetTime);
+    targetTime.tm_hour = hour;
+    targetTime.tm_min = minute;
+    targetTime.tm_sec = 0;
+    time_t targetTimestamp = mktime(&targetTime);
+    
+    // If the time is in the past today, schedule for tomorrow
+    struct tm now;
+    getLocalTime(&now);
+    time_t nowTimestamp = mktime(&now);
+    if (targetTimestamp <= nowTimestamp) {
+        targetTime.tm_mday += 1;
+        targetTimestamp = mktime(&targetTime);
+    }
+    
+    // Calculate delay in seconds
+    int delaySeconds = difftime(targetTimestamp, nowTimestamp);
+    
+    // Start cooling (delay mode) that will end at the target time
+    if (!_ctx->coolingController) {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
+        return;
+    }
+    
+    _ctx->coolingController->startCooling(targetTimestamp);
+    
     JsonDocument response;
     response["success"] = true;
-    response["message"] = "Scheduled proofing at " + String(hour) + ":" + String(minute);
+    response["message"] = "Proofing scheduled at " + String(hour) + ":" + String(minute);
+    response["delaySeconds"] = delaySeconds;
     
     String responseStr;
     serializeJson(response, responseStr);
@@ -521,17 +534,17 @@ void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* da
     
     float hours = doc["hours"];
     
-    // Navigate to cooling screen to set up delayed proofing
-    if (!_ctx->screens || !_ctx->input) {
-        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+    if (!_ctx->coolingController) {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
         return;
     }
     
-    // TODO: Navigate to Proof In menu and set the delay
-    // For now, just acknowledge
+    // Start cooling with delay
+    _ctx->coolingController->startCoolingWithDelay((int)hours);
+    
     JsonDocument response;
     response["success"] = true;
-    response["message"] = "Will proof in " + String(hours) + " hours";
+    response["message"] = "Proofing will start in " + String(hours) + " hours";
     
     String responseStr;
     serializeJson(response, responseStr);
@@ -539,43 +552,30 @@ void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* da
 }
 
 void WebServerService::handleStartCooling(AsyncWebServerRequest* request) {
-    if (!_ctx->screens || !_ctx->input) {
-        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+    // Start cooling directly without navigation
+    if (!_ctx->coolingController) {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
         return;
     }
     
-    // Navigate to Cooling screen and start
-    _ctx->input->injectButtonPress();  // Go to menu
-    delay(100);
+    // Default cooling time of 2 hours
+    _ctx->coolingController->startCoolingWithDelay(2);
     
-    // Navigate to Cooling item
-    for (int i = 0; i < 6; i++) {  // Try a few positions
-        _ctx->input->injectEncoderSteps(1);  // Down
-        delay(50);
-    }
-    _ctx->input->injectButtonPress();  // Select Cooling
-    delay(100);
-    _ctx->input->injectButtonPress();  // Start cooling
-    
-    request->send(200, "application/json", "{\"success\":true}");
+    request->send(200, "application/json", "{\"success\":true,\"message\":\"Cooling started for 2 hours\"}");
 }
 
 void WebServerService::handleStopOperation(AsyncWebServerRequest* request) {
-    // Stop operation by navigating back to menu
+    // Stop operation directly without navigation
     bool wasActive = false;
     
     if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        _ctx->proofingController->stopProofing();
         wasActive = true;
     }
     
     if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        _ctx->coolingController->stopCooling();
         wasActive = true;
-    }
-    
-    if (wasActive && _ctx->input) {
-        // Navigate back to menu to stop the operation
-        _ctx->input->injectButtonPress();  // Exit current screen
-        delay(100);
     }
     
     if (wasActive) {

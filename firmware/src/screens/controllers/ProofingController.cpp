@@ -65,3 +65,30 @@ bool ProofingController::update(bool shouldRedraw) {
     }
     return true;
 }
+
+void ProofingController::startProofing() {
+    AppContext* ctx = getContext();
+    if (!ctx || !ctx->tempController) return;
+    
+    _temperatureController = ctx->tempController;
+    
+    struct tm startTime;
+    getLocalTime(&startTime);
+    _startTime = mktime(&startTime);
+    _lastTemperatureUpdate = 0;
+    _lastGraphUpdate = 0;
+    
+    _temperatureController->setMode(ITemperatureController::HEATING);
+    _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
+    
+    DEBUG_PRINTLN("[ProofingController] Started proofing from web API");
+}
+
+void ProofingController::stopProofing() {
+    if (_temperatureController) {
+        _temperatureController->setMode(ITemperatureController::OFF);
+    }
+    _startTime = 0;
+    
+    DEBUG_PRINTLN("[ProofingController] Stopped proofing from web API");
+}

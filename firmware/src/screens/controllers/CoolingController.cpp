@@ -84,3 +84,35 @@ void CoolingController::prepare(TimeCalculatorCallback callback, BaseController*
     _proofingController = proofingController;
     _menuScreen = menuScreen;
 }
+
+void CoolingController::startCooling(time_t endTime) {
+    AppContext* ctx = getContext();
+    if (!ctx || !ctx->tempController) return;
+    
+    _temperatureController = ctx->tempController;
+    _endTime = endTime;
+    _lastUpdateTime = 0;
+    _lastGraphUpdate = 0;
+    
+    _temperatureController->setMode(ITemperatureController::COOLING);
+    _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
+    
+    DEBUG_PRINTLN("[CoolingController] Started cooling from web API");
+}
+
+void CoolingController::startCoolingWithDelay(int hours) {
+    struct tm now;
+    getLocalTime(&now);
+    time_t currentTime = mktime(&now);
+    time_t endTime = currentTime + (hours * 3600);
+    startCooling(endTime);
+}
+
+void CoolingController::stopCooling() {
+    if (_temperatureController) {
+        _temperatureController->setMode(ITemperatureController::OFF);
+    }
+    _endTime = 0;
+    
+    DEBUG_PRINTLN("[CoolingController] Stopped cooling from web API");
+}
