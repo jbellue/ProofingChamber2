@@ -19,13 +19,21 @@ void ProofingController::beginImpl() {
     _temperatureController = ctx->tempController;
     _view = ctx->proofingView;
     
-    struct tm startTime;
-    getLocalTime(&startTime);
-    _startTime = mktime(&startTime);
+    // Only set start time if not already set (from web API)
+    if (_startTime == 0) {
+        struct tm startTime;
+        getLocalTime(&startTime);
+        _startTime = mktime(&startTime);
+    }
+    
     getInputManager()->slowTemperaturePolling(false);
     _previousDiffSeconds = -60; // Force a redraw on the first update
 
-    _temperatureController->setMode(ITemperatureController::HEATING);
+    // Only set heating mode if not already set (from web API)
+    if (_temperatureController->getMode() != ITemperatureController::HEATING) {
+        _temperatureController->setMode(ITemperatureController::HEATING);
+    }
+    
     _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
     _view->start(getInputManager()->getTemperature(), _temperatureGraph);
 }

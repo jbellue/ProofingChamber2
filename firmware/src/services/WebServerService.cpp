@@ -592,6 +592,7 @@ String WebServerService::getWebPageHtml() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proofing Chamber Control</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍞</text></svg>">
     <style>
         * {
             margin: 0;
@@ -834,9 +835,6 @@ String WebServerService::getWebPageHtml() {
                 </button>
                 <button class="btn" style="background: #17a2b8;" onclick="showScheduleProofing()">
                     🕐 Schedule Proof
-                </button>
-                <button class="btn" style="background: #007bff;" onclick="startCooling()">
-                    ❄️ Start Cooling
                 </button>
                 <button class="btn" style="background: #dc3545;" onclick="stopOperation()" id="stopBtn">
                     ⏹️ Stop
@@ -1207,26 +1205,6 @@ String WebServerService::getWebPageHtml() {
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to schedule proofing', 'error');
-                }
-            } catch (error) {
-                showAlert('statusAlert', 'Failed to communicate with device', 'error');
-            }
-        }
-
-        async function startCooling() {
-            if (!confirm('Start cooling mode? This will delay proofing.')) return;
-            
-            try {
-                const response = await fetch('/api/action/cool', {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    showAlert('statusAlert', '✓ Cooling started!', 'success');
-                    setTimeout(updateStatus, 500);
-                } else {
-                    const error = await response.json();
-                    showAlert('statusAlert', error.error || 'Failed to start cooling', 'error');
                 }
             } catch (error) {
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');
