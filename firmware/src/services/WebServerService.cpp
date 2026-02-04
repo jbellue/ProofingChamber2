@@ -347,11 +347,65 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
     BaseController* currentScreen = _ctx->screens->getActiveScreen();
     if (currentScreen) {
         doc["screen"] = currentScreen->getScreenName();
+        
+        // Add screen-specific content based on screen type
+        const char* screenName = currentScreen->getScreenName();
+        
+        // Menu screen
+        if (strcmp(screenName, "Menu") == 0 && _ctx->menu) {
+            Menu* menu = _ctx->menu;
+            Menu::MenuItem* currentMenu = menu->getCurrentMenu();
+            uint8_t menuIndex = menu->getCurrentMenuIndex();
+            
+            // Build array of visible menu items
+            JsonArray items = doc["menuItems"].to<JsonArray>();
+            
+            // Count menu size
+            uint8_t menuSize = 0;
+            Menu::MenuItem* item = currentMenu;
+            while (item && item->name) {
+                menuSize++;
+                item++;
+            }
+            
+            // Add up to 5 items centered around current selection
+            int startIdx = max(0, (int)menuIndex - 2);
+            int endIdx = min((int)menuSize, startIdx + 5);
+            
+            for (int i = startIdx; i < endIdx; i++) {
+                JsonObject itemObj = items.add<JsonObject>();
+                itemObj["name"] = currentMenu[i].name;
+                itemObj["selected"] = (i == menuIndex);
+            }
+            
+            doc["menuIndex"] = menuIndex;
+            doc["menuSize"] = menuSize;
+        }
+        // Proofing screen
+        else if (strcmp(screenName, "Proofing") == 0 && _ctx->proofingController) {
+            ProofingController* proofing = static_cast<ProofingController*>(currentScreen);
+            doc["isActive"] = proofing->isActive();
+            if (proofing->isActive()) {
+                doc["startTime"] = proofing->getStartTime();
+                time_t now = time(nullptr);
+                doc["elapsedSeconds"] = (int)(now - proofing->getStartTime());
+            }
+        }
+        // Cooling screen  
+        else if (strcmp(screenName, "Cooling") == 0 && _ctx->coolingController) {
+            CoolingController* cooling = static_cast<CoolingController*>(currentScreen);
+            doc["isActive"] = cooling->isActive();
+            if (cooling->isActive()) {
+                doc["endTime"] = cooling->getEndTime();
+                time_t now = time(nullptr);
+                doc["remainingSeconds"] = (int)(cooling->getEndTime() - now);
+            }
+        }
     } else {
         doc["screen"] = "None";
     }
     
-    // Add temperature and mode info for convenience
+    // Add temperature and mode info
     if (_ctx->input) {
         doc["temperature"] = _ctx->input->getTemperature();
     }
@@ -593,10 +647,6 @@ String WebServerService::getWebPageHtml() {
                     <div class="status-value temperature" id="temperature">--</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-label">Current Screen</div>
-                    <div class="status-value" id="currentScreen">--</div>
-                </div>
-                <div class="status-item">
                     <div class="status-label">Mode</div>
                     <div class="status-value" id="mode">
                         <span id="modeText">--</span>
@@ -607,6 +657,14 @@ String WebServerService::getWebPageHtml() {
             <div id="timingInfo" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; display: none;">
                 <div id="proofingTime" style="margin-bottom: 5px;"></div>
                 <div id="coolingTime"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Screen Display</h2>
+            <div style="background: #000; color: #fff; padding: 20px; border-radius: 8px; font-family: monospace; min-height: 120px;">
+                <div id="screenName" style="font-weight: bold; margin-bottom: 10px; color: #00f2fe;">--</div>
+                <div id="screenContent" style="line-height: 1.6;"></div>
             </div>
         </div>
 
@@ -624,21 +682,6 @@ String WebServerService::getWebPageHtml() {
                 </button>
                 <button class="btn btn-primary" onclick="pressButton()">
                     ✓ Select
-                </button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Quick Actions (Legacy)</h2>
-            <p style="color: #999; margin-bottom: 10px; font-size: 0.85em;">
-                Note: These may not work correctly. Use Virtual Controls above for reliable operation.
-            </p>
-            <div class="mode-buttons">
-                <button class="btn btn-heating" onclick="setMode('heating')">
-                    🔥 Start Heating
-                </button>
-                <button class="btn btn-off" onclick="setMode('off')">
-                    ⏸️ Stop
                 </button>
             </div>
         </div>
@@ -718,7 +761,41 @@ String WebServerService::getWebPageHtml() {
                 const displayResponse = await fetch('/api/display/state');
                 const displayData = await displayResponse.json();
                 
-                document.getElementById('currentScreen').textContent = displayData.screen || '--';
+                // Update screen name
+                document.getElementById('screenName').textContent = displayData.screen || '--';
+                
+                // Update screen content based on screen type
+                const screenContent = document.getElementById('screenContent');
+                if (displayData.menuItems && displayData.menuItems.length > 0) {
+                    // Menu screen - show menu items
+                    let html = '<div style="font-size: 0.95em;">';
+                    displayData.menuItems.forEach(item => {
+                        const prefix = item.selected ? '► ' : '  ';
+                        const style = item.selected ? 'color: #00f2fe; font-weight: bold;' : '';
+                        html += `<div style="${style}">${prefix}${item.name}</div>`;
+                    });
+                    html += '</div>';
+                    screenContent.innerHTML = html;
+                } else if (displayData.screen === 'Proofing' && displayData.isActive) {
+                    // Proofing screen
+                    const elapsed = formatTime(displayData.elapsedSeconds || 0);
+                    screenContent.innerHTML = `
+                        <div style="font-size: 1.1em;">🔥 Heating Mode Active</div>
+                        <div style="margin-top: 8px;">⏱️ Time elapsed: ${elapsed}</div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #aaa;">Temperature: ${displayData.temperature ? displayData.temperature.toFixed(1) + '°C' : '--'}</div>
+                    `;
+                } else if (displayData.screen === 'Cooling' && displayData.isActive) {
+                    // Cooling screen
+                    const remaining = Math.max(0, displayData.remainingSeconds || 0);
+                    screenContent.innerHTML = `
+                        <div style="font-size: 1.1em;">❄️ Cooling Mode Active</div>
+                        <div style="margin-top: 8px;">⏳ Time remaining: ${formatTime(remaining)}</div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #aaa;">Temperature: ${displayData.temperature ? displayData.temperature.toFixed(1) + '°C' : '--'}</div>
+                    `;
+                } else {
+                    // Other screens or inactive
+                    screenContent.innerHTML = '<div style="color: #888;">Screen active</div>';
+                }
                 
                 // Fetch regular status
                 const response = await fetch('/api/status');
@@ -782,30 +859,6 @@ String WebServerService::getWebPageHtml() {
                 }
             } catch (error) {
                 console.error('Failed to load settings:', error);
-            }
-        }
-
-        async function setMode(mode) {
-            try {
-                const formData = new FormData();
-                formData.append('mode', mode);
-                
-                const response = await fetch('/api/mode', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    const message = result.message || `Mode changed to ${mode}`;
-                    showAlert('statusAlert', message, 'success');
-                    updateStatus();
-                } else {
-                    const error = await response.json();
-                    showAlert('statusAlert', error.error || 'Failed to change mode', 'error');
-                }
-            } catch (error) {
-                showAlert('statusAlert', 'Failed to communicate with device', 'error');
             }
         }
 
