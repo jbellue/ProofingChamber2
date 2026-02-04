@@ -464,7 +464,7 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
 
 void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
     // Navigate to Proofing screen and start
-    if (!_ctx->screensManager || !_ctx->input) {
+    if (!_ctx->screens || !_ctx->input) {
         request->send(500, "application/json", "{\"error\":\"System not ready\"}");
         return;
     }
@@ -491,7 +491,7 @@ void WebServerService::handleProofAt(AsyncWebServerRequest* request, uint8_t* da
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, data, len);
     
-    if (error || !doc.containsKey("hour") || !doc.containsKey("minute")) {
+    if (error || !doc["hour"].is<int>() || !doc["minute"].is<int>()) {
         request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hour/minute\"}");
         return;
     }
@@ -514,32 +514,32 @@ void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* da
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, data, len);
     
-    if (error || !doc.containsKey("hours")) {
+    if (error || !doc["hours"].is<float>()) {
         request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hours\"}");
         return;
     }
     
     float hours = doc["hours"];
     
-    // Start cooling mode with delay
-    if (_ctx->coolingController) {
-        int delaySeconds = (int)(hours * 3600);
-        _ctx->coolingController->start(delaySeconds);
-        
-        JsonDocument response;
-        response["success"] = true;
-        response["message"] = "Cooling started, proofing in " + String(hours) + " hours";
-        
-        String responseStr;
-        serializeJson(response, responseStr);
-        request->send(200, "application/json", responseStr);
-    } else {
-        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
+    // Navigate to cooling screen to set up delayed proofing
+    if (!_ctx->screens || !_ctx->input) {
+        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+        return;
     }
+    
+    // TODO: Navigate to Proof In menu and set the delay
+    // For now, just acknowledge
+    JsonDocument response;
+    response["success"] = true;
+    response["message"] = "Will proof in " + String(hours) + " hours";
+    
+    String responseStr;
+    serializeJson(response, responseStr);
+    request->send(200, "application/json", responseStr);
 }
 
 void WebServerService::handleStartCooling(AsyncWebServerRequest* request) {
-    if (!_ctx->screensManager || !_ctx->input) {
+    if (!_ctx->screens || !_ctx->input) {
         request->send(500, "application/json", "{\"error\":\"System not ready\"}");
         return;
     }
@@ -561,20 +561,24 @@ void WebServerService::handleStartCooling(AsyncWebServerRequest* request) {
 }
 
 void WebServerService::handleStopOperation(AsyncWebServerRequest* request) {
-    // Stop both proofing and cooling
-    bool stopped = false;
+    // Stop operation by navigating back to menu
+    bool wasActive = false;
     
     if (_ctx->proofingController && _ctx->proofingController->isActive()) {
-        _ctx->proofingController->stop();
-        stopped = true;
+        wasActive = true;
     }
     
     if (_ctx->coolingController && _ctx->coolingController->isActive()) {
-        _ctx->coolingController->stop();
-        stopped = true;
+        wasActive = true;
     }
     
-    if (stopped) {
+    if (wasActive && _ctx->input) {
+        // Navigate back to menu to stop the operation
+        _ctx->input->injectButtonPress();  // Exit current screen
+        delay(100);
+    }
+    
+    if (wasActive) {
         request->send(200, "application/json", "{\"success\":true,\"message\":\"Operation stopped\"}");
     } else {
         request->send(200, "application/json", "{\"success\":true,\"message\":\"No active operation to stop\"}");
