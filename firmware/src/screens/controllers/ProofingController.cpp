@@ -4,6 +4,7 @@
 #include "../views/ProofingView.h"
 #include "../../ITemperatureController.h"
 #include "../../ScreensManager.h"
+#include "../Menu.h"
 
 ProofingController::ProofingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _startTime(0),
