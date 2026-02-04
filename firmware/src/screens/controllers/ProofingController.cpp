@@ -3,6 +3,7 @@
 #include "../../icons.h"
 #include "../views/ProofingView.h"
 #include "../../ITemperatureController.h"
+#include "../../ScreensManager.h"
 
 ProofingController::ProofingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _startTime(0),

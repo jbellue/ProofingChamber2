@@ -1,6 +1,7 @@
 #include "CoolingController.h"
 #include "DebugUtils.h"
 #include "../views/CoolingView.h"
+#include "../../ScreensManager.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
