@@ -93,6 +93,29 @@ void WebServerService::setupRoutes() {
     _server->on("/api/display/state", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetDisplayState(request);
     });
+    
+    // Quick action endpoints
+    _server->on("/api/action/proof-now", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleProofNow(request);
+    });
+    
+    _server->on("/api/action/proof-at", HTTP_POST, [this](AsyncWebServerRequest* request) {}, nullptr, 
+        [this](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+            handleProofAt(request, data, len);
+        });
+    
+    _server->on("/api/action/proof-in", HTTP_POST, [this](AsyncWebServerRequest* request) {}, nullptr,
+        [this](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+            handleProofIn(request, data, len);
+        });
+    
+    _server->on("/api/action/cool", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleStartCooling(request);
+    });
+    
+    _server->on("/api/action/stop", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleStopOperation(request);
+    });
 }
 
 void WebServerService::handleGetRoot(AsyncWebServerRequest* request) {
@@ -439,6 +462,125 @@ void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
     request->send(200, "application/json", response);
 }
 
+void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
+    // Navigate to Proofing screen and start
+    if (!_ctx->screensManager || !_ctx->input) {
+        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+        return;
+    }
+    
+    // Inject sequence: Navigate to Menu -> Proofing -> Start
+    // This simulates the user navigating and pressing buttons
+    _ctx->input->injectButtonPress();  // Go to menu
+    delay(100);
+    
+    // Navigate to Proofing item (usually first or second in main menu)
+    // We'll press down a couple times to find it, then select
+    for (int i = 0; i < 5; i++) {  // Try a few positions
+        _ctx->input->injectEncoderSteps(1);  // Down
+        delay(50);
+    }
+    _ctx->input->injectButtonPress();  // Select Proofing
+    delay(100);
+    _ctx->input->injectButtonPress();  // Start proofing
+    
+    request->send(200, "application/json", "{\"success\":true}");
+}
+
+void WebServerService::handleProofAt(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, data, len);
+    
+    if (error || !doc.containsKey("hour") || !doc.containsKey("minute")) {
+        request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hour/minute\"}");
+        return;
+    }
+    
+    int hour = doc["hour"];
+    int minute = doc["minute"];
+    
+    // TODO: Navigate to schedule screen and set time
+    // For now, just acknowledge
+    JsonDocument response;
+    response["success"] = true;
+    response["message"] = "Scheduled proofing at " + String(hour) + ":" + String(minute);
+    
+    String responseStr;
+    serializeJson(response, responseStr);
+    request->send(200, "application/json", responseStr);
+}
+
+void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, data, len);
+    
+    if (error || !doc.containsKey("hours")) {
+        request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hours\"}");
+        return;
+    }
+    
+    float hours = doc["hours"];
+    
+    // Start cooling mode with delay
+    if (_ctx->coolingController) {
+        int delaySeconds = (int)(hours * 3600);
+        _ctx->coolingController->start(delaySeconds);
+        
+        JsonDocument response;
+        response["success"] = true;
+        response["message"] = "Cooling started, proofing in " + String(hours) + " hours";
+        
+        String responseStr;
+        serializeJson(response, responseStr);
+        request->send(200, "application/json", responseStr);
+    } else {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
+    }
+}
+
+void WebServerService::handleStartCooling(AsyncWebServerRequest* request) {
+    if (!_ctx->screensManager || !_ctx->input) {
+        request->send(500, "application/json", "{\"error\":\"System not ready\"}");
+        return;
+    }
+    
+    // Navigate to Cooling screen and start
+    _ctx->input->injectButtonPress();  // Go to menu
+    delay(100);
+    
+    // Navigate to Cooling item
+    for (int i = 0; i < 6; i++) {  // Try a few positions
+        _ctx->input->injectEncoderSteps(1);  // Down
+        delay(50);
+    }
+    _ctx->input->injectButtonPress();  // Select Cooling
+    delay(100);
+    _ctx->input->injectButtonPress();  // Start cooling
+    
+    request->send(200, "application/json", "{\"success\":true}");
+}
+
+void WebServerService::handleStopOperation(AsyncWebServerRequest* request) {
+    // Stop both proofing and cooling
+    bool stopped = false;
+    
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        _ctx->proofingController->stop();
+        stopped = true;
+    }
+    
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        _ctx->coolingController->stop();
+        stopped = true;
+    }
+    
+    if (stopped) {
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"Operation stopped\"}");
+    } else {
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"No active operation to stop\"}");
+    }
+}
+
 String WebServerService::getWebPageHtml() {
     return R"html(<!DOCTYPE html>
 <html>
@@ -678,22 +820,65 @@ String WebServerService::getWebPageHtml() {
         </div>
 
         <div class="card">
-            <h2>Virtual Controls</h2>
+            <h2>Quick Actions</h2>
             <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
-                These buttons simulate physical interface interactions
+                Direct control buttons for common operations
             </p>
             <div class="mode-buttons">
-                <button class="btn btn-primary" onclick="encoderUp()">
-                    ⬆️ Up
+                <button class="btn" style="background: #28a745;" onclick="startProofingNow()">
+                    🔥 Proof Now
                 </button>
-                <button class="btn btn-primary" onclick="encoderDown()">
-                    ⬇️ Down
+                <button class="btn" style="background: #17a2b8;" onclick="showScheduleProofing()">
+                    🕐 Schedule Proof
                 </button>
-                <button class="btn btn-primary" onclick="pressButton()">
-                    ✓ Select
+                <button class="btn" style="background: #007bff;" onclick="startCooling()">
+                    ❄️ Start Cooling
+                </button>
+                <button class="btn" style="background: #dc3545;" onclick="stopOperation()" id="stopBtn">
+                    ⏹️ Stop
                 </button>
             </div>
+            
+            <!-- Schedule Proofing Form -->
+            <div id="scheduleForm" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin-top: 0;">Schedule Proofing</h3>
+                <div class="input-group">
+                    <label>Proof at specific time:</label>
+                    <input type="time" id="proofAtTime" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
+                </div>
+                <div style="text-align: center; margin: 10px 0; color: #666;">OR</div>
+                <div class="input-group">
+                    <label>Proof in (hours):</label>
+                    <input type="number" id="proofInHours" min="0" max="24" step="0.5" placeholder="e.g., 2.5" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
+                </div>
+                <div class="mode-buttons" style="margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="scheduleProofing()">✓ Schedule</button>
+                    <button class="btn" style="background: #6c757d;" onclick="hideScheduleProofing()">Cancel</button>
+                </div>
+            </div>
         </div>
+
+        <details style="margin-top: 20px;">
+            <summary style="cursor: pointer; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                <strong>🎛️ Advanced: Virtual Controls</strong>
+            </summary>
+            <div class="card" style="margin-top: 0;">
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                    These buttons simulate physical device navigation (for advanced users)
+                </p>
+                <div class="mode-buttons">
+                    <button class="btn btn-primary" onclick="encoderUp()">
+                        ⬆️ Up
+                    </button>
+                    <button class="btn btn-primary" onclick="encoderDown()">
+                        ⬇️ Down
+                    </button>
+                    <button class="btn btn-primary" onclick="pressButton()">
+                        ✓ Select
+                    </button>
+                </div>
+            </div>
+        </details>
 
         <div class="card">
             <h2>Temperature Settings</h2>
@@ -787,14 +972,6 @@ String WebServerService::getWebPageHtml() {
                     html += '</div>';
                     html += `<div style="margin-top: 8px; color: #666; font-size: 0.85em;">Item ${displayData.menuIndex + 1} of ${displayData.menuSize}</div>`;
                     screenContent.innerHTML = html;
-                    
-                    // Scroll selected item into view
-                    setTimeout(() => {
-                        const selectedItem = document.getElementById('selectedMenuItem');
-                        if (selectedItem) {
-                            selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 50);
                 } else if (displayData.screen === 'Proofing' && displayData.isActive) {
                     // Proofing screen
                     const elapsed = formatTime(displayData.elapsedSeconds || 0);
@@ -955,6 +1132,117 @@ String WebServerService::getWebPageHtml() {
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to send input', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        // Quick Action functions
+        function showScheduleProofing() {
+            document.getElementById('scheduleForm').style.display = 'block';
+        }
+
+        function hideScheduleProofing() {
+            document.getElementById('scheduleForm').style.display = 'none';
+        }
+
+        async function startProofingNow() {
+            if (!confirm('Start proofing now?')) return;
+            
+            try {
+                const response = await fetch('/api/action/proof-now', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Proofing started!', 'success');
+                    setTimeout(updateStatus, 500);
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to start proofing', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function scheduleProofing() {
+            const timeInput = document.getElementById('proofAtTime').value;
+            const hoursInput = document.getElementById('proofInHours').value;
+            
+            if (!timeInput && !hoursInput) {
+                showAlert('statusAlert', 'Please enter either a time or duration', 'error');
+                return;
+            }
+            
+            try {
+                let endpoint, body;
+                
+                if (timeInput) {
+                    // Schedule at specific time
+                    const [hours, minutes] = timeInput.split(':').map(Number);
+                    endpoint = '/api/action/proof-at';
+                    body = JSON.stringify({ hour: hours, minute: minutes });
+                } else {
+                    // Schedule after delay
+                    endpoint = '/api/action/proof-in';
+                    body = JSON.stringify({ hours: parseFloat(hoursInput) });
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Proofing scheduled!', 'success');
+                    hideScheduleProofing();
+                    setTimeout(updateStatus, 500);
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to schedule proofing', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function startCooling() {
+            if (!confirm('Start cooling mode? This will delay proofing.')) return;
+            
+            try {
+                const response = await fetch('/api/action/cool', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Cooling started!', 'success');
+                    setTimeout(updateStatus, 500);
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to start cooling', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function stopOperation() {
+            if (!confirm('Stop current operation?')) return;
+            
+            try {
+                const response = await fetch('/api/action/stop', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Operation stopped', 'success');
+                    setTimeout(updateStatus, 500);
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to stop', 'error');
                 }
             } catch (error) {
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');

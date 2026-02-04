@@ -30,6 +30,13 @@ namespace services {
         void handleInjectEncoder(AsyncWebServerRequest* request);
         void handleGetDisplayState(AsyncWebServerRequest* request);
         
+        // Quick action endpoints
+        void handleProofNow(AsyncWebServerRequest* request);
+        void handleProofAt(AsyncWebServerRequest* request, uint8_t* data, size_t len);
+        void handleProofIn(AsyncWebServerRequest* request, uint8_t* data, size_t len);
+        void handleStartCooling(AsyncWebServerRequest* request);
+        void handleStopOperation(AsyncWebServerRequest* request);
+        
         String getWebPageHtml();
     };
 }
