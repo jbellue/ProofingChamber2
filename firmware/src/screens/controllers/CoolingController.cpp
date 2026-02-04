@@ -104,6 +104,7 @@ void CoolingController::startCooling(time_t endTime) {
     // Navigate display to show cooling screen
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
+        begin(); // Initialize the screen properly
     }
 }
 
@@ -127,5 +128,6 @@ void CoolingController::stopCooling() {
     // Navigate back to menu
     if (ctx && ctx->screens && ctx->menu) {
         ctx->screens->setActiveScreen(ctx->menu);
+        ctx->menu->begin(); // Initialize menu to prevent blank screen
     }
 }

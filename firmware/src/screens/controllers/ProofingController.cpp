@@ -96,6 +96,7 @@ void ProofingController::startProofing() {
     // Navigate display to show proofing screen
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
+        begin(); // Initialize the screen properly
     }
 }
 
@@ -111,5 +112,6 @@ void ProofingController::stopProofing() {
     // Navigate back to menu
     if (ctx && ctx->screens && ctx->menu) {
         ctx->screens->setActiveScreen(ctx->menu);
+        ctx->menu->begin(); // Initialize menu to prevent blank screen
     }
 }
