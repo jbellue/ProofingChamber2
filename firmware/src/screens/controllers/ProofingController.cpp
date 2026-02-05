@@ -104,6 +104,11 @@ void ProofingController::startProofing() {
             ctx->display->sendBuffer();
         }
     }
+    
+    // Notify web view of state change (web is a VIEW)
+    if (ctx->webServer) {
+        ctx->webServer->notifyStateChange();
+    }
 }
 
 void ProofingController::stopProofing() {
@@ -125,5 +130,10 @@ void ProofingController::stopProofing() {
             ctx->menu->update(true); // Force redraw
             ctx->display->sendBuffer();
         }
+    }
+    
+    // Notify web view of state change (web is a VIEW)
+    if (ctx->webServer) {
+        ctx->webServer->notifyStateChange();
     }
 }

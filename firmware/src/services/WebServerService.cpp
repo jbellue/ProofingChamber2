@@ -111,6 +111,11 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
     }
 }
 
+void WebServerService::notifyStateChange() {
+    // When controller state changes, immediately push to web view
+    broadcastScreenState();
+}
+
 void WebServerService::broadcastScreenState() {
     if (!_ws || _ws->count() == 0) return;
     

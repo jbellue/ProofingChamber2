@@ -15,6 +15,9 @@ namespace services {
         
         // WebSocket for real-time data updates
         void broadcastScreenState();
+        
+        // Notify web view of state changes (web is a VIEW)
+        void notifyStateChange();
 
     private:
         AppContext* _ctx;
