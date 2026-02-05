@@ -19,8 +19,6 @@ void DisplayManager::clear() {
 
 void DisplayManager::clearBuffer() {
     _display.clearBuffer();
-    // Notify browser to clear display
-    notifyDisplayUpdate("{\"cmd\":\"clear\"}");
 }
 
 void DisplayManager::drawStr(uint8_t x, uint8_t y, const char* str) {
@@ -73,8 +71,6 @@ uint8_t DisplayManager::getDisplayHeight() {
 
 void DisplayManager::sendBuffer() {
     _display.sendBuffer();
-    // Notify browser to render the buffered display
-    notifyDisplayUpdate("{\"cmd\":\"render\"}");
 }
 
 void DisplayManager::setFont(const uint8_t* font) {
@@ -83,10 +79,6 @@ void DisplayManager::setFont(const uint8_t* font) {
 
 void DisplayManager::drawUTF8(uint8_t x, uint8_t y, const char* str) {
     _display.drawUTF8(x, y, str);
-    // Notify browser of text drawing
-    String jsonStr = "{\"cmd\":\"text\",\"x\":" + String(x) + ",\"y\":" + String(y) + 
-                     ",\"text\":\"" + String(str) + "\"}";
-    notifyDisplayUpdate(jsonStr);
 }
 
 void DisplayManager::drawHLine(uint8_t x, uint8_t y, uint8_t w) {

@@ -43,7 +43,7 @@ void WebServerService::begin() {
         }
     }
     
-    DEBUG_PRINTLN("Setting up WebSocket for display mirroring...");
+    DEBUG_PRINTLN("Setting up WebSocket...");
     setupWebSocket();
     
     DEBUG_PRINTLN("Setting up web server routes...");
@@ -53,14 +53,6 @@ void WebServerService::begin() {
     _server->begin();
     DEBUG_PRINTLN("✓ Web server started successfully on port 80");
     DEBUG_PRINTLN("  Access via IP address or http://proofingchamber.local");
-    
-    // Set up display update callback for real-time mirroring
-    if (_ctx && _ctx->display) {
-        _ctx->display->setDisplayUpdateCallback([this](const String& command) {
-            this->broadcastDisplayUpdate(command);
-        });
-        DEBUG_PRINTLN("✓ Display mirroring callback registered");
-    }
 }
 
 void WebServerService::update() {
@@ -88,8 +80,6 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
             DEBUG_PRINT("WebSocket client #");
             DEBUG_PRINT(client->id());
             DEBUG_PRINTLN(" connected");
-            // Send initial clear screen command
-            client->text("{\"cmd\":\"clear\"}");
             break;
             
         case WS_EVT_DISCONNECT:
@@ -128,10 +118,6 @@ void WebServerService::setupRoutes() {
     });
     
     // API endpoints
-    _server->on("/api/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
-        handleGetStatus(request);
-    });
-    
     _server->on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest* request) {
         handleGetSettings(request);
     });
@@ -179,58 +165,6 @@ void WebServerService::setupRoutes() {
 
 void WebServerService::handleGetRoot(AsyncWebServerRequest* request) {
     request->send(200, "text/html", getWebPageHtml());
-}
-
-void WebServerService::handleGetStatus(AsyncWebServerRequest* request) {
-    JsonDocument doc;
-    
-    if (_ctx->input) {
-        doc["temperature"] = _ctx->input->getTemperature();
-    } else {
-        doc["temperature"] = nullptr;
-    }
-    
-    if (_ctx->tempController) {
-        ITemperatureController::Mode mode = _ctx->tempController->getMode();
-        switch (mode) {
-            case ITemperatureController::HEATING:
-                doc["mode"] = "heating";
-                break;
-            case ITemperatureController::COOLING:
-                doc["mode"] = "cooling";
-                break;
-            case ITemperatureController::OFF:
-                doc["mode"] = "off";
-                break;
-        }
-        doc["isHeating"] = _ctx->tempController->isHeating();
-        doc["isCooling"] = _ctx->tempController->isCooling();
-    } else {
-        doc["mode"] = "unknown";
-        doc["isHeating"] = false;
-        doc["isCooling"] = false;
-    }
-    
-    // Add timing information
-    struct tm now;
-    getLocalTime(&now);
-    time_t currentTime = mktime(&now);
-    
-    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
-        time_t startTime = _ctx->proofingController->getStartTime();
-        doc["proofingStartTime"] = (long)startTime;
-        doc["proofingElapsedSeconds"] = (long)difftime(currentTime, startTime);
-    }
-    
-    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
-        time_t endTime = _ctx->coolingController->getEndTime();
-        doc["coolingEndTime"] = (long)endTime;
-        doc["coolingRemainingSeconds"] = (long)difftime(endTime, currentTime);
-    }
-    
-    String response;
-    serializeJson(doc, response);
-    request->send(200, "application/json", response);
 }
 
 void WebServerService::handleGetSettings(AsyncWebServerRequest* request) {

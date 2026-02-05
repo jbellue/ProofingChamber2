@@ -13,20 +13,19 @@ namespace services {
         void begin() override;
         void update() override;
         
-        // Display mirroring via WebSocket
+        // WebSocket for real-time data updates
         void broadcastDisplayUpdate(const String& command);
 
     private:
         AppContext* _ctx;
         AsyncWebServer* _server;  // Pointer to delay port 80 allocation
-        AsyncWebSocket* _ws;      // WebSocket for display mirroring
+        AsyncWebSocket* _ws;      // WebSocket for display updates
         
         void setupRoutes();
         void setupWebSocket();
         void onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                             AwsEventType type, void* arg, uint8_t* data, size_t len);
         
-        void handleGetStatus(AsyncWebServerRequest* request);
         void handleGetSettings(AsyncWebServerRequest* request);
         void handleSetMode(AsyncWebServerRequest* request);
         void handleSetSettings(AsyncWebServerRequest* request);
