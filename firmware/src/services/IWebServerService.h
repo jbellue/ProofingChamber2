@@ -5,5 +5,6 @@ namespace services {
         virtual ~IWebServerService() = default;
         virtual void begin() = 0;
         virtual void update() = 0;
+        virtual void notifyStateChange() = 0;
     };
 }
