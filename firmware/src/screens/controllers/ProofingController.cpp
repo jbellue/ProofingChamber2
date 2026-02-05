@@ -5,6 +5,7 @@
 #include "../../ITemperatureController.h"
 #include "../../ScreensManager.h"
 #include "../Menu.h"
+#include "../../services/IWebServerService.h"
 
 ProofingController::ProofingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _startTime(0),

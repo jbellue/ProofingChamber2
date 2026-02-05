@@ -3,6 +3,7 @@
 #include "../views/CoolingView.h"
 #include "../../ScreensManager.h"
 #include "../Menu.h"
+#include "../../services/IWebServerService.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
