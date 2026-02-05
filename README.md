@@ -30,8 +30,20 @@ This script will:
 
 **For Restricted Environments (No Internet):**
 ```bash
-./build.sh --check
+./build.sh --check  # Syntax checking only
 ```
+
+### Running Unit Tests
+
+The firmware includes unit tests with mocked Arduino/ESP32 libraries:
+
+```bash
+./run-tests.sh
+# or
+make test
+```
+
+Tests run completely offline and don't require hardware or the ESP32 platform. See `firmware/test/README.md` for details.
 
 This performs syntax checking without downloading ESP32 platform packages.
 
