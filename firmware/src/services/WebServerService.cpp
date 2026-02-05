@@ -125,26 +125,15 @@ void WebServerService::broadcastScreenState() {
     String currentScreen = (_ctx->screens && _ctx->screens->getActiveScreen()) 
         ? _ctx->screens->getActiveScreen()->getScreenName() : "";
     
-    int proofingElapsed = -1;
+    // Get timestamps for proofing and cooling (let client calculate elapsed/remaining)
+    time_t proofingStartTime = 0;
     if (_ctx->proofingController && _ctx->proofingController->isActive()) {
-        time_t startTime = _ctx->proofingController->getStartTime();
-        if (startTime > 0) {
-            struct tm tm_now;
-            getLocalTime(&tm_now);
-            time_t now = mktime(&tm_now);
-            proofingElapsed = (int)(now - startTime);
-        }
+        proofingStartTime = _ctx->proofingController->getStartTime();
     }
     
-    int coolingRemaining = -1;
+    time_t coolingEndTime = 0;
     if (_ctx->coolingController && _ctx->coolingController->isActive()) {
-        time_t endTime = _ctx->coolingController->getEndTime();
-        if (endTime > 0) {
-            struct tm tm_now;
-            getLocalTime(&tm_now);
-            time_t now = mktime(&tm_now);
-            coolingRemaining = (int)(endTime - now);
-        }
+        coolingEndTime = _ctx->coolingController->getEndTime();
     }
     
     // Check if anything changed (with tolerance for temperature)
@@ -152,8 +141,8 @@ void WebServerService::broadcastScreenState() {
     if (abs(currentTemp - _lastBroadcast.temperature) > 0.1f) changed = true;
     if (currentMode != _lastBroadcast.mode) changed = true;
     if (currentScreen != _lastBroadcast.screenName) changed = true;
-    if (proofingElapsed != _lastBroadcast.proofingElapsed) changed = true;
-    if (coolingRemaining != _lastBroadcast.coolingRemaining) changed = true;
+    if (proofingStartTime != _lastBroadcast.proofingStartTime) changed = true;
+    if (coolingEndTime != _lastBroadcast.coolingEndTime) changed = true;
     
     // Only broadcast if something actually changed
     if (!changed) return;
@@ -162,8 +151,8 @@ void WebServerService::broadcastScreenState() {
     _lastBroadcast.temperature = currentTemp;
     _lastBroadcast.mode = currentMode;
     _lastBroadcast.screenName = currentScreen;
-    _lastBroadcast.proofingElapsed = proofingElapsed;
-    _lastBroadcast.coolingRemaining = coolingRemaining;
+    _lastBroadcast.proofingStartTime = proofingStartTime;
+    _lastBroadcast.coolingEndTime = coolingEndTime;
     
     // Build JSON with current screen state
     JsonDocument doc;
@@ -175,15 +164,13 @@ void WebServerService::broadcastScreenState() {
     doc["mode"] = modeStr;
     doc["screenName"] = currentScreen;
     
-    if (proofingElapsed >= 0) {
-        doc["proofingElapsedSeconds"] = proofingElapsed;
+    // Send timestamps - let client calculate elapsed/remaining time
+    if (proofingStartTime > 0) {
+        doc["proofingStartTime"] = proofingStartTime;
     }
     
-    if (coolingRemaining >= 0) {
-        doc["coolingRemainingSeconds"] = coolingRemaining;
-        if (_ctx->coolingController) {
-            doc["coolingEndTime"] = _ctx->coolingController->getEndTime();
-        }
+    if (coolingEndTime > 0) {
+        doc["coolingEndTime"] = coolingEndTime;
     }
     
     String output;
@@ -789,6 +776,9 @@ String WebServerService::getWebPageHtml() {
     <script>
         let currentMode = 'off';
         let ws = null;
+        let proofingStartTime = null;
+        let coolingEndTime = null;
+        let timingUpdateInterval = null;
         
         // Initialize WebSocket for status updates
         function initWebSocket() {
@@ -819,33 +809,26 @@ String WebServerService::getWebPageHtml() {
                         indicator.className = `indicator ${currentMode}`;
                     }
                     
-                    // Update timing information
-                    const timingInfo = document.getElementById('timingInfo');
-                    const proofingTime = document.getElementById('proofingTime');
-                    const coolingTime = document.getElementById('coolingTime');
-                    let hasTimingInfo = false;
-                    
-                    if (data.proofingElapsedSeconds !== undefined) {
-                        proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(data.proofingElapsedSeconds)} elapsed`;
-                        proofingTime.style.display = 'block';
-                        hasTimingInfo = true;
+                    // Store timestamps - client will calculate elapsed/remaining time
+                    if (data.proofingStartTime !== undefined) {
+                        proofingStartTime = data.proofingStartTime;
                     } else {
-                        proofingTime.style.display = 'none';
+                        proofingStartTime = null;
                     }
                     
-                    if (data.coolingRemainingSeconds !== undefined) {
-                        const remaining = Math.max(0, data.coolingRemainingSeconds);
-                        coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
-                        if (data.coolingEndTime) {
-                            coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(data.coolingEndTime)}</small>`;
-                        }
-                        coolingTime.style.display = 'block';
-                        hasTimingInfo = true;
+                    if (data.coolingEndTime !== undefined) {
+                        coolingEndTime = data.coolingEndTime;
                     } else {
-                        coolingTime.style.display = 'none';
+                        coolingEndTime = null;
                     }
                     
-                    timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
+                    // Update timing display immediately
+                    updateTimingDisplay();
+                    
+                    // Start interval timer if not already running
+                    if (!timingUpdateInterval && (proofingStartTime || coolingEndTime)) {
+                        timingUpdateInterval = setInterval(updateTimingDisplay, 1000);
+                    }
                     
                     // Also update screen name if provided
                     if (data.screenName) {
@@ -865,6 +848,51 @@ String WebServerService::getWebPageHtml() {
                 // Reconnect after 2 seconds
                 setTimeout(initWebSocket, 2000);
             };
+        }
+        
+        // Update timing display based on stored timestamps (client-side calculation)
+        function updateTimingDisplay() {
+            const timingInfo = document.getElementById('timingInfo');
+            const proofingTime = document.getElementById('proofingTime');
+            const coolingTime = document.getElementById('coolingTime');
+            let hasTimingInfo = false;
+            
+            // Calculate and display proofing elapsed time
+            if (proofingStartTime) {
+                const now = Math.floor(Date.now() / 1000);
+                const elapsed = Math.max(0, now - proofingStartTime);
+                proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(elapsed)} elapsed`;
+                proofingTime.style.display = 'block';
+                hasTimingInfo = true;
+            } else {
+                proofingTime.style.display = 'none';
+            }
+            
+            // Calculate and display cooling remaining time
+            if (coolingEndTime) {
+                const now = Math.floor(Date.now() / 1000);
+                const remaining = Math.max(0, coolingEndTime - now);
+                coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
+                coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(coolingEndTime)}</small>`;
+                coolingTime.style.display = 'block';
+                hasTimingInfo = true;
+                
+                // If countdown reached zero, clear it
+                if (remaining === 0 && timingUpdateInterval) {
+                    clearInterval(timingUpdateInterval);
+                    timingUpdateInterval = null;
+                }
+            } else {
+                coolingTime.style.display = 'none';
+            }
+            
+            timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
+            
+            // Stop interval if no timing info
+            if (!hasTimingInfo && timingUpdateInterval) {
+                clearInterval(timingUpdateInterval);
+                timingUpdateInterval = null;
+            }
         }
         
         function showAlert(elementId, message, type) {

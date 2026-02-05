@@ -30,9 +30,8 @@ namespace services {
             float temperature = -999.0f;
             ITemperatureController::Mode mode = ITemperatureController::OFF;
             String screenName;
-            int proofingElapsed = -1;
-            int coolingRemaining = -1;
-            bool hasChanged() const { return true; } // Will be set properly
+            time_t proofingStartTime = 0;
+            time_t coolingEndTime = 0;
         };
         LastBroadcastState _lastBroadcast;
         
