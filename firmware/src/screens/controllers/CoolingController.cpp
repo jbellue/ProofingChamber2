@@ -19,7 +19,10 @@ void CoolingController::beginImpl() {
     }
     
     getInputManager()->slowTemperaturePolling(false);
-    _endTime = _timeCalculator ? _timeCalculator() : 0;
+    // Only use timeCalculator if _endTime is not already set (from web API)
+    if (_endTime == 0) {
+        _endTime = _timeCalculator ? _timeCalculator() : 0;
+    }
     _lastUpdateTime = 0;
     _lastGraphUpdate = 0;
     _onCancelButton = true;
