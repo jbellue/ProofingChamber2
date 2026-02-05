@@ -109,7 +109,7 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
                 JsonDocument doc;
                 DeserializationError error = deserializeJson(doc, message);
                 
-                if (!error && doc.containsKey("request") && doc["request"] == "state") {
+                if (!error && doc["request"].is<const char*>() && doc["request"] == "state") {
                     // Client is requesting current state
                     sendStateToClient(client);
                 }
@@ -120,10 +120,6 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
         case WS_EVT_ERROR:
             DEBUG_PRINT("WebSocket error from client #");
             DEBUG_PRINTLN(client->id());
-            break;
-            
-        case WS_EVT_DATA:
-            // We don't expect data from clients for display mirroring
             break;
             
         case WS_EVT_PONG:
@@ -208,7 +204,8 @@ void WebServerService::sendStateToClient(AsyncWebSocketClient* client) {
     ITemperatureController::Mode currentMode = _ctx->tempController ? 
         _ctx->tempController->getMode() : ITemperatureController::OFF;
     
-    String currentScreen = _ctx->screens ? _ctx->screens->getCurrentScreenName() : "unknown";
+    const char* currentScreen = (_ctx->screens && _ctx->screens->getActiveScreen()) 
+        ? _ctx->screens->getActiveScreen()->getScreenName() : "unknown";
     
     time_t proofingStartTime = 0;
     if (_ctx->proofingController && _ctx->proofingController->isActive()) {
