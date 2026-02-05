@@ -88,6 +88,8 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
             DEBUG_PRINT("WebSocket client #");
             DEBUG_PRINT(client->id());
             DEBUG_PRINTLN(" connected");
+            // Send current state immediately to newly connected client
+            broadcastScreenState();
             break;
             
         case WS_EVT_DISCONNECT:
