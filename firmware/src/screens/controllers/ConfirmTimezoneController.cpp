@@ -9,10 +9,11 @@
 ConfirmTimezoneController::ConfirmTimezoneController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr) {}
 
-void ConfirmTimezoneController::setTimezoneInfo(const char* continent, const char* tzName, const char* posixString) {
+void ConfirmTimezoneController::setTimezoneInfo(const char* continent, const char* tzName, const char* posixString, int timezoneIndex) {
     _timezoneContinentName = continent;
     _timezoneDisplayName = tzName;
     _timezonePosixString = posixString;
+    _timezoneIndex = timezoneIndex;
 }
 
 void ConfirmTimezoneController::beginImpl() {
@@ -46,9 +47,15 @@ bool ConfirmTimezoneController::update(bool shouldRedraw) {
         // Confirm timezone selection
         AppContext* ctx = getContext();
         if (ctx && ctx->storage && _timezonePosixString) {
+            // Save both POSIX string (for backward compatibility and NTP) and index (for accurate retrieval)
             ctx->storage->setCharArray(storage::keys::TIMEZONE_KEY, _timezonePosixString);
+            if (_timezoneIndex >= 0) {
+                ctx->storage->setInt(storage::keys::TIMEZONE_INDEX_KEY, _timezoneIndex);
+            }
             DEBUG_PRINT("Timezone confirmed and saved: ");
             DEBUG_PRINTLN(_timezonePosixString);
+            DEBUG_PRINT("Timezone index saved: ");
+            DEBUG_PRINTLN(_timezoneIndex);
             
             // Apply the timezone change immediately without requiring a reboot
             if (ctx->networkService) {

@@ -18,11 +18,27 @@ namespace {
     static Menu::MenuItem* timezoneMenuAllocated = nullptr;
     static bool timezoneMenusInitialized = false;
     
-    // Helper function to find the current timezone based on saved posix string
+    // Helper function to find the current timezone based on saved index or posix string
     // Returns the global timezone index
     // Returns DEFAULT_TIMEZONE_INDEX if not found
-    int findCurrentTimezone(const char* posixString) {
-        if (!posixString || posixString[0] == '\0') {
+    int findCurrentTimezone(services::IStorage* storage) {
+        if (!storage) {
+            return timezones::DEFAULT_TIMEZONE_INDEX;
+        }
+        
+        // First, try to read the timezone index (new approach)
+        int timezoneIndex = storage->getInt(storage::keys::TIMEZONE_INDEX_KEY, -1);
+        
+        // If we have a valid index, use it
+        if (timezoneIndex >= 0 && timezoneIndex < timezones::TIMEZONE_COUNT) {
+            return timezoneIndex;
+        }
+        
+        // Otherwise, fall back to POSIX string lookup (backward compatibility)
+        char posixString[64] = "";
+        storage->getCharArray(storage::keys::TIMEZONE_KEY, posixString, sizeof(posixString), "");
+        
+        if (posixString[0] == '\0') {
             // Return default timezone (Paris) if no timezone is saved
             return timezones::DEFAULT_TIMEZONE_INDEX;
         }
@@ -69,14 +85,8 @@ namespace {
     void initializeTimezoneMenus(AppContext* ctx) {
         if (timezoneMenusInitialized) return;
         
-        // Try to read current timezone from storage
-        char currentTimezone[64] = "";
-        if (ctx && ctx->storage) {
-            ctx->storage->getCharArray(storage::keys::TIMEZONE_KEY, currentTimezone, sizeof(currentTimezone), "");
-        }
-        
         // Find which timezone is currently selected
-        const int currentTimezoneIndex = findCurrentTimezone(currentTimezone);
+        const int currentTimezoneIndex = findCurrentTimezone(ctx ? ctx->storage : nullptr);
         const int currentContinentIndex = getContinentIndexForTimezone(currentTimezoneIndex);
         const int currentLocalIndex = getLocalTimezoneIndex(currentTimezoneIndex);
 
@@ -165,13 +175,9 @@ void refreshTimezoneSelectionIcons(AppContext* ctx) {
     if (!timezoneMenusInitialized) {
         initializeTimezoneMenus(ctx);
     }
-    // Read current timezone
-    char currentTimezone[64] = "";
-    if (ctx && ctx->storage) {
-        ctx->storage->getCharArray(storage::keys::TIMEZONE_KEY, currentTimezone, sizeof(currentTimezone), "");
-    }
-    // Find indices
-    const int currentTimezoneIndex = findCurrentTimezone(currentTimezone);
+    
+    // Find indices using the storage-aware helper
+    const int currentTimezoneIndex = findCurrentTimezone(ctx ? ctx->storage : nullptr);
     const int currentContinentIndex = getContinentIndexForTimezone(currentTimezoneIndex);
     const int currentLocalIndex = getLocalTimezoneIndex(currentTimezoneIndex);
     
