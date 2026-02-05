@@ -24,6 +24,17 @@ namespace services {
         AsyncWebServer* _server;  // Pointer to delay port 80 allocation
         AsyncWebSocket* _ws;      // WebSocket for display updates
         
+        // State tracking to avoid redundant broadcasts
+        struct LastBroadcastState {
+            float temperature = -999.0f;
+            ITemperatureController::Mode mode = ITemperatureController::OFF;
+            String screenName;
+            int proofingElapsed = -1;
+            int coolingRemaining = -1;
+            bool hasChanged() const { return true; } // Will be set properly
+        };
+        LastBroadcastState _lastBroadcast;
+        
         void setupRoutes();
         void setupWebSocket();
         void onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 

@@ -45,12 +45,22 @@ bool CoolingController::update(bool shouldRedraw) {
         _temperatureController->setMode(ITemperatureController::OFF);
         _endTime = 0; // Reset when exiting
         bool goingToProofScreen = !_onCancelButton || timesUp;
-        BaseController* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
-        setNextScreen(nextScreen);
-        if (goingToProofScreen && _proofingController) {
-            _proofingController->setNextScreen(_menuScreen);
+        
+        // Notify web that cooling has stopped
+        AppContext* ctx = getContext();
+        if (ctx->webServerService) {
+            ctx->webServerService->notifyStateChange();
         }
-        if (nextScreen) nextScreen->begin();
+        
+        if (goingToProofScreen && _proofingController) {
+            // When transitioning to proofing (timer expired), actually start proofing
+            _proofingController->startProofing();
+        } else {
+            // When cancelling to menu, just navigate
+            BaseController* nextScreen = _menuScreen;
+            setNextScreen(nextScreen);
+            if (nextScreen) nextScreen->begin();
+        }
         return false;
     }
     // Force update on first draw or when enough time has passed

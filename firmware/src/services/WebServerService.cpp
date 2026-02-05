@@ -119,47 +119,70 @@ void WebServerService::notifyStateChange() {
 void WebServerService::broadcastScreenState() {
     if (!_ws || _ws->count() == 0) return;
     
-    // Build JSON with current screen state
-    JsonDocument doc;
+    // Collect current state
+    float currentTemp = _ctx->input ? _ctx->input->getTemperature() : -999.0f;
+    ITemperatureController::Mode currentMode = _ctx->tempController->getMode();
+    String currentScreen = (_ctx->screens && _ctx->screens->getActiveScreen()) 
+        ? _ctx->screens->getActiveScreen()->getScreenName() : "";
     
-    // Get current temperature
-    if (_ctx->input) {
-        float temp = _ctx->input->getTemperature();
-        doc["temperature"] = temp;
-    }
-    
-    // Get current mode
-    ITemperatureController::Mode mode = _ctx->tempController->getMode();
-    const char* modeStr = "off";
-    if (mode == ITemperatureController::HEATING) modeStr = "heating";
-    else if (mode == ITemperatureController::COOLING) modeStr = "cooling";
-    doc["mode"] = modeStr;
-    
-    // Get screen name
-    if (_ctx->screens && _ctx->screens->getActiveScreen()) {
-        doc["screenName"] = _ctx->screens->getActiveScreen()->getScreenName();
-    }
-    
-    // Get proofing state
+    int proofingElapsed = -1;
     if (_ctx->proofingController && _ctx->proofingController->isActive()) {
         time_t startTime = _ctx->proofingController->getStartTime();
         if (startTime > 0) {
             struct tm tm_now;
             getLocalTime(&tm_now);
             time_t now = mktime(&tm_now);
-            doc["proofingElapsedSeconds"] = (int)(now - startTime);
+            proofingElapsed = (int)(now - startTime);
         }
     }
     
-    // Get cooling state
+    int coolingRemaining = -1;
     if (_ctx->coolingController && _ctx->coolingController->isActive()) {
         time_t endTime = _ctx->coolingController->getEndTime();
         if (endTime > 0) {
             struct tm tm_now;
             getLocalTime(&tm_now);
             time_t now = mktime(&tm_now);
-            doc["coolingRemainingSeconds"] = (int)(endTime - now);
-            doc["coolingEndTime"] = endTime;
+            coolingRemaining = (int)(endTime - now);
+        }
+    }
+    
+    // Check if anything changed (with tolerance for temperature)
+    bool changed = false;
+    if (abs(currentTemp - _lastBroadcast.temperature) > 0.1f) changed = true;
+    if (currentMode != _lastBroadcast.mode) changed = true;
+    if (currentScreen != _lastBroadcast.screenName) changed = true;
+    if (proofingElapsed != _lastBroadcast.proofingElapsed) changed = true;
+    if (coolingRemaining != _lastBroadcast.coolingRemaining) changed = true;
+    
+    // Only broadcast if something actually changed
+    if (!changed) return;
+    
+    // Update last broadcast state
+    _lastBroadcast.temperature = currentTemp;
+    _lastBroadcast.mode = currentMode;
+    _lastBroadcast.screenName = currentScreen;
+    _lastBroadcast.proofingElapsed = proofingElapsed;
+    _lastBroadcast.coolingRemaining = coolingRemaining;
+    
+    // Build JSON with current screen state
+    JsonDocument doc;
+    doc["temperature"] = currentTemp;
+    
+    const char* modeStr = "off";
+    if (currentMode == ITemperatureController::HEATING) modeStr = "heating";
+    else if (currentMode == ITemperatureController::COOLING) modeStr = "cooling";
+    doc["mode"] = modeStr;
+    doc["screenName"] = currentScreen;
+    
+    if (proofingElapsed >= 0) {
+        doc["proofingElapsedSeconds"] = proofingElapsed;
+    }
+    
+    if (coolingRemaining >= 0) {
+        doc["coolingRemainingSeconds"] = coolingRemaining;
+        if (_ctx->coolingController) {
+            doc["coolingEndTime"] = _ctx->coolingController->getEndTime();
         }
     }
     
