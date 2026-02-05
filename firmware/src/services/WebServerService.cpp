@@ -885,9 +885,9 @@ String WebServerService::getWebPageHtml() {
 
         <div class="card">
             <h2>Screen Display</h2>
-            <div style="background: #000; color: #fff; padding: 20px; border-radius: 8px; font-family: monospace; min-height: 120px;">
-                <div id="screenName" style="font-weight: bold; margin-bottom: 10px; color: #00f2fe;">--</div>
-                <div id="screenContent" style="line-height: 1.6;"></div>
+            <div style="background: #000; padding: 10px; border-radius: 8px; text-align: center;">
+                <canvas id="displayCanvas" width="128" height="64" style="border: 1px solid #333; background: #000; image-rendering: pixelated; width: 100%; max-width: 512px; height: auto;"></canvas>
+                <div id="wsStatus" style="margin-top: 8px; font-size: 0.85em; color: #666;">Connecting to display...</div>
             </div>
         </div>
 
@@ -989,6 +989,79 @@ String WebServerService::getWebPageHtml() {
 
     <script>
         let currentMode = 'off';
+        let ws = null;
+        let canvas = null;
+        let ctx = null;
+        
+        // Initialize WebSocket for display mirroring
+        function initWebSocket() {
+            canvas = document.getElementById('displayCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set up canvas for OLED-like display
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 128, 64);
+            
+            // Connect to WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                document.getElementById('wsStatus').textContent = '✓ Display connected';
+                document.getElementById('wsStatus').style.color = '#28a745';
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleDisplayCommand(data);
+                } catch (e) {
+                    console.error('WebSocket message error:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                document.getElementById('wsStatus').textContent = '✗ Display connection error';
+                document.getElementById('wsStatus').style.color = '#dc3545';
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('wsStatus').textContent = 'Reconnecting to display...';
+                document.getElementById('wsStatus').style.color = '#ffc107';
+                // Reconnect after 2 seconds
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+        
+        // Handle display commands from ESP32
+        function handleDisplayCommand(cmd) {
+            if (!ctx) return;
+            
+            switch (cmd.cmd) {
+                case 'clear':
+                    // Clear display (black)
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, 128, 64);
+                    break;
+                    
+                case 'text':
+                    // Draw text at position
+                    // OLED uses white on black
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(cmd.text, cmd.x, cmd.y);
+                    break;
+                    
+                case 'render':
+                    // Display update complete - refresh happens automatically
+                    break;
+                    
+                default:
+                    console.log('Unknown display command:', cmd);
+            }
+        }
 
         function showAlert(elementId, message, type) {
             const alert = document.getElementById(elementId);
@@ -1020,69 +1093,7 @@ String WebServerService::getWebPageHtml() {
 
         async function updateStatus() {
             try {
-                // Fetch display state to show current screen
-                const displayResponse = await fetch('/api/display/state');
-                const displayData = await displayResponse.json();
-                
-                // Update screen name
-                document.getElementById('screenName').textContent = displayData.screen || '--';
-                
-                // Update screen content based on screen type
-                const screenContent = document.getElementById('screenContent');
-                if (displayData.menuItems && displayData.menuItems.length > 0) {
-                    // Menu screen - show ALL menu items with scrolling
-                    let html = '<div style="font-size: 0.95em; max-height: 300px; overflow-y: auto;" id="menuItemsList">';
-                    displayData.menuItems.forEach((item, index) => {
-                        const prefix = item.selected ? '► ' : '  ';
-                        const style = item.selected ? 'color: #00f2fe; font-weight: bold;' : '';
-                        const id = item.selected ? 'id="selectedMenuItem"' : '';
-                        html += `<div ${id} style="${style}; padding: 2px 0;">${prefix}${item.name}</div>`;
-                    });
-                    html += '</div>';
-                    html += `<div style="margin-top: 8px; color: #666; font-size: 0.85em;">Item ${displayData.menuIndex + 1} of ${displayData.menuSize}</div>`;
-                    screenContent.innerHTML = html;
-                } else if (displayData.screen === 'Proofing' && displayData.isActive) {
-                    // Proofing screen
-                    const elapsed = formatTime(displayData.elapsedSeconds || 0);
-                    screenContent.innerHTML = `
-                        <div style="font-size: 1.1em;">🔥 Heating Mode Active</div>
-                        <div style="margin-top: 8px;">⏱️ Time elapsed: ${elapsed}</div>
-                        <div style="margin-top: 5px; font-size: 0.9em; color: #aaa;">Temperature: ${displayData.temperature ? displayData.temperature.toFixed(1) + '°C' : '--'}</div>
-                    `;
-                } else if (displayData.screen === 'Cooling' && displayData.isActive) {
-                    // Cooling screen
-                    const remaining = Math.max(0, displayData.remainingSeconds || 0);
-                    screenContent.innerHTML = `
-                        <div style="font-size: 1.1em;">❄️ Cooling Mode Active</div>
-                        <div style="margin-top: 8px;">⏳ Time remaining: ${formatTime(remaining)}</div>
-                        <div style="margin-top: 5px; font-size: 0.9em; color: #aaa;">Temperature: ${displayData.temperature ? displayData.temperature.toFixed(1) + '°C' : '--'}</div>
-                    `;
-                } else {
-                    // Other screens - show generic info
-                    let html = '';
-                    if (displayData.screenType === 'action') {
-                        html = '<div style="font-size: 1.1em;">⚠️ Confirmation Screen</div>';
-                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Use virtual controls to confirm or cancel</div>';
-                    } else if (displayData.screenType === 'settings') {
-                        html = '<div style="font-size: 1.1em;">⚙️ Adjusting Settings</div>';
-                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Use encoder to change value, button to confirm</div>';
-                    } else if (displayData.screenType === 'display') {
-                        html = '<div style="font-size: 1.1em;">📊 Viewing Data</div>';
-                        html += '<div style="margin-top: 8px; color: #aaa; font-size: 0.9em;">Press button to go back</div>';
-                    } else if (displayData.screen === 'Proofing') {
-                        html = '<div style="color: #888;">Proofing mode ready</div>';
-                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Not currently active</div>';
-                    } else if (displayData.screen === 'Cooling') {
-                        html = '<div style="color: #888;">Cooling mode ready</div>';
-                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Not currently active</div>';
-                    } else {
-                        html = `<div style="color: #888;">${displayData.screen || 'Screen'} active</div>`;
-                        html += '<div style="margin-top: 5px; font-size: 0.9em; color: #666;">Use virtual controls to navigate</div>';
-                    }
-                    screenContent.innerHTML = html;
-                }
-                
-                // Fetch regular status
+                // Fetch regular status (temperature, mode, timing)
                 const response = await fetch('/api/status');
                 const data = await response.json();
                 
@@ -1322,6 +1333,9 @@ String WebServerService::getWebPageHtml() {
             }
         }
 
+        // Initialize WebSocket for display mirroring
+        initWebSocket();
+        
         // Update status every 2 seconds
         setInterval(updateStatus, 2000);
         
