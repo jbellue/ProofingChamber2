@@ -54,14 +54,15 @@ bool CoolingController::update(bool shouldRedraw) {
         if (nextScreen) nextScreen->begin();
         return false;
     }
-    if (difftime(now, _lastUpdateTime) >= 1) {
+    // Force update on first draw or when enough time has passed
+    if (shouldRedraw || difftime(now, _lastUpdateTime) >= 1) {
         const float currentTemp = inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
         _temperatureController->update(currentTemp);
         shouldRedraw |= _view->drawTime(difftime(_endTime, now));
         _lastUpdateTime = now;
-        if (difftime(now, _lastGraphUpdate) >= 10.0) {
+        if (shouldRedraw || difftime(now, _lastGraphUpdate) >= 10.0) {
             _temperatureGraph.commitAverage(currentTemp);
             _lastGraphUpdate = now;
             _view->drawGraph(_temperatureGraph);
@@ -108,13 +109,13 @@ void CoolingController::startCooling(time_t endTime) {
     // Navigate display to show cooling screen
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
-        begin(); // Initialize the screen properly
+        begin(); // Initialize the screen - calls beginImpl() which calls _view->start()
         // Small delay to ensure view is fully initialized
         delay(10);
-        // Force display refresh
+        // Update dynamic content (temperature, time, icons) and send to display
+        // Note: beginImpl() already drew the static parts (title, buttons, graph)
         if (ctx->display) {
-            ctx->display->clearBuffer();
-            update(true); // Force redraw
+            update(true); // Force update of dynamic content
             ctx->display->sendBuffer();
         }
     }

@@ -53,14 +53,15 @@ bool ProofingController::update(bool shouldRedraw) {
     getLocalTime(&now);
     const time_t now_time = mktime(&now);
 
-    if (difftime(now_time, _lastTemperatureUpdate) >= 1) {
+    // Force update on first draw or when enough time has passed
+    if (shouldRedraw || difftime(now_time, _lastTemperatureUpdate) >= 1) {
         _lastTemperatureUpdate = now_time;
         const float currentTemp = inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
         _temperatureController->update(currentTemp);
 
-        if (difftime(now_time, _lastGraphUpdate) >= 10) {
+        if (shouldRedraw || difftime(now_time, _lastGraphUpdate) >= 10) {
             _temperatureGraph.commitAverage(currentTemp);
             _lastGraphUpdate = now_time;
             _view->drawGraph(_temperatureGraph);
@@ -97,13 +98,13 @@ void ProofingController::startProofing() {
     // Navigate display to show proofing screen
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
-        begin(); // Initialize the screen properly
+        begin(); // Initialize the screen - calls beginImpl() which calls _view->start()
         // Small delay to ensure view is fully initialized
         delay(10);
-        // Force display refresh
+        // Update dynamic content (temperature, time, icons) and send to display
+        // Note: beginImpl() already drew the static parts (title, buttons, graph)
         if (ctx->display) {
-            ctx->display->clearBuffer();
-            update(true); // Force redraw
+            update(true); // Force update of dynamic content
             ctx->display->sendBuffer();
         }
     }
