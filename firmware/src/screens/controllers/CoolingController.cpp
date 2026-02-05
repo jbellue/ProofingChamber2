@@ -105,6 +105,12 @@ void CoolingController::startCooling(time_t endTime) {
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
         begin(); // Initialize the screen properly
+        // Force display refresh
+        if (ctx->display) {
+            ctx->display->clearBuffer();
+            update(true); // Force redraw
+            ctx->display->sendBuffer();
+        }
     }
 }
 
@@ -129,5 +135,11 @@ void CoolingController::stopCooling() {
     if (ctx && ctx->screens && ctx->menu) {
         ctx->screens->setActiveScreen(ctx->menu);
         ctx->menu->begin(); // Initialize menu to prevent blank screen
+        // Force display refresh
+        if (ctx->display) {
+            ctx->display->clearBuffer();
+            ctx->menu->update(true); // Force redraw
+            ctx->display->sendBuffer();
+        }
     }
 }

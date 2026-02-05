@@ -748,14 +748,6 @@ String WebServerService::getWebPageHtml() {
         </div>
 
         <div class="card">
-            <h2>Screen Display</h2>
-            <div style="background: #000; padding: 10px; border-radius: 8px; text-align: center;">
-                <canvas id="displayCanvas" width="128" height="64" style="border: 1px solid #333; background: #000; image-rendering: pixelated; width: 100%; max-width: 512px; height: auto;"></canvas>
-                <div id="wsStatus" style="margin-top: 8px; font-size: 0.85em; color: #666;">Connecting to display...</div>
-            </div>
-        </div>
-
-        <div class="card">
             <h2>Quick Actions</h2>
             <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
                 Direct control buttons for common operations
@@ -854,18 +846,9 @@ String WebServerService::getWebPageHtml() {
     <script>
         let currentMode = 'off';
         let ws = null;
-        let canvas = null;
-        let ctx = null;
         
-        // Initialize WebSocket for display mirroring
+        // Initialize WebSocket for status updates
         function initWebSocket() {
-            canvas = document.getElementById('displayCanvas');
-            ctx = canvas.getContext('2d');
-            
-            // Set up canvas for OLED-like display
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, 128, 64);
-            
             // Connect to WebSocket
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -873,8 +856,7 @@ String WebServerService::getWebPageHtml() {
             ws = new WebSocket(wsUrl);
             
             ws.onopen = () => {
-                document.getElementById('wsStatus').textContent = '✓ Display connected';
-                document.getElementById('wsStatus').style.color = '#28a745';
+                console.log('WebSocket connected');
             };
             
             ws.onmessage = (event) => {
