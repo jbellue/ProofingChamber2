@@ -48,7 +48,7 @@ bool ProofingController::update(bool shouldRedraw) {
         _startTime = 0; // Reset when exiting
         
         // Set next screen and initialize it before returning
-        BaseController* menuScreen = ctx->menu;
+        BaseController* menuScreen = getContext()->menu;
         setNextScreen(menuScreen);
         if (menuScreen) {
             menuScreen->begin();
