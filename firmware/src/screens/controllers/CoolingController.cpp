@@ -114,8 +114,8 @@ void CoolingController::startCooling(time_t endTime) {
     }
     
     // Notify web view of state change (web is a VIEW)
-    if (ctx->webServer) {
-        ctx->webServer->notifyStateChange();
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
     }
 }
 
@@ -149,7 +149,7 @@ void CoolingController::stopCooling() {
     }
     
     // Notify web view of state change (web is a VIEW)
-    if (ctx->webServer) {
-        ctx->webServer->notifyStateChange();
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
     }
 }

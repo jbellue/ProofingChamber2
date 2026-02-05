@@ -106,8 +106,8 @@ void ProofingController::startProofing() {
     }
     
     // Notify web view of state change (web is a VIEW)
-    if (ctx->webServer) {
-        ctx->webServer->notifyStateChange();
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
     }
 }
 
@@ -133,7 +133,7 @@ void ProofingController::stopProofing() {
     }
     
     // Notify web view of state change (web is a VIEW)
-    if (ctx->webServer) {
-        ctx->webServer->notifyStateChange();
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
     }
 }
