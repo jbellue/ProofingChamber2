@@ -37,8 +37,9 @@ namespace services {
         
         void setupRoutes();
         void setupWebSocket();
-        void onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
+        void onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                             AwsEventType type, void* arg, uint8_t* data, size_t len);
+        void sendStateToClient(AsyncWebSocketClient* client);
         
         void handleGetSettings(AsyncWebServerRequest* request);
         void handleSetMode(AsyncWebServerRequest* request);

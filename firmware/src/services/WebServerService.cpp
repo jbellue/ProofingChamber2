@@ -88,8 +88,7 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
             DEBUG_PRINT("WebSocket client #");
             DEBUG_PRINT(client->id());
             DEBUG_PRINTLN(" connected");
-            // Send current state immediately to newly connected client
-            broadcastScreenState();
+            // Client will request state when ready
             break;
             
         case WS_EVT_DISCONNECT:
@@ -97,6 +96,26 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
             DEBUG_PRINT(client->id());
             DEBUG_PRINTLN(" disconnected");
             break;
+            
+        case WS_EVT_DATA: {
+            // Handle text messages from client
+            AwsFrameInfo* info = (AwsFrameInfo*)arg;
+            if (info->opcode == WS_TEXT && info->final && info->index == 0 && info->len == len) {
+                // Null-terminate the data
+                data[len] = 0;
+                String message = String((char*)data);
+                
+                // Parse JSON request
+                JsonDocument doc;
+                DeserializationError error = deserializeJson(doc, message);
+                
+                if (!error && doc.containsKey("request") && doc["request"] == "state") {
+                    // Client is requesting current state
+                    sendStateToClient(client);
+                }
+            }
+            break;
+        }
             
         case WS_EVT_ERROR:
             DEBUG_PRINT("WebSocket error from client #");
@@ -178,6 +197,51 @@ void WebServerService::broadcastScreenState() {
     String output;
     serializeJson(doc, output);
     _ws->textAll(output);
+}
+
+void WebServerService::sendStateToClient(AsyncWebSocketClient* client) {
+    if (!_ws || !client) return;
+    
+    // Collect current state
+    float currentTemp = _ctx->input ? _ctx->input->getTemperature() : 0.0f;
+    
+    ITemperatureController::Mode currentMode = _ctx->tempController ? 
+        _ctx->tempController->getMode() : ITemperatureController::OFF;
+    
+    String currentScreen = _ctx->screens ? _ctx->screens->getCurrentScreenName() : "unknown";
+    
+    time_t proofingStartTime = 0;
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        proofingStartTime = _ctx->proofingController->getStartTime();
+    }
+    
+    time_t coolingEndTime = 0;
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        coolingEndTime = _ctx->coolingController->getEndTime();
+    }
+    
+    // Build JSON with current state
+    JsonDocument doc;
+    doc["temperature"] = currentTemp;
+    
+    const char* modeStr = "off";
+    if (currentMode == ITemperatureController::HEATING) modeStr = "heating";
+    else if (currentMode == ITemperatureController::COOLING) modeStr = "cooling";
+    doc["mode"] = modeStr;
+    doc["screenName"] = currentScreen;
+    
+    // Send timestamps - let client calculate elapsed/remaining time
+    if (proofingStartTime > 0) {
+        doc["proofingStartTime"] = proofingStartTime;
+    }
+    
+    if (coolingEndTime > 0) {
+        doc["coolingEndTime"] = coolingEndTime;
+    }
+    
+    String output;
+    serializeJson(doc, output);
+    client->text(output);  // Send to specific client only
 }
 
 void WebServerService::setupRoutes() {
@@ -792,6 +856,8 @@ String WebServerService::getWebPageHtml() {
             
             ws.onopen = () => {
                 console.log('WebSocket connected');
+                // Request current state from server
+                ws.send(JSON.stringify({request: "state"}));
             };
             
             ws.onmessage = (event) => {
