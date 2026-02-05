@@ -18,6 +18,14 @@ For agents or automated systems, the easiest way to build is:
 
 This script handles everything automatically.
 
+**For restricted environments without internet:**
+
+```bash
+./build.sh --check
+```
+
+This performs syntax validation without downloading ESP32 platform packages.
+
 ## Build Methods
 
 ### Method 1: Build Script (Recommended for Automation)
@@ -51,6 +59,9 @@ make install
 
 # Build the firmware
 make build
+
+# Syntax check only (works offline, no platform download needed)
+make check
 
 # Install PlatformIO and build in one step
 make all
@@ -126,9 +137,42 @@ A GitHub Actions workflow is provided in `.github/workflows/build.yml` that:
 - Library dependencies (first time)
 
 **Solutions:**
-- Ensure you have internet connectivity
-- Check firewall/proxy settings
-- Try again (sometimes temporary network issues occur)
+1. Ensure you have internet connectivity
+2. Check firewall/proxy settings
+3. Try again (sometimes temporary network issues occur)
+
+**WORKAROUND for Restricted Environments:**
+
+If you're in a restricted environment (air-gapped network, CI without internet), use the **syntax checking** feature:
+
+```bash
+# Using build script
+./build.sh --check
+
+# Or using make
+make check
+
+# Or directly
+./check-syntax.sh
+```
+
+**What syntax checking does:**
+- Validates C++ syntax using g++
+- Checks all `.cpp` and `.h` files
+- Identifies actual syntax errors vs. missing libraries
+- Works completely offline (no downloads needed)
+- Returns exit code 0 on success, non-zero on errors
+
+**What it doesn't do:**
+- Can't produce firmware binary (needs full platform)
+- Can't verify Arduino/ESP32 library compatibility
+- Can't check hardware-specific functionality
+
+**When to use:**
+- CI/CD in restricted environments
+- Quick syntax validation before committing
+- Checking code structure without full build
+- Air-gapped development environments
 
 ### Platform espressif32 Not Found
 
@@ -179,6 +223,18 @@ When building in an automated environment:
 3. **First build is slower**: Platform and library downloads take time
 4. **Cache PlatformIO files**: For faster CI, cache `~/.platformio/` directory
 5. **Internet required**: First build requires internet access
+
+**For restricted environments without internet:**
+
+Use syntax checking instead of full build:
+
+```bash
+./build.sh --check
+# or
+make check
+```
+
+This validates code structure and syntax without downloading dependencies.
 
 Example for GitHub Actions (see `.github/workflows/build.yml`):
 

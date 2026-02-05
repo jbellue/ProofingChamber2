@@ -1,7 +1,7 @@
 # Makefile for ProofingChamber2
 # Provides convenient targets for building and managing the firmware
 
-.PHONY: help install build clean upload monitor all
+.PHONY: help install build clean upload monitor check all
 
 # Default target
 help:
@@ -9,11 +9,15 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make install  - Install PlatformIO if not already installed"
-	@echo "  make build    - Build the firmware"
+	@echo "  make build    - Build the firmware (requires internet)"
+	@echo "  make check    - Check syntax only (works offline)"
 	@echo "  make clean    - Clean build artifacts"
 	@echo "  make upload   - Upload firmware to device"
 	@echo "  make monitor  - Open serial monitor"
 	@echo "  make all      - Install dependencies and build"
+	@echo ""
+	@echo "For restricted environments without internet access:"
+	@echo "  make check    - Validates C++ syntax without downloading dependencies"
 	@echo ""
 
 # Install PlatformIO
@@ -26,6 +30,11 @@ install:
 build:
 	@echo "Building firmware..."
 	@cd firmware && pio run
+
+# Check syntax only (works offline)
+check:
+	@echo "Checking syntax..."
+	@./check-syntax.sh
 
 # Clean build artifacts
 clean:
