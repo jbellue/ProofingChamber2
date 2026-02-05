@@ -46,6 +46,13 @@ bool ProofingController::update(bool shouldRedraw) {
         _temperatureController->setMode(ITemperatureController::OFF);
         _view->reset();
         _startTime = 0; // Reset when exiting
+        
+        // Set next screen and initialize it before returning
+        BaseController* menuScreen = ctx->menu;
+        setNextScreen(menuScreen);
+        if (menuScreen) {
+            menuScreen->begin();
+        }
         return false;
     }
 
