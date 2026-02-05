@@ -157,10 +157,6 @@ void WebServerService::setupRoutes() {
         handleInjectEncoder(request);
     });
     
-    _server->on("/api/display/state", HTTP_GET, [this](AsyncWebServerRequest* request) {
-        handleGetDisplayState(request);
-    });
-    
     // Quick action endpoints
     _server->on("/api/action/proof-now", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleProofNow(request);
@@ -175,10 +171,6 @@ void WebServerService::setupRoutes() {
         [this](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
             handleProofIn(request, data, len);
         });
-    
-    _server->on("/api/action/cool", HTTP_POST, [this](AsyncWebServerRequest* request) {
-        handleStartCooling(request);
-    });
     
     _server->on("/api/action/stop", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleStopOperation(request);
@@ -426,109 +418,6 @@ void WebServerService::handleInjectEncoder(AsyncWebServerRequest* request) {
     request->send(200, "application/json", response);
 }
 
-void WebServerService::handleGetDisplayState(AsyncWebServerRequest* request) {
-    JsonDocument doc;
-    
-    if (!_ctx->screens) {
-        request->send(500, "application/json", "{\"error\":\"Screen manager not available\"}");
-        return;
-    }
-    
-    BaseController* currentScreen = _ctx->screens->getActiveScreen();
-    if (currentScreen) {
-        doc["screen"] = currentScreen->getScreenName();
-        
-        // Add screen-specific content based on screen type
-        const char* screenName = currentScreen->getScreenName();
-        
-        // Menu screen - show ALL menu items for better web UX
-        if (strcmp(screenName, "Menu") == 0 && _ctx->menu) {
-            Menu* menu = _ctx->menu;
-            Menu::MenuItem* currentMenu = menu->getCurrentMenu();
-            uint8_t menuIndex = menu->getCurrentMenuIndex();
-            
-            // Build array of ALL menu items (not just visible ones)
-            JsonArray items = doc["menuItems"].to<JsonArray>();
-            
-            // Count menu size and add all items
-            uint8_t menuSize = 0;
-            Menu::MenuItem* item = currentMenu;
-            while (item && item->name) {
-                JsonObject itemObj = items.add<JsonObject>();
-                itemObj["name"] = item->name;
-                itemObj["selected"] = (menuSize == menuIndex);
-                menuSize++;
-                item++;
-            }
-            
-            doc["menuIndex"] = menuIndex;
-            doc["menuSize"] = menuSize;
-        }
-        // Proofing screen
-        else if (strcmp(screenName, "Proofing") == 0 && _ctx->proofingController) {
-            ProofingController* proofing = static_cast<ProofingController*>(currentScreen);
-            doc["isActive"] = proofing->isActive();
-            if (proofing->isActive()) {
-                doc["startTime"] = proofing->getStartTime();
-                time_t now = time(nullptr);
-                doc["elapsedSeconds"] = (int)(now - proofing->getStartTime());
-            }
-        }
-        // Cooling screen  
-        else if (strcmp(screenName, "Cooling") == 0 && _ctx->coolingController) {
-            CoolingController* cooling = static_cast<CoolingController*>(currentScreen);
-            doc["isActive"] = cooling->isActive();
-            if (cooling->isActive()) {
-                doc["endTime"] = cooling->getEndTime();
-                time_t now = time(nullptr);
-                doc["remainingSeconds"] = (int)(cooling->getEndTime() - now);
-            }
-        }
-        // Generic handling for other screen types
-        else {
-            // For screens we don't have specific handlers for, provide basic info
-            doc["screenType"] = "generic";
-            doc["screenName"] = screenName;
-            
-            // Try to identify common screen types by name patterns
-            if (strstr(screenName, "Adjust") || strstr(screenName, "Settings")) {
-                doc["screenType"] = "settings";
-            } else if (strstr(screenName, "Confirm") || strstr(screenName, "Reset") || 
-                       strstr(screenName, "Reboot") || strstr(screenName, "PowerOff")) {
-                doc["screenType"] = "action";
-            } else if (strstr(screenName, "Display") || strstr(screenName, "Data")) {
-                doc["screenType"] = "display";
-            }
-        }
-    } else {
-        doc["screen"] = "None";
-    }
-    
-    // Add temperature and mode info
-    if (_ctx->input) {
-        doc["temperature"] = _ctx->input->getTemperature();
-    }
-    
-    if (_ctx->tempController) {
-        ITemperatureController::Mode mode = _ctx->tempController->getMode();
-        switch (mode) {
-            case ITemperatureController::HEATING:
-                doc["mode"] = "heating";
-                break;
-            case ITemperatureController::COOLING:
-                doc["mode"] = "cooling";
-                break;
-            case ITemperatureController::OFF:
-                doc["mode"] = "off";
-                break;
-        }
-    }
-    
-    String response;
-    serializeJson(doc, response);
-    request->send(200, "application/json", response);
-}
-
 void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
     // Start proofing directly without navigation simulation
     if (!_ctx->proofingController) {
@@ -616,19 +505,6 @@ void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* da
     String responseStr;
     serializeJson(response, responseStr);
     request->send(200, "application/json", responseStr);
-}
-
-void WebServerService::handleStartCooling(AsyncWebServerRequest* request) {
-    // Start cooling directly without navigation
-    if (!_ctx->coolingController) {
-        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
-        return;
-    }
-    
-    // Default cooling time of 2 hours
-    _ctx->coolingController->startCoolingWithDelay(2);
-    
-    request->send(200, "application/json", "{\"success\":true,\"message\":\"Cooling started for 2 hours\"}");
 }
 
 void WebServerService::handleStopOperation(AsyncWebServerRequest* request) {
