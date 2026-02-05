@@ -56,9 +56,9 @@ int main() {
     
     // Test that findTimezoneIndex still works for backward compatibility
     std::cout << "\nTesting findTimezoneIndex (backward compatibility):" << std::endl;
-    const char* parisPostix = "CET-1CEST,M3.5.0,M10.5.0/3";
-    int parisIndex = timezones::findTimezoneIndex(parisPostix);
-    std::cout << "  findTimezoneIndex(\"" << parisPostix << "\") = " << parisIndex << std::endl;
+    const char* parisPosix = "CET-1CEST,M3.5.0,M10.5.0/3";
+    int parisIndex = timezones::findTimezoneIndex(parisPosix);
+    std::cout << "  findTimezoneIndex(\"" << parisPosix << "\") = " << parisIndex << std::endl;
     std::cout << "  Result: " << timezones::TIMEZONES[parisIndex].continent 
               << "/" << timezones::TIMEZONES[parisIndex].name << std::endl;
     std::cout << "  (Note: Returns first match, which is expected for backward compatibility)" << std::endl;

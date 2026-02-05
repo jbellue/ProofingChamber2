@@ -55,9 +55,41 @@ namespace timezones {
     const char* getContinentName(int continentIndex);
     int getTimezoneCount(const char* continent);
     const Timezone* getTimezone(const char* continent, int localIndex);
+    int getTimezoneGlobalIndex(const char* continent, int localIndex);
     int findTimezoneIndex(const char* posixString);
 }
 ```
+
+## Timezone Selection and Storage
+
+### The Duplicate POSIX String Problem
+
+Many timezones in the database share the same POSIX string. For example:
+- `Europe/Berlin`, `Europe/Paris`, and `Europe/Rome` all use `"CET-1CEST,M3.5.0,M10.5.0/3"`
+- `Africa/Abidjan`, `Africa/Accra`, and `America/Danmarkshavn` all use `"GMT0"`
+
+This is correct from a timezone offset perspective, but it creates a problem for timezone selection: if we only store the POSIX string, we can't distinguish which specific timezone the user selected.
+
+### The Solution
+
+The system now stores **both** the timezone index and the POSIX string:
+- **Timezone Index** (`tz_idx` in preferences): A unique integer (0-460) that identifies the exact timezone
+- **POSIX String** (`timezone` in preferences): The POSIX timezone string for NTP configuration
+
+When loading the timezone selection:
+1. First, try to read the timezone index - if found, use it directly (precise)
+2. If no index is found, fall back to POSIX string lookup (backward compatible)
+
+This approach provides:
+- **Precision**: Each timezone can be uniquely identified
+- **Backward Compatibility**: Existing installations with only POSIX strings still work
+- **NTP Compatibility**: POSIX string is still available for NTP configuration
+
+### Related Functions
+
+- `getTimezoneGlobalIndex(continent, localIndex)`: Convert continent and local index to global timezone index
+- `findCurrentTimezone(storage)`: Load the current timezone, preferring index over POSIX string
+- `setTimezoneInfo(continent, name, posixString, timezoneIndex)`: Set timezone info with index for confirmation
 
 To use the helper functions, include both headers:
 ```cpp
