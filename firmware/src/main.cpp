@@ -185,6 +185,15 @@ void setup() {
 }
 
 void loop() {
+    static unsigned long lastWebUpdate = 0;
+    unsigned long now = millis();
+    
     inputManager.update();
     screensManager.update();
+    
+    // Broadcast state to web every 500ms (ensures web stays in sync with device)
+    if (appContext.webServerService && now - lastWebUpdate >= 500) {
+        appContext.webServerService->broadcastScreenState();
+        lastWebUpdate = now;
+    }
 }

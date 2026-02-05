@@ -14,10 +14,10 @@ namespace services {
         void update() override;
         
         // WebSocket for real-time data updates
-        void broadcastScreenState();
+        void broadcastScreenState() override;
         
         // Notify web view of state changes (web is a VIEW)
-        void notifyStateChange();
+        void notifyStateChange() override;
 
     private:
         AppContext* _ctx;

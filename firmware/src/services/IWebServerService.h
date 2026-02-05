@@ -6,5 +6,6 @@ namespace services {
         virtual void begin() = 0;
         virtual void update() = 0;
         virtual void notifyStateChange() = 0;
+        virtual void broadcastScreenState() = 0;
     };
 }

@@ -98,6 +98,8 @@ void ProofingController::startProofing() {
     if (ctx->screens) {
         ctx->screens->setActiveScreen(this);
         begin(); // Initialize the screen properly
+        // Small delay to ensure view is fully initialized
+        delay(10);
         // Force display refresh
         if (ctx->display) {
             ctx->display->clearBuffer();
