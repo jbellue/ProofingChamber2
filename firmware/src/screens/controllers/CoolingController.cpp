@@ -37,9 +37,8 @@ bool CoolingController::update(bool shouldRedraw) {
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
 
-    if (shouldRedraw) {
-        _endTime = _timeCalculator ? _timeCalculator() : _endTime;
-    }
+    // Don't recalculate _endTime on force redraw - it's already set in beginImpl()
+    // Force redraw should just refresh display, not change state
     bool timesUp = now >= _endTime;
     if (inputManager->isButtonPressed() || timesUp) {
         inputManager->slowTemperaturePolling(true);
