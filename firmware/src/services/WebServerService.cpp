@@ -15,12 +15,16 @@
 namespace services {
 
 WebServerService::WebServerService(AppContext* ctx)
-    : _ctx(ctx), _server(nullptr) {
+    : _ctx(ctx), _server(nullptr), _ws(nullptr) {
     // Don't create AsyncWebServer here - delays port 80 allocation
     // until after WiFi captive portal completes
 }
 
 WebServerService::~WebServerService() {
+    if (_ws) {
+        delete _ws;
+        _ws = nullptr;
+    }
     if (_server) {
         delete _server;
         _server = nullptr;
@@ -39,6 +43,9 @@ void WebServerService::begin() {
         }
     }
     
+    DEBUG_PRINTLN("Setting up WebSocket for display mirroring...");
+    setupWebSocket();
+    
     DEBUG_PRINTLN("Setting up web server routes...");
     setupRoutes();
     
@@ -46,10 +53,70 @@ void WebServerService::begin() {
     _server->begin();
     DEBUG_PRINTLN("✓ Web server started successfully on port 80");
     DEBUG_PRINTLN("  Access via IP address or http://proofingchamber.local");
+    
+    // Set up display update callback for real-time mirroring
+    if (_ctx && _ctx->display) {
+        _ctx->display->setDisplayUpdateCallback([this](const String& command) {
+            this->broadcastDisplayUpdate(command);
+        });
+        DEBUG_PRINTLN("✓ Display mirroring callback registered");
+    }
 }
 
 void WebServerService::update() {
-    // AsyncWebServer handles requests asynchronously, no polling needed
+    // Clean up WebSocket clients periodically
+    if (_ws) {
+        _ws->cleanupClients();
+    }
+}
+
+void WebServerService::setupWebSocket() {
+    if (!_server) return;
+    
+    _ws = new AsyncWebSocket("/ws");
+    _ws->onEvent([this](AsyncWebSocket* server, AsyncWebSocketClient* client, 
+                       AwsEventType type, void* arg, uint8_t* data, size_t len) {
+        this->onWebSocketEvent(server, client, type, arg, data, len);
+    });
+    _server->addHandler(_ws);
+}
+
+void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
+                                       AwsEventType type, void* arg, uint8_t* data, size_t len) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            DEBUG_PRINT("WebSocket client #");
+            DEBUG_PRINT(client->id());
+            DEBUG_PRINTLN(" connected");
+            // Send initial clear screen command
+            client->text("{\"cmd\":\"clear\"}");
+            break;
+            
+        case WS_EVT_DISCONNECT:
+            DEBUG_PRINT("WebSocket client #");
+            DEBUG_PRINT(client->id());
+            DEBUG_PRINTLN(" disconnected");
+            break;
+            
+        case WS_EVT_ERROR:
+            DEBUG_PRINT("WebSocket error from client #");
+            DEBUG_PRINTLN(client->id());
+            break;
+            
+        case WS_EVT_DATA:
+            // We don't expect data from clients for display mirroring
+            break;
+            
+        case WS_EVT_PONG:
+            // Pong received
+            break;
+    }
+}
+
+void WebServerService::broadcastDisplayUpdate(const String& command) {
+    if (_ws && _ws->count() > 0) {
+        _ws->textAll(command);
+    }
 }
 
 void WebServerService::setupRoutes() {
