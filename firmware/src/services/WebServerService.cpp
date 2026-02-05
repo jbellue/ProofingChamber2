@@ -857,46 +857,16 @@ String WebServerService::getWebPageHtml() {
             };
             
             ws.onerror = (error) => {
-                document.getElementById('wsStatus').textContent = '✗ Display connection error';
-                document.getElementById('wsStatus').style.color = '#dc3545';
+                console.error('WebSocket error:', error);
             };
             
             ws.onclose = () => {
-                document.getElementById('wsStatus').textContent = 'Reconnecting to display...';
-                document.getElementById('wsStatus').style.color = '#ffc107';
+                console.log('WebSocket closed, reconnecting to display...');
                 // Reconnect after 2 seconds
                 setTimeout(initWebSocket, 2000);
             };
         }
         
-        // Handle display commands from ESP32
-        function handleDisplayCommand(cmd) {
-            if (!ctx) return;
-            
-            switch (cmd.cmd) {
-                case 'clear':
-                    // Clear display (black)
-                    ctx.fillStyle = '#000';
-                    ctx.fillRect(0, 0, 128, 64);
-                    break;
-                    
-                case 'text':
-                    // Draw text at position
-                    // OLED uses white on black
-                    ctx.fillStyle = '#fff';
-                    ctx.font = '10px monospace';
-                    ctx.fillText(cmd.text, cmd.x, cmd.y);
-                    break;
-                    
-                case 'render':
-                    // Display update complete - refresh happens automatically
-                    break;
-                    
-                default:
-                    console.log('Unknown display command:', cmd);
-            }
-        }
-
         function showAlert(elementId, message, type) {
             const alert = document.getElementById(elementId);
             alert.className = `alert ${type}`;
