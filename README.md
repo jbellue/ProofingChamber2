@@ -13,15 +13,44 @@ A smart, temperature-controlled proofing chamber project.
 
 ## Quick Start
 
-### Firmware
+### Building the Firmware
 
-1. Install PlatformIO (VS Code extension or CLI)
-2. Build from the firmware folder:
+There are several ways to build the firmware:
 
+#### Option 1: Using the Build Script (Recommended for Automation)
+
+```bash
+./build.sh
 ```
+
+This script will:
+- Install PlatformIO if not already present
+- Build the firmware automatically
+- Provide clear error messages if something goes wrong
+
+#### Option 2: Using Make
+
+```bash
+make all      # Install PlatformIO and build
+make build    # Build only (assumes PlatformIO is installed)
+make clean    # Clean build artifacts
+```
+
+Run `make help` for all available targets.
+
+#### Option 3: Using PlatformIO Directly
+
+```bash
 cd firmware
 pio run
 ```
+
+**Prerequisites:**
+- Python 3.6 or later
+- pip (Python package installer)
+- Internet connection (for first build to download platform packages and dependencies)
+
+**Note:** The first build will take longer as PlatformIO downloads the ESP32 platform and required libraries.
 
 ### Hardware Vendor References
 
