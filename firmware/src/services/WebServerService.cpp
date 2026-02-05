@@ -60,6 +60,14 @@ void WebServerService::update() {
     if (_ws) {
         _ws->cleanupClients();
     }
+    
+    // Broadcast screen state every 500ms
+    static unsigned long lastBroadcast = 0;
+    unsigned long now = millis();
+    if (now - lastBroadcast >= 500) {
+        lastBroadcast = now;
+        broadcastScreenState();
+    }
 }
 
 void WebServerService::setupWebSocket() {
@@ -103,10 +111,52 @@ void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketCl
     }
 }
 
-void WebServerService::broadcastDisplayUpdate(const String& command) {
-    if (_ws && _ws->count() > 0) {
-        _ws->textAll(command);
+void WebServerService::broadcastScreenState() {
+    if (!_ws || _ws->count() == 0) return;
+    
+    // Build JSON with current screen state
+    StaticJsonDocument<512> doc;
+    
+    // Get current temperature
+    if (_ctx->tempController) {
+        float temp = _ctx->tempController->getTemperature();
+        doc["temperature"] = temp;
     }
+    
+    // Get current mode
+    TemperatureMode mode = _ctx->tempController->getMode();
+    const char* modeStr = "off";
+    if (mode == TemperatureMode::HEATING) modeStr = "heating";
+    else if (mode == TemperatureMode::COOLING) modeStr = "cooling";
+    doc["mode"] = modeStr;
+    
+    // Get screen name
+    if (_ctx->screens && _ctx->screens->getActiveScreen()) {
+        doc["screenName"] = _ctx->screens->getActiveScreen()->getScreenName();
+    }
+    
+    // Get proofing state
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        time_t startTime = _ctx->proofingController->getStartTime();
+        if (startTime > 0) {
+            time_t now = _ctx->clock->now();
+            doc["proofingElapsedSeconds"] = (int)(now - startTime);
+        }
+    }
+    
+    // Get cooling state
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        time_t endTime = _ctx->coolingController->getEndTime();
+        if (endTime > 0) {
+            time_t now = _ctx->clock->now();
+            doc["coolingRemainingSeconds"] = (int)(endTime - now);
+            doc["coolingEndTime"] = endTime;
+        }
+    }
+    
+    String output;
+    serializeJson(doc, output);
+    _ws->textAll(output);
 }
 
 void WebServerService::setupRoutes() {
@@ -826,7 +876,52 @@ String WebServerService::getWebPageHtml() {
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    handleDisplayCommand(data);
+                    // Update status display from WebSocket data
+                    if (data.temperature !== undefined) {
+                        document.getElementById('temperature').textContent = 
+                            data.temperature !== null ? data.temperature.toFixed(1) + '°C' : '--';
+                    }
+                    
+                    if (data.mode) {
+                        currentMode = data.mode;
+                        const modeText = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+                        document.getElementById('modeText').textContent = modeText;
+                        const indicator = document.getElementById('modeIndicator');
+                        indicator.className = `indicator ${currentMode}`;
+                    }
+                    
+                    // Update timing information
+                    const timingInfo = document.getElementById('timingInfo');
+                    const proofingTime = document.getElementById('proofingTime');
+                    const coolingTime = document.getElementById('coolingTime');
+                    let hasTimingInfo = false;
+                    
+                    if (data.proofingElapsedSeconds !== undefined) {
+                        proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(data.proofingElapsedSeconds)} elapsed`;
+                        proofingTime.style.display = 'block';
+                        hasTimingInfo = true;
+                    } else {
+                        proofingTime.style.display = 'none';
+                    }
+                    
+                    if (data.coolingRemainingSeconds !== undefined) {
+                        const remaining = Math.max(0, data.coolingRemainingSeconds);
+                        coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
+                        if (data.coolingEndTime) {
+                            coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(data.coolingEndTime)}</small>`;
+                        }
+                        coolingTime.style.display = 'block';
+                        hasTimingInfo = true;
+                    } else {
+                        coolingTime.style.display = 'none';
+                    }
+                    
+                    timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
+                    
+                    // Also update screen name if provided
+                    if (data.screenName) {
+                        console.log('Current screen:', data.screenName);
+                    }
                 } catch (e) {
                     console.error('WebSocket message error:', e);
                 }
@@ -901,54 +996,7 @@ String WebServerService::getWebPageHtml() {
             return date.toLocaleString();
         }
 
-        async function updateStatus() {
-            try {
-                // Fetch regular status (temperature, mode, timing)
-                const response = await fetch('/api/status');
-                const data = await response.json();
-                
-                document.getElementById('temperature').textContent = 
-                    data.temperature !== null ? data.temperature.toFixed(1) + '°C' : '--';
-                
-                currentMode = data.mode || 'off';
-                const modeText = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
-                document.getElementById('modeText').textContent = modeText;
-                
-                const indicator = document.getElementById('modeIndicator');
-                indicator.className = `indicator ${currentMode}`;
-                
-                // Update timing information
-                const timingInfo = document.getElementById('timingInfo');
-                const proofingTime = document.getElementById('proofingTime');
-                const coolingTime = document.getElementById('coolingTime');
-                
-                let hasTimingInfo = false;
-                
-                if (data.proofingElapsedSeconds !== undefined) {
-                    proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(data.proofingElapsedSeconds)} elapsed`;
-                    proofingTime.style.display = 'block';
-                    hasTimingInfo = true;
-                } else {
-                    proofingTime.style.display = 'none';
-                }
-                
-                if (data.coolingRemainingSeconds !== undefined) {
-                    const remaining = Math.max(0, data.coolingRemainingSeconds);
-                    coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
-                    if (data.coolingEndTime) {
-                        coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(data.coolingEndTime)}</small>`;
-                    }
-                    coolingTime.style.display = 'block';
-                    hasTimingInfo = true;
-                } else {
-                    coolingTime.style.display = 'none';
-                }
-                
-                timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
-            } catch (error) {
-                console.error('Failed to update status:', error);
-            }
-        }
+        // Status updates now come via WebSocket, no polling needed
 
         async function loadSettings() {
             try {
@@ -1143,14 +1191,10 @@ String WebServerService::getWebPageHtml() {
             }
         }
 
-        // Initialize WebSocket for display mirroring
+        // Initialize WebSocket for real-time updates
         initWebSocket();
         
-        // Update status every 2 seconds
-        setInterval(updateStatus, 2000);
-        
         // Initial load
-        updateStatus();
         loadSettings();
     </script>
 </body>

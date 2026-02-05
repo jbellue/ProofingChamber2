@@ -14,7 +14,7 @@ namespace services {
         void update() override;
         
         // WebSocket for real-time data updates
-        void broadcastDisplayUpdate(const String& command);
+        void broadcastScreenState();
 
     private:
         AppContext* _ctx;
