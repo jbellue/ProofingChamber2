@@ -4,6 +4,7 @@
 #include "../../ScreensManager.h"
 #include "../Menu.h"
 #include "../../services/IWebServerService.h"
+#include "ProofingController.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
@@ -54,7 +55,11 @@ bool CoolingController::update(bool shouldRedraw) {
         
         if (goingToProofScreen && _proofingController) {
             // When transitioning to proofing (timer expired), actually start proofing
-            _proofingController->startProofing();
+            // Cast to ProofingController to access startProofing()
+            ProofingController* proofController = static_cast<ProofingController*>(_proofingController);
+            if (proofController) {
+                proofController->startProofing();
+            }
         } else {
             // When cancelling to menu, just navigate
             BaseController* nextScreen = _menuScreen;

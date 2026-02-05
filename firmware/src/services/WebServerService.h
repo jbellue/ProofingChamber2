@@ -1,5 +1,6 @@
 #pragma once
 #include "IWebServerService.h"
+#include "ITemperatureController.h"
 #include <ESPAsyncWebServer.h>
 
 // Forward declarations
