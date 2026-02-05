@@ -212,19 +212,6 @@ void WebServerService::setupRoutes() {
         handleSetSettings(request);
     });
     
-    _server->on("/api/cooling/schedule", HTTP_POST, [this](AsyncWebServerRequest* request) {
-        handleScheduleCooling(request);
-    });
-    
-    // New virtual input endpoints
-    _server->on("/api/input/button", HTTP_POST, [this](AsyncWebServerRequest* request) {
-        handleInjectButton(request);
-    });
-    
-    _server->on("/api/input/encoder", HTTP_POST, [this](AsyncWebServerRequest* request) {
-        handleInjectEncoder(request);
-    });
-    
     // Quick action endpoints
     _server->on("/api/action/proof-now", HTTP_POST, [this](AsyncWebServerRequest* request) {
         handleProofNow(request);
@@ -382,56 +369,6 @@ void WebServerService::handleSetSettings(AsyncWebServerRequest* request) {
     String response;
     serializeJson(doc, response);
     request->send(updated ? 200 : 400, "application/json", response);
-}
-
-void WebServerService::handleScheduleCooling(AsyncWebServerRequest* request) {
-    // This is a placeholder for future implementation
-    // The full cooling schedule logic would require more integration with the screen controllers
-    request->send(501, "application/json", "{\"error\":\"Cooling schedule not yet implemented via web interface\"}");
-}
-
-// Virtual input injection handlers
-void WebServerService::handleInjectButton(AsyncWebServerRequest* request) {
-    if (!_ctx->input) {
-        request->send(500, "application/json", "{\"error\":\"Input manager not available\"}");
-        return;
-    }
-    
-    // Inject a button press
-    _ctx->input->injectButtonPress();
-    request->send(200, "application/json", "{\"status\":\"ok\",\"action\":\"button_press\"}");
-}
-
-void WebServerService::handleInjectEncoder(AsyncWebServerRequest* request) {
-    if (!request->hasParam("steps", true)) {
-        request->send(400, "application/json", "{\"error\":\"Missing 'steps' parameter\"}");
-        return;
-    }
-    
-    if (!_ctx->input) {
-        request->send(500, "application/json", "{\"error\":\"Input manager not available\"}");
-        return;
-    }
-    
-    int steps = request->getParam("steps", true)->value().toInt();
-    
-    // Validate steps are reasonable (-10 to 10)
-    if (steps < -10 || steps > 10) {
-        request->send(400, "application/json", "{\"error\":\"Steps must be between -10 and 10\"}");
-        return;
-    }
-    
-    // Inject encoder steps
-    _ctx->input->injectEncoderSteps(steps);
-    
-    JsonDocument doc;
-    doc["status"] = "ok";
-    doc["action"] = "encoder_turn";
-    doc["steps"] = steps;
-    
-    String response;
-    serializeJson(doc, response);
-    request->send(200, "application/json", response);
 }
 
 void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
@@ -811,28 +748,6 @@ String WebServerService::getWebPageHtml() {
             </div>
         </div>
 
-        <details style="margin-top: 20px;">
-            <summary style="cursor: pointer; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
-                <strong>🎛️ Advanced: Virtual Controls</strong>
-            </summary>
-            <div class="card" style="margin-top: 0;">
-                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
-                    These buttons simulate physical device navigation (for advanced users)
-                </p>
-                <div class="mode-buttons">
-                    <button class="btn btn-primary" onclick="encoderUp()">
-                        ⬆️ Up
-                    </button>
-                    <button class="btn btn-primary" onclick="encoderDown()">
-                        ⬇️ Down
-                    </button>
-                    <button class="btn btn-primary" onclick="pressButton()">
-                        ✓ Select
-                    </button>
-                </div>
-            </div>
-        </details>
-
         <div class="card">
             <h2>Temperature Settings</h2>
             <div id="settingsAlert" class="alert"></div>
@@ -1030,66 +945,6 @@ String WebServerService::getWebPageHtml() {
             }
         }
 
-        // Virtual control functions
-        async function encoderUp() {
-            try {
-                const formData = new FormData();
-                formData.append('steps', '-1');  // Negative = up/counter-clockwise
-                
-                const response = await fetch('/api/input/encoder', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    setTimeout(updateStatus, 100);  // Quick refresh
-                } else {
-                    const error = await response.json();
-                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
-                }
-            } catch (error) {
-                showAlert('statusAlert', 'Failed to communicate with device', 'error');
-            }
-        }
-
-        async function encoderDown() {
-            try {
-                const formData = new FormData();
-                formData.append('steps', '1');  // Positive = down/clockwise
-                
-                const response = await fetch('/api/input/encoder', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    setTimeout(updateStatus, 100);  // Quick refresh
-                } else {
-                    const error = await response.json();
-                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
-                }
-            } catch (error) {
-                showAlert('statusAlert', 'Failed to communicate with device', 'error');
-            }
-        }
-
-        async function pressButton() {
-            try {
-                const response = await fetch('/api/input/button', {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    setTimeout(updateStatus, 100);  // Quick refresh
-                } else {
-                    const error = await response.json();
-                    showAlert('statusAlert', error.error || 'Failed to send input', 'error');
-                }
-            } catch (error) {
-                showAlert('statusAlert', 'Failed to communicate with device', 'error');
-            }
-        }
-
         // Quick Action functions
         function showScheduleProofing() {
             document.getElementById('scheduleForm').style.display = 'block';
@@ -1109,12 +964,12 @@ String WebServerService::getWebPageHtml() {
                 
                 if (response.ok) {
                     showAlert('statusAlert', '✓ Proofing started!', 'success');
-                    setTimeout(updateStatus, 500);
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to start proofing', 'error');
                 }
             } catch (error) {
+                console.error('Failed to start proofing:', error);
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');
             }
         }
@@ -1151,12 +1006,12 @@ String WebServerService::getWebPageHtml() {
                 if (response.ok) {
                     showAlert('statusAlert', '✓ Proofing scheduled!', 'success');
                     hideScheduleProofing();
-                    setTimeout(updateStatus, 500);
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to schedule proofing', 'error');
                 }
             } catch (error) {
+                console.error('Failed to schedule proofing:', error);
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');
             }
         }
@@ -1171,12 +1026,12 @@ String WebServerService::getWebPageHtml() {
                 
                 if (response.ok) {
                     showAlert('statusAlert', '✓ Operation stopped', 'success');
-                    setTimeout(updateStatus, 500);
                 } else {
                     const error = await response.json();
                     showAlert('statusAlert', error.error || 'Failed to stop', 'error');
                 }
             } catch (error) {
+                console.error('Failed to stop operation:', error);
                 showAlert('statusAlert', 'Failed to communicate with device', 'error');
             }
         }
@@ -1201,6 +1056,7 @@ String WebServerService::getWebPageHtml() {
                     showAlert('settingsAlert', error.message || 'Failed to save settings', 'error');
                 }
             } catch (error) {
+                console.error('Failed to save settings:', error);
                 showAlert('settingsAlert', 'Failed to communicate with device', 'error');
             }
         }

@@ -44,12 +44,7 @@ namespace services {
         void handleGetSettings(AsyncWebServerRequest* request);
         void handleSetMode(AsyncWebServerRequest* request);
         void handleSetSettings(AsyncWebServerRequest* request);
-        void handleScheduleCooling(AsyncWebServerRequest* request);
         void handleGetRoot(AsyncWebServerRequest* request);
-        
-        // New virtual input endpoints
-        void handleInjectButton(AsyncWebServerRequest* request);
-        void handleInjectEncoder(AsyncWebServerRequest* request);
         
         // Quick action endpoints
         void handleProofNow(AsyncWebServerRequest* request);
