@@ -2,7 +2,7 @@
 
 #include <esp_log.h>
 
-#define LOG_TAG "ProofingChamber"
+#define LOG_TAG "Proofi"
 
 // Simple logging wrappers using ESP-IDF logging
 static inline void debug_log(const char* v) { ESP_LOGI(LOG_TAG, "%s", v); }

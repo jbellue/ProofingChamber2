@@ -230,7 +230,7 @@ These libraries are:
    - Export data as CSV
 
 5. **Multiple Device Support**
-   - mDNS hostname (proofingchamber.local)
+   - mDNS hostname (proofi.local)
    - Device discovery on network
    - Unified dashboard for multiple chambers
 

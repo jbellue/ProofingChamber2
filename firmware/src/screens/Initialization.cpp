@@ -41,34 +41,55 @@ bool Initialization::update(bool forceRedraw) {
 void Initialization::drawScreen() {
     _display->clearBuffer();
     _display->setFont(u8g2_font_t0_11_tf);
-    _display->drawStr(0, 10, "Initialisation...");
-    _display->drawStr(0, 22, "Connexion au WiFi...");
+    _display->drawStr(0, 10, "Connexion au WiFi...");
     _display->sendBuffer();
 
     // Use the injected network service to connect; continue on failure after a short timeout
     bool wifiConnected = false;
     // Name the captive portal so users can spot it easily
-    const char* portalName = "ProofingChamber";
+    const char* portalName = "Proofi";
     wifiConnected = _networkService->autoConnect(portalName, [this](const char* apName) {
         if (!_display) return;
-        _display->clearBuffer();
         _display->setFont(u8g2_font_t0_11_tf);
-        _display->drawStr(0, 10, "Portail WiFi actif");
-        _display->drawStr(0, 22, "Connectez-vous :");
-        const char* safeName = apName ? apName : "ConfigPortal";
-        _display->drawStr(0, 34, safeName);
+        _display->drawStr(0, 22, "Portail WiFi actif");
+        _display->drawStr(0, 34, apName);
         _display->sendBuffer();
     });
     if (!wifiConnected) {
-        _display->drawUTF8(0, 34, "WiFi indisponible.");
+        _display->drawUTF8(0, 22, "WiFi indisponible.");
         _display->sendBuffer();
         return; // Do not hang the boot if WiFi is down
     }
 
-    _display->drawUTF8(0, 34, "Succ\xC3\xA8s.");
-    _display->drawStr(0, 46, "Connexion au NTP...");
+        // Start the web server after WiFi is connected
+    if (_webServerService) {
+        DEBUG_PRINTLN("Starting web server...");
+        _webServerService->begin();
+        DEBUG_PRINTLN("Web server started successfully");
+        _display->drawStr(0, 22, "Serveur web actif");
+        
+        // Get and display IP address
+        String ipAddress = WiFi.localIP().toString();
+        _display->drawStr(0, 34, ipAddress.c_str());
+        
+        // Also show mDNS hostname
+        _display->drawStr(0, 46, "proofi.local");
+        _display->sendBuffer();
+        
+        // Wait 5 seconds to let user see the information
+        DEBUG_PRINT("Web interface available at: http://");
+        DEBUG_PRINTLN(ipAddress.c_str());
+        DEBUG_PRINTLN("Also accessible via: http://proofi.local");
+    } else {
+        if (!wifiConnected) {
+            DEBUG_PRINTLN("Web server not started - no WiFi connection");
+        } else {
+            DEBUG_PRINTLN("Web server not started - service not available");
+        }
+    }
+
+    _display->drawStr(0, 58, "Connexion NTP");
     _display->sendBuffer();
-    _display->setCursor(0, 58);
 
     // Configure NTP via network service
     char timezoneBuf[64];
@@ -87,40 +108,4 @@ void Initialization::drawScreen() {
         taskYIELD();
     }
     DEBUG_PRINTLN("\nTime synced with NTP");
-    
-    // Start the web server after WiFi is connected
-    if (_webServerService && wifiConnected) {
-        DEBUG_PRINTLN("Starting web server...");
-        _webServerService->begin();
-        DEBUG_PRINTLN("Web server started successfully");
-        
-        // Display IP address and access information
-        _display->clearBuffer();
-        _display->setFont(u8g2_font_t0_11_tf);
-        _display->drawStr(0, 10, "Serveur web actif");
-        _display->drawStr(0, 22, "Acces via:");
-        
-        // Get and display IP address
-        String ipAddress = WiFi.localIP().toString();
-        _display->drawStr(0, 34, ipAddress.c_str());
-        
-        // Also show mDNS hostname
-        _display->drawStr(0, 46, "ou:");
-        _display->drawStr(0, 58, "proofingchamber.local");
-        _display->sendBuffer();
-        
-        // Wait 5 seconds to let user see the information
-        DEBUG_PRINTLN("========================================");
-        DEBUG_PRINT("Web interface available at: http://");
-        DEBUG_PRINTLN(ipAddress.c_str());
-        DEBUG_PRINTLN("Also accessible via: http://proofingchamber.local");
-        DEBUG_PRINTLN("========================================");
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    } else {
-        if (!wifiConnected) {
-            DEBUG_PRINTLN("Web server not started - no WiFi connection");
-        } else {
-            DEBUG_PRINTLN("Web server not started - service not available");
-        }
-    }
 }
