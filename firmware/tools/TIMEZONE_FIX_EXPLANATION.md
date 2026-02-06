@@ -45,12 +45,9 @@ static constexpr char TIMEZONE_INDEX_KEY[] = "tz_idx";   // Global index (NEW)
 │ findCurrentTimezone │
 └──────────┬──────────┘
            │
-           ├─→ Read "tz_idx" from storage
-           │   └─→ If valid (0-460): Use directly ✓ [PRECISE]
-           │
-           └─→ Read "timezone" from storage
-               └─→ Call findTimezoneIndex(posix) [BACKWARD COMPATIBLE]
-                   └─→ Returns first match (may be wrong)
+           └─→ Read "tz_idx" from storage
+               └─→ If valid (0-460): Use directly ✓ [PRECISE]
+               └─→ Otherwise: Use DEFAULT_TIMEZONE_INDEX
 ```
 
 ## Code Changes Summary
@@ -74,34 +71,32 @@ inline int getTimezoneGlobalIndex(const char* continent, int localIndex) {
 
 ### 2. MenuItems.cpp
 ```cpp
-// UPDATED: Check index first, fall back to POSIX string
+// UPDATED: Use timezone index directly
 int findCurrentTimezone(services::IStorage* storage) {
-    // Try index first (NEW)
-    int timezoneIndex = storage->getInt(storage::keys::TIMEZONE_INDEX_KEY, -1);
-    if (timezoneIndex >= 0 && timezoneIndex < timezones::TIMEZONE_COUNT) {
-        return timezoneIndex;  // Precise match
+    if (!storage) {
+        return timezones::DEFAULT_TIMEZONE_INDEX;
     }
     
-    // Fall back to POSIX string (OLD - backward compatible)
-    char posixString[64] = "";
-    storage->getCharArray(storage::keys::TIMEZONE_KEY, posixString, sizeof(posixString), "");
-    return timezones::findTimezoneIndex(posixString);  // First match
+    // Read the timezone index
+    int timezoneIndex = storage->getInt(storage::keys::TIMEZONE_INDEX_KEY, timezones::DEFAULT_TIMEZONE_INDEX);
+    
+    // Validate and return
+    if (timezoneIndex >= 0 && timezoneIndex < timezones::TIMEZONE_COUNT) {
+        return timezoneIndex;
+    }
+    
+    return timezones::DEFAULT_TIMEZONE_INDEX;
 }
 ```
 
 ### 3. ConfirmTimezoneController.cpp
 ```cpp
-// UPDATED: Save both index and POSIX string
+// UPDATED: Save both index (for identification) and POSIX string (for NTP)
+if (_timezoneIndex >= 0) {
+    ctx->storage->setInt(storage::keys::TIMEZONE_INDEX_KEY, _timezoneIndex);
+}
 ctx->storage->setCharArray(storage::keys::TIMEZONE_KEY, _timezonePosixString);
-ctx->storage->setInt(storage::keys::TIMEZONE_INDEX_KEY, _timezoneIndex);  // NEW
 ```
-
-## Backward Compatibility
-
-Existing installations will continue to work:
-- If no index is stored, system falls back to POSIX string lookup
-- First boot after update will use POSIX string (old behavior)
-- After first timezone change, both index and POSIX are saved (new behavior)
 
 ## Testing
 
@@ -115,11 +110,10 @@ g++ -std=c++17 -I../src test_timezone_fix.cpp -o test_timezone_fix
 The test will:
 1. Identify all duplicate POSIX strings in the database
 2. Verify that `getTimezoneGlobalIndex()` correctly maps each timezone
-3. Confirm backward compatibility of `findTimezoneIndex()`
+3. Demonstrate that `findTimezoneIndex()` returns the first match (showing why index is needed)
 
 ## Benefits
 
 ✅ **Precision**: Each timezone is uniquely identified  
-✅ **Backward Compatible**: Existing installations continue to work  
 ✅ **NTP Compatible**: POSIX string still available for NTP configuration  
 ✅ **Minimal Changes**: Small, surgical modifications to existing code  

@@ -72,23 +72,20 @@ This is correct from a timezone offset perspective, but it creates a problem for
 
 ### The Solution
 
-The system now stores **both** the timezone index and the POSIX string:
+The system stores **both** the timezone index and the POSIX string:
 - **Timezone Index** (`tz_idx` in preferences): A unique integer (0-460) that identifies the exact timezone
-- **POSIX String** (`timezone` in preferences): The POSIX timezone string for NTP configuration
+- **POSIX String** (`timezone` in preferences): The POSIX timezone string for NTP configuration and display
 
-When loading the timezone selection:
-1. First, try to read the timezone index - if found, use it directly (precise)
-2. If no index is found, fall back to POSIX string lookup (backward compatible)
+When loading the timezone selection, the system reads the timezone index directly for precise identification.
 
 This approach provides:
 - **Precision**: Each timezone can be uniquely identified
-- **Backward Compatibility**: Existing installations with only POSIX strings still work
 - **NTP Compatibility**: POSIX string is still available for NTP configuration
 
 ### Related Functions
 
 - `getTimezoneGlobalIndex(continent, localIndex)`: Convert continent and local index to global timezone index
-- `findCurrentTimezone(storage)`: Load the current timezone, preferring index over POSIX string
+- `findCurrentTimezone(storage)`: Load the current timezone using the stored index
 - `setTimezoneInfo(continent, name, posixString, timezoneIndex)`: Set timezone info with index for confirmation
 
 To use the helper functions, include both headers:

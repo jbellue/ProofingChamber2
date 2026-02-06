@@ -54,14 +54,14 @@ int main() {
                   << ", local: " << localIndex << ")" << std::endl;
     }
     
-    // Test that findTimezoneIndex still works for backward compatibility
-    std::cout << "\nTesting findTimezoneIndex (backward compatibility):" << std::endl;
+    // Test that findTimezoneIndex returns first match (demonstrating why index is needed)
+    std::cout << "\nDemonstrating why timezone index is necessary:" << std::endl;
     const char* parisPosix = "CET-1CEST,M3.5.0,M10.5.0/3";
     int parisIndex = timezones::findTimezoneIndex(parisPosix);
     std::cout << "  findTimezoneIndex(\"" << parisPosix << "\") = " << parisIndex << std::endl;
     std::cout << "  Result: " << timezones::TIMEZONES[parisIndex].continent 
               << "/" << timezones::TIMEZONES[parisIndex].name << std::endl;
-    std::cout << "  (Note: Returns first match, which is expected for backward compatibility)" << std::endl;
+    std::cout << "  ⚠️  Returns first match (Berlin), not Paris! This is why we need the index." << std::endl;
     
     std::cout << "\n✅ All tests passed!" << std::endl;
     return 0;

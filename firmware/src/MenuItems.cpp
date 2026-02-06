@@ -18,7 +18,7 @@ namespace {
     static Menu::MenuItem* timezoneMenuAllocated = nullptr;
     static bool timezoneMenusInitialized = false;
     
-    // Helper function to find the current timezone based on saved index or posix string
+    // Helper function to find the current timezone based on saved index
     // Returns the global timezone index
     // Returns DEFAULT_TIMEZONE_INDEX if not found
     int findCurrentTimezone(services::IStorage* storage) {
@@ -26,25 +26,15 @@ namespace {
             return timezones::DEFAULT_TIMEZONE_INDEX;
         }
         
-        // First, try to read the timezone index (new approach)
-        int timezoneIndex = storage->getInt(storage::keys::TIMEZONE_INDEX_KEY, -1);
+        // Read the timezone index
+        int timezoneIndex = storage->getInt(storage::keys::TIMEZONE_INDEX_KEY, timezones::DEFAULT_TIMEZONE_INDEX);
         
-        // If we have a valid index, use it
+        // Validate and return
         if (timezoneIndex >= 0 && timezoneIndex < timezones::TIMEZONE_COUNT) {
             return timezoneIndex;
         }
         
-        // Otherwise, fall back to POSIX string lookup (backward compatibility)
-        char posixString[64] = "";
-        storage->getCharArray(storage::keys::TIMEZONE_KEY, posixString, sizeof(posixString), "");
-        
-        if (posixString[0] == '\0') {
-            // Return default timezone (Paris) if no timezone is saved
-            return timezones::DEFAULT_TIMEZONE_INDEX;
-        }
-        
-        // Use the helper function from Timezones.h
-        return timezones::findTimezoneIndex(posixString);
+        return timezones::DEFAULT_TIMEZONE_INDEX;
     }
     
     // Helper to get continent index for a timezone
