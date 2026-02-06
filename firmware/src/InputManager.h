@@ -17,11 +17,6 @@ public:
     int getPendingSteps() const override;
     void slowTemperaturePolling(bool slowPolling) override;
     float getTemperature() const override;
-    
-    // Virtual input injection for web interface
-    void injectButtonPress() override;
-    void injectEncoderSteps(int steps) override;
-
 private:
     static void isrEncoder(void* arg);
 
