@@ -169,14 +169,3 @@ void DisplayManager::drawButtons(const char* buttonTexts[], uint8_t buttonCount,
         }
     }
 }
-
-// WebSocket display mirroring support
-void DisplayManager::setDisplayUpdateCallback(std::function<void(const String&)> callback) {
-    _displayUpdateCallback = callback;
-}
-
-void DisplayManager::notifyDisplayUpdate(const String& command) {
-    if (_displayUpdateCallback) {
-        _displayUpdateCallback(command);
-    }
-}

@@ -34,5 +34,4 @@ public:
     virtual void print(const char* str) = 0;
     virtual uint8_t drawTitle(const char* title, const uint8_t y = 10) = 0;
     virtual void drawButtons(const char* buttonTexts[], uint8_t buttonCount, int8_t selectedButton = -1) = 0;
-    virtual void setDisplayUpdateCallback(std::function<void(const String&)> callback) = 0;
 };

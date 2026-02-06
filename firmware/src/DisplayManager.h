@@ -37,14 +37,7 @@ public:
 
     uint8_t drawTitle(const char* title, const uint8_t y = 10) override;
     void drawButtons(const char* buttonTexts[], uint8_t buttonCount, int8_t selectedButton = -1) override;
-    U8G2* getDisplay() { return &_display; }
-    
-    // WebSocket display mirroring
-    void setDisplayUpdateCallback(std::function<void(const String&)> callback);
-    
+    U8G2* getDisplay() { return &_display; }    
 private:
     U8G2_SH1106_128X64_NONAME_F_HW_I2C _display;
-    std::function<void(const String&)> _displayUpdateCallback;
-    
-    void notifyDisplayUpdate(const String& command);
 };
