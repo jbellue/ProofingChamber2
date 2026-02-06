@@ -20,34 +20,7 @@ NetworkService::~NetworkService() {
 }
 
 bool NetworkService::autoConnect(const char* portalSsid,
-                                 std::function<void(const char* apName)> onPortalStarted) {
-    DEBUG_PRINTLN("╔════════════════════════════════════════════════════╗");
-    DEBUG_PRINTLN("║   WiFi Connection Starting - Diagnostics          ║");
-    DEBUG_PRINTLN("╚════════════════════════════════════════════════════╝");
-    
-    // DIAGNOSTICS: Verify WiFi hardware is functional
-    DEBUG_PRINTLN("📊 WiFi Hardware Diagnostics:");
-    DEBUG_PRINT("  Chip Model: ");
-    DEBUG_PRINTLN(ESP.getChipModel());
-    DEBUG_PRINT("  WiFi MAC: ");
-    DEBUG_PRINTLN(WiFi.macAddress().c_str());
-    
-    // Test if WiFi can scan - this verifies hardware works
-    DEBUG_PRINTLN("  Testing WiFi scan capability...");
-    int networks = WiFi.scanNetworks();
-    DEBUG_PRINT("  Networks found: ");
-    DEBUG_PRINTLN(String(networks).c_str());
-    if (networks > 0) {
-        DEBUG_PRINTLN("  ✓ WiFi hardware is functional");
-    } else {
-        DEBUG_PRINTLN("  ⚠️ WARNING: WiFi scan found no networks - possible hardware issue!");
-    }
-    
-    // CRITICAL: Ensure clean WiFi state before starting
-    // This is essential for WiFiManager to work correctly
-    // NOTE: We do NOT call WiFi.disconnect(true) here because that would
-    // erase saved credentials from RAM, preventing auto-reconnect!
-    // WiFiManager loads credentials from NVS automatically.
+                                 std::function<void(const char* apName)> onPortalStarted) {   
     DEBUG_PRINTLN("\n🔄 Resetting WiFi to clean state...");
     WiFi.mode(WIFI_OFF);    // Turn off WiFi completely (preserves credentials)
     delay(100);             // Let WiFi power down
@@ -59,12 +32,9 @@ bool NetworkService::autoConnect(const char* portalSsid,
     DEBUG_PRINTLN(String(WiFi.getMode()).c_str());
     
     DEBUG_PRINTLN("\n📡 Creating WiFiManager instance...");
-    // CRITICAL FIX: Keep WiFiManager as member variable so it stays alive
-    // If created as local variable, it gets destroyed when function returns,
-    // which shuts down the AP even if portal is still needed!
     if (!_wifiManager) {
         _wifiManager = new WiFiManager();
-        DEBUG_PRINTLN("  ✓ New WiFiManager instance created (will persist)");
+        DEBUG_PRINTLN("  ✓ New WiFiManager instance created");
     } else {
         DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
     }
@@ -90,31 +60,17 @@ bool NetworkService::autoConnect(const char* portalSsid,
         _wifiManager->setAPCallback([onPortalStarted](WiFiManager* wm) {
             // When portal starts after failed connection attempts,
             // ensure WiFi is in correct AP+STA mode
-            DEBUG_PRINTLN("Portal starting - ensuring WiFi is in AP+STA mode...");
-            
-            // Step 1: Complete WiFi shutdown
+            DEBUG_PRINTLN("Portal starting");
+
             WiFi.mode(WIFI_OFF);
             delay(100);  // Let radio power down
             
-            // Step 2: Explicitly set to AP+STA mode
             WiFi.mode(WIFI_AP_STA);
             delay(200);  // Let mode transition complete
             
             String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
             IPAddress apIp = WiFi.softAPIP();
             wifi_mode_t mode = WiFi.getMode();
-            
-            DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-            DEBUG_PRINTLN("║   CAPTIVE PORTAL STARTED!              ║");
-            DEBUG_PRINTLN("╚════════════════════════════════════════╝");
-            DEBUG_PRINT("  AP Name: ");
-            DEBUG_PRINTLN(apName.c_str());
-            DEBUG_PRINT("  AP IP: ");
-            DEBUG_PRINTLN(apIp.toString().c_str());
-            DEBUG_PRINT("  WiFi Mode: ");
-            DEBUG_PRINT(String(mode).c_str());
-            DEBUG_PRINTLN(mode == WIFI_AP_STA ? " (AP+STA - correct)" : " (WRONG MODE!)");
-            DEBUG_PRINTLN("  Connect to this network and configure WiFi");
             
             onPortalStarted(apName.c_str());
         });
@@ -132,147 +88,27 @@ bool NetworkService::autoConnect(const char* portalSsid,
         connected = _wifiManager->autoConnect();
     }
     
-    if (connected) {
-        DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-        DEBUG_PRINTLN("║   WiFi CONNECTED SUCCESSFULLY!         ║");
-        DEBUG_PRINTLN("╚════════════════════════════════════════╝");
-        DEBUG_PRINT("  SSID: ");
-        DEBUG_PRINTLN(WiFi.SSID().c_str());
-        DEBUG_PRINT("  IP Address: ");
-        DEBUG_PRINTLN(WiFi.localIP().toString().c_str());
-        DEBUG_PRINT("  Signal Strength: ");
-        DEBUG_PRINT(WiFi.RSSI());
-        DEBUG_PRINTLN(" dBm");
-        
-        // Set up mDNS so users can access via http://proofingchamber.local
+    if (connected) {       
+        // Set up mDNS so users can access via http://proofi.local
         DEBUG_PRINTLN("Starting mDNS responder...");
-        if (MDNS.begin("proofingchamber")) {
-            DEBUG_PRINTLN("✓ mDNS responder started: proofingchamber.local");
+        if (MDNS.begin("proofi")) {
+            DEBUG_PRINTLN("✓ mDNS responder started: proofi.local");
             MDNS.addService("http", "tcp", 80);
         } else {
             DEBUG_PRINTLN("✗ Error setting up mDNS responder!");
         }
-        DEBUG_PRINTLN("========================================");
     } else {
-        DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-        DEBUG_PRINTLN("║   WiFi CONNECTION FAILED               ║");
-        DEBUG_PRINTLN("╚════════════════════════════════════════╝");
+        DEBUG_PRINTLN("WiFi CONNECTION FAILED");
         DEBUG_PRINTLN("  Possible reasons:");
         DEBUG_PRINTLN("  - Portal timeout (user didn't configure)");
         DEBUG_PRINTLN("  - Connection timeout (wrong credentials)");
         DEBUG_PRINTLN("  - Hardware issue");
-        DEBUG_PRINTLN("========================================");
-    }
-    
-    // NOTE: We do NOT call WiFi.persistent(true) or WiFi.setAutoReconnect(true) here
-    // WiFiManager already handles persistence and auto-reconnect internally
-    // Adding extra calls can cause conflicts and unreliable behavior
-    
-    return connected;
-}
-
-bool NetworkService::startConfigPortal(const char* portalSsid,
-                                       std::function<void(const char* apName)> onPortalStarted) {
-    DEBUG_PRINTLN("=== FORCED CONFIG PORTAL MODE ===");
-    DEBUG_PRINTLN("This will ALWAYS start the captive portal,");
-    DEBUG_PRINTLN("even if WiFi credentials exist.");
-    
-    // CRITICAL: Ensure clean WiFi state before starting
-    DEBUG_PRINTLN("Stopping any existing WiFi...");
-    WiFi.disconnect(true);  // Disconnect and erase credentials from RAM
-    WiFi.mode(WIFI_OFF);    // Turn off WiFi completely
-    delay(100);             // Give WiFi time to fully shut down
-    
-    DEBUG_PRINTLN("Setting WiFi mode to AP+STA...");
-    WiFi.mode(WIFI_AP_STA); // Set to AP+STA mode for portal
-    delay(100);             // Give WiFi time to initialize
-    
-    DEBUG_PRINTLN("Creating/reusing WiFiManager instance...");
-    // CRITICAL FIX: Keep WiFiManager as member variable so it stays alive
-    if (!_wifiManager) {
-        _wifiManager = new WiFiManager();
-        DEBUG_PRINTLN("  ✓ New WiFiManager instance created (will persist)");
-    } else {
-        DEBUG_PRINTLN("  ✓ Reusing existing WiFiManager instance");
-    }
-    
-    // Configure WiFiManager
-    DEBUG_PRINTLN("Configuring WiFiManager...");
-    _wifiManager->setConfigPortalTimeout(0);      // No timeout - stay open until configured
-    _wifiManager->setBreakAfterConfig(true);      // exit once credentials are saved
-    _wifiManager->setSaveConfigCallback([]() {
-        DEBUG_PRINTLN("✓ WiFiManager saved credentials to NVS");
-    });
-    
-    // Enable debug output
-    _wifiManager->setDebugOutput(true);
-    DEBUG_PRINTLN("WiFiManager debug output enabled");
-    
-    if (onPortalStarted) {
-        _wifiManager->setAPCallback([onPortalStarted](WiFiManager* wm) {
-            // CRITICAL: Ensure WiFi is in AP+STA mode when forced portal starts
-            DEBUG_PRINTLN("Forced portal starting - ensuring WiFi is in AP+STA mode...");
-            WiFi.mode(WIFI_OFF);
-            delay(100);
-            WiFi.mode(WIFI_AP_STA);
-            delay(200);
-            
-            String apName = wm ? wm->getConfigPortalSSID() : String("ConfigPortal");
-            IPAddress apIp = WiFi.softAPIP();
-            DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-            DEBUG_PRINTLN("║   CAPTIVE PORTAL STARTED (FORCED)!     ║");
-            DEBUG_PRINTLN("╚════════════════════════════════════════╝");
-            DEBUG_PRINT("  AP Name: ");
-            DEBUG_PRINTLN(apName.c_str());
-            DEBUG_PRINT("  AP IP: ");
-            DEBUG_PRINTLN(apIp.toString().c_str());
-            DEBUG_PRINTLN("  Connect to this network and configure WiFi");
-            DEBUG_PRINTLN("  Portal will stay open until configured");
-            onPortalStarted(apName.c_str());
-        });
-    }
-    
-    // Force portal mode - will NOT try saved credentials
-    DEBUG_PRINTLN("Starting FORCED config portal...");
-    DEBUG_PRINT("  Portal SSID: ");
-    DEBUG_PRINTLN(portalSsid ? portalSsid : "ESP_AP");
-    
-    bool connected = false;
-    if (portalSsid && portalSsid[0] != '\0') {
-        connected = _wifiManager->startConfigPortal(portalSsid);
-    } else {
-        connected = _wifiManager->startConfigPortal();
-    }
-    
-    if (connected) {
-        DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-        DEBUG_PRINTLN("║   WiFi CONFIGURED SUCCESSFULLY!        ║");
-        DEBUG_PRINTLN("╚════════════════════════════════════════╝");
-        DEBUG_PRINT("  SSID: ");
-        DEBUG_PRINTLN(WiFi.SSID().c_str());
-        DEBUG_PRINT("  IP Address: ");
-        DEBUG_PRINTLN(WiFi.localIP().toString().c_str());
-        
-        // Set up mDNS
-        if (MDNS.begin("proofingchamber")) {
-            DEBUG_PRINTLN("✓ mDNS responder started: proofingchamber.local");
-            MDNS.addService("http", "tcp", 80);
-        }
-        DEBUG_PRINTLN("========================================");
-    } else {
-        DEBUG_PRINTLN("╔════════════════════════════════════════╗");
-        DEBUG_PRINTLN("║   PORTAL EXITED WITHOUT CONFIGURATION  ║");
-        DEBUG_PRINTLN("╚════════════════════════════════════════╝");
-        DEBUG_PRINTLN("========================================");
     }
     
     return connected;
 }
 
 void NetworkService::resetSettings() {
-    DEBUG_PRINTLN("=== RESETTING WiFi SETTINGS ===");
-    DEBUG_PRINTLN("This will erase all saved WiFi credentials");
-    
     // Stop WiFi completely first
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
