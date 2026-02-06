@@ -1,4 +1,4 @@
-#include "WebServerService.h"
+#include "./WebServerService.h"
 #include "../AppContext.h"
 #include "../ITemperatureController.h"
 #include "../IInputManager.h"
@@ -52,7 +52,7 @@ void WebServerService::begin() {
     DEBUG_PRINTLN("Starting web server...");
     _server->begin();
     DEBUG_PRINTLN("✓ Web server started successfully on port 80");
-    DEBUG_PRINTLN("  Access via IP address or http://proofingchamber.local");
+    DEBUG_PRINTLN("  Access via IP address or http://proofi.local");
 }
 
 void WebServerService::update() {
@@ -537,7 +537,7 @@ String WebServerService::getWebPageHtml() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proofing Chamber Control</title>
+    <title>Proofi</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍞</text></svg>">
     <style>
         * {
@@ -736,16 +736,16 @@ String WebServerService::getWebPageHtml() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍞 Proofing Chamber</h1>
+            <h1>🍞 Proofi 🍞</h1>
             <p>Temperature Control System</p>
         </div>
 
         <div class="card">
-            <h2>Current Status</h2>
+            <h2>Status</h2>
             <div id="statusAlert" class="alert"></div>
             <div class="status-grid">
                 <div class="status-item">
-                    <div class="status-label">Temperature</div>
+                    <div class="status-label">Température</div>
                     <div class="status-value temperature" id="temperature">--</div>
                 </div>
                 <div class="status-item">
@@ -763,16 +763,13 @@ String WebServerService::getWebPageHtml() {
         </div>
 
         <div class="card">
-            <h2>Quick Actions</h2>
-            <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
-                Direct control buttons for common operations
-            </p>
+            <h2>Actions Rapides</h2>
             <div class="mode-buttons">
                 <button class="btn" style="background: #28a745;" onclick="startProofingNow()">
-                    🔥 Proof Now
+                    🔥 Mettre en pousse
                 </button>
                 <button class="btn" style="background: #17a2b8;" onclick="showScheduleProofing()">
-                    🕐 Schedule Proof
+                    🕐 Programmer la pousse
                 </button>
                 <button class="btn" style="background: #dc3545;" onclick="stopOperation()" id="stopBtn">
                     ⏹️ Stop
@@ -781,58 +778,58 @@ String WebServerService::getWebPageHtml() {
             
             <!-- Schedule Proofing Form -->
             <div id="scheduleForm" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                <h3 style="margin-top: 0;">Schedule Proofing</h3>
+                <h3 style="margin-top: 0;">Programmer la pousse</h3>
                 <div class="input-group">
-                    <label>Proof at specific time:</label>
+                    <label>Pousser à:</label>
                     <input type="time" id="proofAtTime" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
                 </div>
-                <div style="text-align: center; margin: 10px 0; color: #666;">OR</div>
+                <div style="text-align: center; margin: 10px 0; color: #666;">OU</div>
                 <div class="input-group">
-                    <label>Proof in (hours):</label>
+                    <label>Pousser dans (heures):</label>
                     <input type="number" id="proofInHours" min="0" max="24" step="0.5" placeholder="e.g., 2.5" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
                 </div>
                 <div class="mode-buttons" style="margin-top: 15px;">
-                    <button class="btn btn-primary" onclick="scheduleProofing()">✓ Schedule</button>
-                    <button class="btn" style="background: #6c757d;" onclick="hideScheduleProofing()">Cancel</button>
+                    <button class="btn btn-primary" onclick="scheduleProofing()">✓ Programmer</button>
+                    <button class="btn" style="background: #6c757d;" onclick="hideScheduleProofing()">Annuler</button>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>Temperature Settings</h2>
+            <h2>Paramètres de température</h2>
             <div id="settingsAlert" class="alert"></div>
             
             <div class="settings-group">
-                <h3>🔥 Heating Mode</h3>
+                <h3>🔥 Pousse</h3>
                 <div class="input-group">
-                    <label>Lower Limit (°C):</label>
+                    <label>Limite inférieure (°C):</label>
                     <input type="number" id="heatingLower" value="23" min="-50" max="100">
                 </div>
                 <div class="input-group">
-                    <label>Upper Limit (°C):</label>
+                    <label>Limite supérieure (°C):</label>
                     <input type="number" id="heatingUpper" value="32" min="-50" max="100">
                 </div>
             </div>
             
             <div class="settings-group">
-                <h3>❄️ Cooling Mode</h3>
+                <h3>❄️ Refroidissement</h3>
                 <div class="input-group">
-                    <label>Lower Limit (°C):</label>
+                    <label>Limite inférieure (°C):</label>
                     <input type="number" id="coolingLower" value="2" min="-50" max="100">
                 </div>
                 <div class="input-group">
-                    <label>Upper Limit (°C):</label>
+                    <label>Limite supérieure (°C):</label>
                     <input type="number" id="coolingUpper" value="7" min="-50" max="100">
                 </div>
             </div>
             
             <button class="btn btn-primary" onclick="saveSettings()">
-                💾 Save Settings
+                💾 Enregistrer les paramètres
             </button>
         </div>
 
         <div class="footer">
-            <p>Proofing Chamber Web Interface v1.0</p>
+            <p>Proofi v1.0</p>
         </div>
     </div>
 
@@ -863,7 +860,7 @@ String WebServerService::getWebPageHtml() {
                     // Update status display from WebSocket data
                     if (data.temperature !== undefined) {
                         document.getElementById('temperature').textContent = 
-                            data.temperature !== null ? data.temperature.toFixed(1) + '°C' : '--';
+                            data.temperature !== null ? data.temperature.toFixed(1) + '℃' : '--';
                     }
                     
                     if (data.mode) {
@@ -926,7 +923,7 @@ String WebServerService::getWebPageHtml() {
             if (proofingStartTime) {
                 const now = Math.floor(Date.now() / 1000);
                 const elapsed = Math.max(0, now - proofingStartTime);
-                proofingTime.innerHTML = `<strong>⏱️ Proofing:</strong> ${formatTime(elapsed)} elapsed`;
+                proofingTime.innerHTML = `<strong>⏱️ Pousse : </strong> ${formatTime(elapsed)} écoulé`;
                 proofingTime.style.display = 'block';
                 hasTimingInfo = true;
             } else {
@@ -937,8 +934,8 @@ String WebServerService::getWebPageHtml() {
             if (coolingEndTime) {
                 const now = Math.floor(Date.now() / 1000);
                 const remaining = Math.max(0, coolingEndTime - now);
-                coolingTime.innerHTML = `<strong>🕐 Cooling:</strong> ${formatTime(remaining)} until proofing starts`;
-                coolingTime.innerHTML += `<br><small>Starts at: ${formatDateTime(coolingEndTime)}</small>`;
+                coolingTime.innerHTML = `<strong>🕐 Refroidissement :</strong> ${formatTime(remaining)} avant le début de la pousse`;
+                coolingTime.innerHTML += `<br><small>Commence à : ${formatDateTime(coolingEndTime)}</small>`;
                 coolingTime.style.display = 'block';
                 hasTimingInfo = true;
                 
@@ -987,8 +984,6 @@ String WebServerService::getWebPageHtml() {
             const date = new Date(timestamp * 1000);
             return date.toLocaleString();
         }
-
-        // Status updates now come via WebSocket, no polling needed
 
         async function loadSettings() {
             try {
