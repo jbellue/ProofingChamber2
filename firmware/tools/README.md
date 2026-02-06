@@ -55,9 +55,38 @@ namespace timezones {
     const char* getContinentName(int continentIndex);
     int getTimezoneCount(const char* continent);
     const Timezone* getTimezone(const char* continent, int localIndex);
+    int getTimezoneGlobalIndex(const char* continent, int localIndex);
     int findTimezoneIndex(const char* posixString);
 }
 ```
+
+## Timezone Selection and Storage
+
+### The Duplicate POSIX String Problem
+
+Many timezones in the database share the same POSIX string. For example:
+- `Europe/Berlin`, `Europe/Paris`, and `Europe/Rome` all use `"CET-1CEST,M3.5.0,M10.5.0/3"`
+- `Africa/Abidjan`, `Africa/Accra`, and `America/Danmarkshavn` all use `"GMT0"`
+
+This is correct from a timezone offset perspective, but it creates a problem for timezone selection: if we only store the POSIX string, we can't distinguish which specific timezone the user selected.
+
+### The Solution
+
+The system stores **both** the timezone index and the POSIX string:
+- **Timezone Index** (`tz_idx` in preferences): A unique integer (0-460) that identifies the exact timezone
+- **POSIX String** (`timezone` in preferences): The POSIX timezone string for NTP configuration and display
+
+When loading the timezone selection, the system reads the timezone index directly for precise identification.
+
+This approach provides:
+- **Precision**: Each timezone can be uniquely identified
+- **NTP Compatibility**: POSIX string is still available for NTP configuration
+
+### Related Functions
+
+- `getTimezoneGlobalIndex(continent, localIndex)`: Convert continent and local index to global timezone index
+- `findCurrentTimezone(storage)`: Load the current timezone using the stored index
+- `setTimezoneInfo(continent, name, posixString, timezoneIndex)`: Set timezone info with index for confirmation
 
 To use the helper functions, include both headers:
 ```cpp

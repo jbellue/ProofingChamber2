@@ -1,0 +1,9 @@
+{
+  "Africa/Abidjan": "GMT0",
+  "Africa/Accra": "GMT0",
+  "America/Danmarkshavn": "GMT0",
+  "Europe/Paris": "CET-1CEST,M3.5.0,M10.5.0/3",
+  "Europe/Berlin": "CET-1CEST,M3.5.0,M10.5.0/3",
+  "Europe/Rome": "CET-1CEST,M3.5.0,M10.5.0/3",
+  "America/New_York": "EST5EDT,M3.2.0,M11.1.0"
+}

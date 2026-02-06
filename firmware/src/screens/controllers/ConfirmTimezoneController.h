@@ -14,7 +14,7 @@ public:
     bool update(bool forceRedraw = false) override;
 
     // Set the timezone info to confirm
-    void setTimezoneInfo(const char* continent, const char* tzName, const char* posixString);
+    void setTimezoneInfo(const char* continent, const char* tzName, const char* posixString, int timezoneIndex);
 
 private:
     ConfirmTimezoneView* _view;
@@ -22,6 +22,7 @@ private:
     const char* _timezoneDisplayName = nullptr;
     const char* _timezonePosixString = nullptr;
     const char* _timezoneContinentName = nullptr;
+    int _timezoneIndex = -1;
 
     void beginImpl() override;
 };

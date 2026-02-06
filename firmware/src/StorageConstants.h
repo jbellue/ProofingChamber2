@@ -9,6 +9,7 @@ namespace storage
         static constexpr char COLD_LOWER_LIMIT_KEY[] = "c_lower";
         static constexpr char COLD_UPPER_LIMIT_KEY[] = "c_upper";
         static constexpr char TIMEZONE_KEY[] = "timezone";
+        static constexpr char TIMEZONE_INDEX_KEY[] = "tz_idx";
     }
     namespace defaults
     {

@@ -218,7 +218,10 @@ void MenuActions::selectTimezoneByData() {
         return;
     }
     
-    _confirmTimezoneController->setTimezoneInfo(continentName, tz->name, tz->posixString);
+    // Get the global timezone index for this selection
+    int globalTimezoneIndex = timezones::getTimezoneGlobalIndex(continentName, selectedIndex);
+    
+    _confirmTimezoneController->setTimezoneInfo(continentName, tz->name, tz->posixString, globalTimezoneIndex);
     
     BaseController* currentScreen = _ctx->screens->getActiveScreen();
     if (currentScreen) {

@@ -69,6 +69,20 @@ namespace timezones {
         return nullptr;
     }
 
+    // Get global timezone index by continent and local index
+    inline int getTimezoneGlobalIndex(const char* continent, int localIndex) {
+        int currentIndex = -1;
+        for (int i = 0; i < TIMEZONE_COUNT; i++) {
+            if (strcmp(TIMEZONES[i].continent, continent) == 0) {
+                currentIndex++;
+                if (currentIndex == localIndex) {
+                    return i;
+                }
+            }
+        }
+        return DEFAULT_TIMEZONE_INDEX;
+    }
+
     // Find timezone global index by POSIX string
     inline int findTimezoneIndex(const char* posixString) {
         for (int i = 0; i < TIMEZONE_COUNT; i++) {
