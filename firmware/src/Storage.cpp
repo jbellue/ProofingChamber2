@@ -10,9 +10,7 @@ bool Storage::begin() {
         return true;
     }
 
-    // Open Preferences with namespace "proofchamber" in read-write mode
-    // Using a specific namespace to avoid conflicts with WiFiManager and system storage
-    if (!preferences.begin("proofchamber", false)) {
+    if (!preferences.begin("Proofi", false)) {
         DEBUG_PRINTLN("Failed to initialize Preferences");
         return false;
     }
