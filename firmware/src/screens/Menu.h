@@ -23,6 +23,8 @@ public:
     void beginImpl() override;
     bool update(bool forceRedraw = false) override;
     
+    const char* getScreenName() const override { return "Menu"; }
+    
     // Expose current menu state for context-aware actions
     MenuItem* getCurrentMenu() const { return _currentMenu; }
     uint8_t getCurrentMenuIndex() const { return _menuIndex; }

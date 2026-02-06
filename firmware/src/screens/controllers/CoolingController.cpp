@@ -1,6 +1,10 @@
 #include "CoolingController.h"
 #include "DebugUtils.h"
 #include "../views/CoolingView.h"
+#include "../../ScreensManager.h"
+#include "../Menu.h"
+#include "../../services/IWebServerService.h"
+#include "ProofingController.h"
 
 CoolingController::CoolingController(AppContext* ctx)
     : BaseController(ctx), _view(nullptr), _temperatureController(nullptr),
@@ -16,7 +20,10 @@ void CoolingController::beginImpl() {
     }
     
     getInputManager()->slowTemperaturePolling(false);
-    _endTime = _timeCalculator ? _timeCalculator() : 0;
+    // Only use timeCalculator if _endTime is not already set (from web API)
+    if (_endTime == 0) {
+        _endTime = _timeCalculator ? _timeCalculator() : 0;
+    }
     _lastUpdateTime = 0;
     _lastGraphUpdate = 0;
     _onCancelButton = true;
@@ -31,30 +38,45 @@ bool CoolingController::update(bool shouldRedraw) {
     getLocalTime(&tm_now);
     const time_t now = mktime(&tm_now);
 
-    if (shouldRedraw) {
-        _endTime = _timeCalculator ? _timeCalculator() : _endTime;
-    }
+    // Don't recalculate _endTime on force redraw - it's already set in beginImpl()
+    // Force redraw should just refresh display, not change state
     bool timesUp = now >= _endTime;
     if (inputManager->isButtonPressed() || timesUp) {
         inputManager->slowTemperaturePolling(true);
         _temperatureController->setMode(ITemperatureController::OFF);
+        _endTime = 0; // Reset when exiting
         bool goingToProofScreen = !_onCancelButton || timesUp;
-        BaseController* nextScreen = goingToProofScreen ? _proofingController : _menuScreen;
-        setNextScreen(nextScreen);
-        if (goingToProofScreen && _proofingController) {
-            _proofingController->setNextScreen(_menuScreen);
+        
+        // Notify web that cooling has stopped
+        AppContext* ctx = getContext();
+        if (ctx->webServerService) {
+            ctx->webServerService->notifyStateChange();
         }
-        if (nextScreen) nextScreen->begin();
+        
+        if (goingToProofScreen && _proofingController) {
+            // When transitioning to proofing (timer expired), actually start proofing
+            // Cast to ProofingController to access startProofing()
+            ProofingController* proofController = static_cast<ProofingController*>(_proofingController);
+            if (proofController) {
+                proofController->startProofing();
+            }
+        } else {
+            // When cancelling to menu, just navigate
+            BaseController* nextScreen = _menuScreen;
+            setNextScreen(nextScreen);
+            if (nextScreen) nextScreen->begin();
+        }
         return false;
     }
-    if (difftime(now, _lastUpdateTime) >= 1) {
+    // Force update on first draw or when enough time has passed
+    if (shouldRedraw || difftime(now, _lastUpdateTime) >= 1) {
         const float currentTemp = inputManager->getTemperature();
         _temperatureGraph.addValueToAverage(currentTemp);
         shouldRedraw |= _view->drawTemperature(currentTemp);
         _temperatureController->update(currentTemp);
         shouldRedraw |= _view->drawTime(difftime(_endTime, now));
         _lastUpdateTime = now;
-        if (difftime(now, _lastGraphUpdate) >= 10.0) {
+        if (shouldRedraw || difftime(now, _lastGraphUpdate) >= 10.0) {
             _temperatureGraph.commitAverage(currentTemp);
             _lastGraphUpdate = now;
             _view->drawGraph(_temperatureGraph);
@@ -82,4 +104,73 @@ void CoolingController::prepare(TimeCalculatorCallback callback, BaseController*
     _timeCalculator = callback;
     _proofingController = proofingController;
     _menuScreen = menuScreen;
+}
+
+void CoolingController::startCooling(time_t endTime) {
+    AppContext* ctx = getContext();
+    if (!ctx || !ctx->tempController) return;
+    
+    _temperatureController = ctx->tempController;
+    _endTime = endTime;
+    _lastUpdateTime = 0;
+    _lastGraphUpdate = 0;
+    
+    _temperatureController->setMode(ITemperatureController::COOLING);
+    _temperatureGraph.configure(30, 15, -5.0, 60.0, true);
+    
+    DEBUG_PRINTLN("[CoolingController] Started cooling from web API");
+    
+    // Navigate display to show cooling screen
+    if (ctx->screens) {
+        ctx->screens->setActiveScreen(this);
+        begin(); // Initialize the screen - calls beginImpl() which calls _view->start()
+        // Small delay to ensure view is fully initialized
+        delay(10);
+        // Update dynamic content (temperature, time, icons) and send to display
+        // Note: beginImpl() already drew the static parts (title, buttons, graph)
+        if (ctx->display) {
+            update(true); // Force update of dynamic content
+            ctx->display->sendBuffer();
+        }
+    }
+    
+    // Notify web view of state change (web is a VIEW)
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
+    }
+}
+
+void CoolingController::startCoolingWithDelay(int hours) {
+    struct tm now;
+    getLocalTime(&now);
+    time_t currentTime = mktime(&now);
+    time_t endTime = currentTime + (hours * 3600);
+    startCooling(endTime);
+}
+
+void CoolingController::stopCooling() {
+    AppContext* ctx = getContext();
+    if (_temperatureController) {
+        _temperatureController->setMode(ITemperatureController::OFF);
+    }
+    _endTime = 0;
+    
+    DEBUG_PRINTLN("[CoolingController] Stopped cooling from web API");
+    
+    // Navigate back to menu
+    if (ctx && ctx->screens && ctx->menu) {
+        ctx->screens->setActiveScreen(ctx->menu);
+        ctx->menu->begin(); // Initialize menu to prevent blank screen
+        // Force display refresh
+        if (ctx->display) {
+            ctx->display->clearBuffer();
+            ctx->menu->update(true); // Force redraw
+            ctx->display->sendBuffer();
+        }
+    }
+    
+    // Notify web view of state change (web is a VIEW)
+    if (ctx->webServerService) {
+        ctx->webServerService->notifyStateChange();
+    }
 }

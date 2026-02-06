@@ -10,8 +10,7 @@ bool Storage::begin() {
         return true;
     }
 
-    // Open Preferences with namespace "storage" in read-write mode
-    if (!preferences.begin("storage", false)) {
+    if (!preferences.begin("Proofi", false)) {
         DEBUG_PRINTLN("Failed to initialize Preferences");
         return false;
     }

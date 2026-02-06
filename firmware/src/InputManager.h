@@ -17,7 +17,6 @@ public:
     int getPendingSteps() const override;
     void slowTemperaturePolling(bool slowPolling) override;
     float getTemperature() const override;
-
 private:
     static void isrEncoder(void* arg);
 

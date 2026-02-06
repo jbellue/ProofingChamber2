@@ -1,0 +1,1132 @@
+#include "./WebServerService.h"
+#include "../AppContext.h"
+#include "../ITemperatureController.h"
+#include "../IInputManager.h"
+#include "../StorageConstants.h"
+#include "../services/IStorage.h"
+#include "../DebugUtils.h"
+#include "../screens/controllers/ProofingController.h"
+#include "../screens/controllers/CoolingController.h"
+#include "../MenuActions.h"
+#include "../screens/Menu.h"
+#include "../ScreensManager.h"
+#include <ArduinoJson.h>
+
+namespace services {
+
+WebServerService::WebServerService(AppContext* ctx)
+    : _ctx(ctx), _server(nullptr), _ws(nullptr) {
+    // Don't create AsyncWebServer here - delays port 80 allocation
+    // until after WiFi captive portal completes
+}
+
+WebServerService::~WebServerService() {
+    if (_ws) {
+        delete _ws;
+        _ws = nullptr;
+    }
+    if (_server) {
+        delete _server;
+        _server = nullptr;
+    }
+}
+
+void WebServerService::begin() {
+    // Create the server now, after WiFi connection is established
+    // This avoids port conflict with WiFiManager captive portal
+    if (!_server) {
+        DEBUG_PRINTLN("Creating AsyncWebServer on port 80...");
+        _server = new AsyncWebServer(80);
+        if (!_server) {
+            DEBUG_PRINTLN("ERROR: Failed to create AsyncWebServer!");
+            return;
+        }
+    }
+    
+    DEBUG_PRINTLN("Setting up WebSocket...");
+    setupWebSocket();
+    
+    DEBUG_PRINTLN("Setting up web server routes...");
+    setupRoutes();
+    
+    DEBUG_PRINTLN("Starting web server...");
+    _server->begin();
+    DEBUG_PRINTLN("✓ Web server started successfully on port 80");
+    DEBUG_PRINTLN("  Access via IP address or http://proofi.local");
+}
+
+void WebServerService::update() {
+    // Clean up WebSocket clients periodically
+    if (_ws) {
+        _ws->cleanupClients();
+    }
+    
+    // Broadcast screen state every 500ms
+    static unsigned long lastBroadcast = 0;
+    unsigned long now = millis();
+    if (now - lastBroadcast >= 500) {
+        lastBroadcast = now;
+        broadcastScreenState();
+    }
+}
+
+void WebServerService::setupWebSocket() {
+    if (!_server) return;
+    
+    _ws = new AsyncWebSocket("/ws");
+    _ws->onEvent([this](AsyncWebSocket* server, AsyncWebSocketClient* client, 
+                       AwsEventType type, void* arg, uint8_t* data, size_t len) {
+        this->onWebSocketEvent(server, client, type, arg, data, len);
+    });
+    _server->addHandler(_ws);
+}
+
+void WebServerService::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
+                                       AwsEventType type, void* arg, uint8_t* data, size_t len) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            DEBUG_PRINT("WebSocket client #");
+            DEBUG_PRINT(client->id());
+            DEBUG_PRINTLN(" connected");
+            // Client will request state when ready
+            break;
+            
+        case WS_EVT_DISCONNECT:
+            DEBUG_PRINT("WebSocket client #");
+            DEBUG_PRINT(client->id());
+            DEBUG_PRINTLN(" disconnected");
+            break;
+            
+        case WS_EVT_DATA: {
+            // Handle text messages from client
+            AwsFrameInfo* info = (AwsFrameInfo*)arg;
+            if (info->opcode == WS_TEXT && info->final && info->index == 0 && info->len == len) {
+                // Null-terminate the data
+                data[len] = 0;
+                String message = String((char*)data);
+                
+                // Parse JSON request
+                JsonDocument doc;
+                DeserializationError error = deserializeJson(doc, message);
+                
+                if (!error && doc["request"].is<const char*>() && doc["request"] == "state") {
+                    // Client is requesting current state
+                    sendStateToClient(client);
+                }
+            }
+            break;
+        }
+            
+        case WS_EVT_ERROR:
+            DEBUG_PRINT("WebSocket error from client #");
+            DEBUG_PRINTLN(client->id());
+            break;
+            
+        case WS_EVT_PONG:
+            // Pong received
+            break;
+    }
+}
+
+void WebServerService::notifyStateChange() {
+    // When controller state changes, immediately push to web view
+    broadcastScreenState();
+}
+
+void WebServerService::broadcastScreenState() {
+    if (!_ws || _ws->count() == 0) return;
+    
+    // Collect current state
+    float currentTemp = _ctx->input ? _ctx->input->getTemperature() : -999.0f;
+    ITemperatureController::Mode currentMode = _ctx->tempController->getMode();
+    String currentScreen = (_ctx->screens && _ctx->screens->getActiveScreen()) 
+        ? _ctx->screens->getActiveScreen()->getScreenName() : "";
+    
+    // Get timestamps for proofing and cooling (let client calculate elapsed/remaining)
+    time_t proofingStartTime = 0;
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        proofingStartTime = _ctx->proofingController->getStartTime();
+    }
+    
+    time_t coolingEndTime = 0;
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        coolingEndTime = _ctx->coolingController->getEndTime();
+    }
+    
+    // Check if anything changed (with tolerance for temperature)
+    bool changed = false;
+    if (abs(currentTemp - _lastBroadcast.temperature) > 0.1f) changed = true;
+    if (currentMode != _lastBroadcast.mode) changed = true;
+    if (currentScreen != _lastBroadcast.screenName) changed = true;
+    if (proofingStartTime != _lastBroadcast.proofingStartTime) changed = true;
+    if (coolingEndTime != _lastBroadcast.coolingEndTime) changed = true;
+    
+    // Only broadcast if something actually changed
+    if (!changed) return;
+    
+    // Update last broadcast state
+    _lastBroadcast.temperature = currentTemp;
+    _lastBroadcast.mode = currentMode;
+    _lastBroadcast.screenName = currentScreen;
+    _lastBroadcast.proofingStartTime = proofingStartTime;
+    _lastBroadcast.coolingEndTime = coolingEndTime;
+    
+    // Build JSON with current screen state
+    JsonDocument doc;
+    doc["temperature"] = currentTemp;
+    
+    const char* modeStr = "off";
+    if (currentMode == ITemperatureController::HEATING) modeStr = "heating";
+    else if (currentMode == ITemperatureController::COOLING) modeStr = "cooling";
+    doc["mode"] = modeStr;
+    doc["screenName"] = currentScreen;
+    
+    // Send timestamps - let client calculate elapsed/remaining time
+    if (proofingStartTime > 0) {
+        doc["proofingStartTime"] = proofingStartTime;
+    }
+    
+    if (coolingEndTime > 0) {
+        doc["coolingEndTime"] = coolingEndTime;
+    }
+    
+    String output;
+    serializeJson(doc, output);
+    _ws->textAll(output);
+}
+
+void WebServerService::sendStateToClient(AsyncWebSocketClient* client) {
+    if (!_ws || !client) return;
+    
+    // Collect current state
+    float currentTemp = _ctx->input ? _ctx->input->getTemperature() : 0.0f;
+    
+    ITemperatureController::Mode currentMode = _ctx->tempController ? 
+        _ctx->tempController->getMode() : ITemperatureController::OFF;
+    
+    const char* currentScreen = (_ctx->screens && _ctx->screens->getActiveScreen()) 
+        ? _ctx->screens->getActiveScreen()->getScreenName() : "unknown";
+    
+    time_t proofingStartTime = 0;
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        proofingStartTime = _ctx->proofingController->getStartTime();
+    }
+    
+    time_t coolingEndTime = 0;
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        coolingEndTime = _ctx->coolingController->getEndTime();
+    }
+    
+    // Build JSON with current state
+    JsonDocument doc;
+    doc["temperature"] = currentTemp;
+    
+    const char* modeStr = "off";
+    if (currentMode == ITemperatureController::HEATING) modeStr = "heating";
+    else if (currentMode == ITemperatureController::COOLING) modeStr = "cooling";
+    doc["mode"] = modeStr;
+    doc["screenName"] = currentScreen;
+    
+    // Send timestamps - let client calculate elapsed/remaining time
+    if (proofingStartTime > 0) {
+        doc["proofingStartTime"] = proofingStartTime;
+    }
+    
+    if (coolingEndTime > 0) {
+        doc["coolingEndTime"] = coolingEndTime;
+    }
+    
+    String output;
+    serializeJson(doc, output);
+    client->text(output);  // Send to specific client only
+}
+
+void WebServerService::setupRoutes() {
+    if (!_server) return;  // Safety check
+    
+    // Serve the main web page
+    _server->on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+        handleGetRoot(request);
+    });
+    
+    // API endpoints
+    _server->on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest* request) {
+        handleGetSettings(request);
+    });
+    
+    _server->on("/api/mode", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleSetMode(request);
+    });
+    
+    _server->on("/api/settings", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleSetSettings(request);
+    });
+    
+    // Quick action endpoints
+    _server->on("/api/action/proof-now", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleProofNow(request);
+    });
+    
+    _server->on("/api/action/proof-at", HTTP_POST, [this](AsyncWebServerRequest* request) {}, nullptr, 
+        [this](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+            handleProofAt(request, data, len);
+        });
+    
+    _server->on("/api/action/proof-in", HTTP_POST, [this](AsyncWebServerRequest* request) {}, nullptr,
+        [this](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+            handleProofIn(request, data, len);
+        });
+    
+    _server->on("/api/action/stop", HTTP_POST, [this](AsyncWebServerRequest* request) {
+        handleStopOperation(request);
+    });
+}
+
+void WebServerService::handleGetRoot(AsyncWebServerRequest* request) {
+    request->send(200, "text/html", getWebPageHtml());
+}
+
+void WebServerService::handleGetSettings(AsyncWebServerRequest* request) {
+    JsonDocument doc;
+    
+    if (_ctx->storage) {
+        JsonObject heating = doc["heating"].to<JsonObject>();
+        heating["lowerLimit"] = _ctx->storage->getInt(
+            storage::keys::HOT_LOWER_LIMIT_KEY, 
+            storage::defaults::HOT_LOWER_LIMIT_DEFAULT
+        );
+        heating["upperLimit"] = _ctx->storage->getInt(
+            storage::keys::HOT_UPPER_LIMIT_KEY, 
+            storage::defaults::HOT_UPPER_LIMIT_DEFAULT
+        );
+        
+        JsonObject cooling = doc["cooling"].to<JsonObject>();
+        cooling["lowerLimit"] = _ctx->storage->getInt(
+            storage::keys::COLD_LOWER_LIMIT_KEY, 
+            storage::defaults::COLD_LOWER_LIMIT_DEFAULT
+        );
+        cooling["upperLimit"] = _ctx->storage->getInt(
+            storage::keys::COLD_UPPER_LIMIT_KEY, 
+            storage::defaults::COLD_UPPER_LIMIT_DEFAULT
+        );
+    }
+    
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+void WebServerService::handleSetMode(AsyncWebServerRequest* request) {
+    if (!request->hasParam("mode", true)) {
+        request->send(400, "application/json", "{\"error\":\"Missing 'mode' parameter\"}");
+        return;
+    }
+    
+    String mode = request->getParam("mode", true)->value();
+    
+    if (!_ctx->menuActions || !_ctx->screens || !_ctx->menu) {
+        request->send(500, "application/json", "{\"error\":\"Menu system not available\"}");
+        return;
+    }
+    
+    if (mode == "heating") {
+        // Use menu action to start proofing (heating mode)
+        _ctx->menuActions->proofNowAction();
+        request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"heating\",\"message\":\"Started proofing via menu action\"}");
+    } else if (mode == "cooling") {
+        // Cooling requires time configuration, so we can't directly trigger it
+        // For now, return an informative error
+        request->send(400, "application/json", "{\"error\":\"Cooling mode requires time configuration. Use physical interface or schedule via dedicated endpoint.\"}");
+    } else if (mode == "off") {
+        // Navigate back to menu which stops current operation
+        BaseController* currentScreen = _ctx->screens->getActiveScreen();
+        if (currentScreen != _ctx->menu) {
+            // Turn off temperature control
+            if (_ctx->tempController) {
+                _ctx->tempController->setMode(ITemperatureController::OFF);
+            }
+            // Return to menu
+            _ctx->screens->setActiveScreen(_ctx->menu);
+            request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"off\",\"message\":\"Returned to menu\"}");
+        } else {
+            // Already at menu
+            request->send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"off\",\"message\":\"Already at menu\"}");
+        }
+    } else {
+        request->send(400, "application/json", "{\"error\":\"Invalid mode. Use 'heating', 'cooling', or 'off'\"}");
+    }
+}
+
+void WebServerService::handleSetSettings(AsyncWebServerRequest* request) {
+    if (!_ctx->storage) {
+        request->send(500, "application/json", "{\"error\":\"Storage not available\"}");
+        return;
+    }
+    
+    bool updated = false;
+    JsonDocument doc;
+    
+    // Handle heating settings
+    if (request->hasParam("heating_lower", true)) {
+        int value = request->getParam("heating_lower", true)->value().toInt();
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::HOT_LOWER_LIMIT_KEY, value);
+            updated = true;
+        }
+    }
+    if (request->hasParam("heating_upper", true)) {
+        int value = request->getParam("heating_upper", true)->value().toInt();
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::HOT_UPPER_LIMIT_KEY, value);
+            updated = true;
+        }
+    }
+    
+    // Handle cooling settings
+    if (request->hasParam("cooling_lower", true)) {
+        int value = request->getParam("cooling_lower", true)->value().toInt();
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::COLD_LOWER_LIMIT_KEY, value);
+            updated = true;
+        }
+    }
+    if (request->hasParam("cooling_upper", true)) {
+        int value = request->getParam("cooling_upper", true)->value().toInt();
+        // Validate temperature is reasonable (-50 to 100°C)
+        if (value >= -50 && value <= 100) {
+            _ctx->storage->setInt(storage::keys::COLD_UPPER_LIMIT_KEY, value);
+            updated = true;
+        }
+    }
+    
+    if (updated) {
+        // If we're currently in a mode, reload the settings
+        if (_ctx->tempController && _ctx->tempController->getMode() != ITemperatureController::OFF) {
+            ITemperatureController::Mode currentMode = _ctx->tempController->getMode();
+            _ctx->tempController->setMode(ITemperatureController::OFF);
+            _ctx->tempController->setMode(currentMode);
+        }
+        doc["status"] = "ok";
+        doc["message"] = "Settings updated";
+    } else {
+        doc["status"] = "error";
+        doc["message"] = "No parameters provided";
+    }
+    
+    String response;
+    serializeJson(doc, response);
+    request->send(updated ? 200 : 400, "application/json", response);
+}
+
+void WebServerService::handleProofNow(AsyncWebServerRequest* request) {
+    // Start proofing directly without navigation simulation
+    if (!_ctx->proofingController) {
+        request->send(500, "application/json", "{\"error\":\"Proofing controller not available\"}");
+        return;
+    }
+    
+    _ctx->proofingController->startProofing();
+    request->send(200, "application/json", "{\"success\":true,\"message\":\"Proofing started\"}");
+}
+
+void WebServerService::handleProofAt(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, data, len);
+    
+    if (error || !doc["hour"].is<int>() || !doc["minute"].is<int>()) {
+        request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hour/minute\"}");
+        return;
+    }
+    
+    int hour = doc["hour"];
+    int minute = doc["minute"];
+    
+    // Calculate target time
+    struct tm targetTime;
+    getLocalTime(&targetTime);
+    targetTime.tm_hour = hour;
+    targetTime.tm_min = minute;
+    targetTime.tm_sec = 0;
+    time_t targetTimestamp = mktime(&targetTime);
+    
+    // If the time is in the past today, schedule for tomorrow
+    struct tm now;
+    getLocalTime(&now);
+    time_t nowTimestamp = mktime(&now);
+    if (targetTimestamp <= nowTimestamp) {
+        targetTime.tm_mday += 1;
+        targetTimestamp = mktime(&targetTime);
+    }
+    
+    // Calculate delay in seconds
+    int delaySeconds = difftime(targetTimestamp, nowTimestamp);
+    
+    // Start cooling (delay mode) that will end at the target time
+    if (!_ctx->coolingController) {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
+        return;
+    }
+    
+    _ctx->coolingController->startCooling(targetTimestamp);
+    
+    JsonDocument response;
+    response["success"] = true;
+    response["message"] = "Proofing scheduled at " + String(hour) + ":" + String(minute);
+    response["delaySeconds"] = delaySeconds;
+    
+    String responseStr;
+    serializeJson(response, responseStr);
+    request->send(200, "application/json", responseStr);
+}
+
+void WebServerService::handleProofIn(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, data, len);
+    
+    if (error || !doc["hours"].is<float>()) {
+        request->send(400, "application/json", "{\"error\":\"Invalid JSON or missing hours\"}");
+        return;
+    }
+    
+    float hours = doc["hours"];
+    
+    if (!_ctx->coolingController) {
+        request->send(500, "application/json", "{\"error\":\"Cooling controller not available\"}");
+        return;
+    }
+    
+    // Start cooling with delay
+    _ctx->coolingController->startCoolingWithDelay((int)hours);
+    
+    JsonDocument response;
+    response["success"] = true;
+    response["message"] = "Proofing will start in " + String(hours) + " hours";
+    
+    String responseStr;
+    serializeJson(response, responseStr);
+    request->send(200, "application/json", responseStr);
+}
+
+void WebServerService::handleStopOperation(AsyncWebServerRequest* request) {
+    // Stop operation directly without navigation
+    bool wasActive = false;
+    
+    if (_ctx->proofingController && _ctx->proofingController->isActive()) {
+        _ctx->proofingController->stopProofing();
+        wasActive = true;
+    }
+    
+    if (_ctx->coolingController && _ctx->coolingController->isActive()) {
+        _ctx->coolingController->stopCooling();
+        wasActive = true;
+    }
+    
+    if (wasActive) {
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"Operation stopped\"}");
+    } else {
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"No active operation to stop\"}");
+    }
+}
+
+String WebServerService::getWebPageHtml() {
+    return R"html(<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proofi</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍞</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .status-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .status-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .temperature {
+            font-size: 3em !important;
+            color: #764ba2;
+        }
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-heating {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .btn-cooling {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .btn-off {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn.active {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            transform: scale(1.05);
+        }
+        .settings-group {
+            margin-bottom: 25px;
+        }
+        .settings-group h3 {
+            font-size: 1.2em;
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            flex: 1;
+            font-weight: 500;
+            color: #555;
+        }
+        .input-group input {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+        .indicator.heating {
+            background: #f5576c;
+        }
+        .indicator.cooling {
+            background: #00f2fe;
+        }
+        .indicator.off {
+            background: #999;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.9;
+        }
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .status-value {
+                font-size: 1.4em;
+            }
+            .temperature {
+                font-size: 2.2em !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍞 Proofi 🍞</h1>
+            <p>Temperature Control System</p>
+        </div>
+
+        <div class="card">
+            <h2>Status</h2>
+            <div id="statusAlert" class="alert"></div>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Température</div>
+                    <div class="status-value temperature" id="temperature">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Mode</div>
+                    <div class="status-value" id="mode">
+                        <span id="modeText">--</span>
+                        <span id="modeIndicator" class="indicator off"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="timingInfo" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; display: none;">
+                <div id="proofingTime" style="margin-bottom: 5px;"></div>
+                <div id="coolingTime"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Actions Rapides</h2>
+            <div class="mode-buttons">
+                <button class="btn" style="background: #28a745;" onclick="startProofingNow()">
+                    🔥 Mettre en pousse
+                </button>
+                <button class="btn" style="background: #17a2b8;" onclick="showScheduleProofing()">
+                    🕐 Programmer la pousse
+                </button>
+                <button class="btn" style="background: #dc3545;" onclick="stopOperation()" id="stopBtn">
+                    ⏹️ Stop
+                </button>
+            </div>
+            
+            <!-- Schedule Proofing Form -->
+            <div id="scheduleForm" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin-top: 0;">Programmer la pousse</h3>
+                <div class="input-group">
+                    <label>Pousser à:</label>
+                    <input type="time" id="proofAtTime" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
+                </div>
+                <div style="text-align: center; margin: 10px 0; color: #666;">OU</div>
+                <div class="input-group">
+                    <label>Pousser dans (heures):</label>
+                    <input type="number" id="proofInHours" min="0" max="24" step="0.5" placeholder="e.g., 2.5" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
+                </div>
+                <div class="mode-buttons" style="margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="scheduleProofing()">✓ Programmer</button>
+                    <button class="btn" style="background: #6c757d;" onclick="hideScheduleProofing()">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Paramètres de température</h2>
+            <div id="settingsAlert" class="alert"></div>
+            
+            <div class="settings-group">
+                <h3>🔥 Pousse</h3>
+                <div class="input-group">
+                    <label>Limite inférieure (°C):</label>
+                    <input type="number" id="heatingLower" value="23" min="-50" max="100">
+                </div>
+                <div class="input-group">
+                    <label>Limite supérieure (°C):</label>
+                    <input type="number" id="heatingUpper" value="32" min="-50" max="100">
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>❄️ Refroidissement</h3>
+                <div class="input-group">
+                    <label>Limite inférieure (°C):</label>
+                    <input type="number" id="coolingLower" value="2" min="-50" max="100">
+                </div>
+                <div class="input-group">
+                    <label>Limite supérieure (°C):</label>
+                    <input type="number" id="coolingUpper" value="7" min="-50" max="100">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="saveSettings()">
+                💾 Enregistrer les paramètres
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>Proofi v1.0</p>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'off';
+        let ws = null;
+        let proofingStartTime = null;
+        let coolingEndTime = null;
+        let timingUpdateInterval = null;
+        
+        // Initialize WebSocket for status updates
+        function initWebSocket() {
+            // Connect to WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                // Request current state from server
+                ws.send(JSON.stringify({request: "state"}));
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    // Update status display from WebSocket data
+                    if (data.temperature !== undefined) {
+                        document.getElementById('temperature').textContent = 
+                            data.temperature !== null ? data.temperature.toFixed(1) + '℃' : '--';
+                    }
+                    
+                    if (data.mode) {
+                        currentMode = data.mode;
+                        const modeText = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+                        document.getElementById('modeText').textContent = modeText;
+                        const indicator = document.getElementById('modeIndicator');
+                        indicator.className = `indicator ${currentMode}`;
+                    }
+                    
+                    // Store timestamps - client will calculate elapsed/remaining time
+                    if (data.proofingStartTime !== undefined) {
+                        proofingStartTime = data.proofingStartTime;
+                    } else {
+                        proofingStartTime = null;
+                    }
+                    
+                    if (data.coolingEndTime !== undefined) {
+                        coolingEndTime = data.coolingEndTime;
+                    } else {
+                        coolingEndTime = null;
+                    }
+                    
+                    // Update timing display immediately
+                    updateTimingDisplay();
+                    
+                    // Start interval timer if not already running
+                    if (!timingUpdateInterval && (proofingStartTime || coolingEndTime)) {
+                        timingUpdateInterval = setInterval(updateTimingDisplay, 1000);
+                    }
+                    
+                    // Also update screen name if provided
+                    if (data.screenName) {
+                        console.log('Current screen:', data.screenName);
+                    }
+                } catch (e) {
+                    console.error('WebSocket message error:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket closed, reconnecting to display...');
+                // Reconnect after 2 seconds
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+        
+        // Update timing display based on stored timestamps (client-side calculation)
+        function updateTimingDisplay() {
+            const timingInfo = document.getElementById('timingInfo');
+            const proofingTime = document.getElementById('proofingTime');
+            const coolingTime = document.getElementById('coolingTime');
+            let hasTimingInfo = false;
+            
+            // Calculate and display proofing elapsed time
+            if (proofingStartTime) {
+                const now = Math.floor(Date.now() / 1000);
+                const elapsed = Math.max(0, now - proofingStartTime);
+                proofingTime.innerHTML = `<strong>⏱️ Pousse : </strong> ${formatTime(elapsed)} écoulé`;
+                proofingTime.style.display = 'block';
+                hasTimingInfo = true;
+            } else {
+                proofingTime.style.display = 'none';
+            }
+            
+            // Calculate and display cooling remaining time
+            if (coolingEndTime) {
+                const now = Math.floor(Date.now() / 1000);
+                const remaining = Math.max(0, coolingEndTime - now);
+                coolingTime.innerHTML = `<strong>🕐 Refroidissement :</strong> ${formatTime(remaining)} avant le début de la pousse`;
+                coolingTime.innerHTML += `<br><small>Commence à : ${formatDateTime(coolingEndTime)}</small>`;
+                coolingTime.style.display = 'block';
+                hasTimingInfo = true;
+                
+                // If countdown reached zero, clear it
+                if (remaining === 0 && timingUpdateInterval) {
+                    clearInterval(timingUpdateInterval);
+                    timingUpdateInterval = null;
+                }
+            } else {
+                coolingTime.style.display = 'none';
+            }
+            
+            timingInfo.style.display = hasTimingInfo ? 'block' : 'none';
+            
+            // Stop interval if no timing info
+            if (!hasTimingInfo && timingUpdateInterval) {
+                clearInterval(timingUpdateInterval);
+                timingUpdateInterval = null;
+            }
+        }
+        
+        function showAlert(elementId, message, type) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
+        }
+
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hrs > 0) {
+                return `${hrs}h ${mins}m ${secs}s`;
+            } else if (mins > 0) {
+                return `${mins}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                
+                if (data.heating) {
+                    document.getElementById('heatingLower').value = data.heating.lowerLimit;
+                    document.getElementById('heatingUpper').value = data.heating.upperLimit;
+                }
+                if (data.cooling) {
+                    document.getElementById('coolingLower').value = data.cooling.lowerLimit;
+                    document.getElementById('coolingUpper').value = data.cooling.upperLimit;
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        // Quick Action functions
+        function showScheduleProofing() {
+            document.getElementById('scheduleForm').style.display = 'block';
+        }
+
+        function hideScheduleProofing() {
+            document.getElementById('scheduleForm').style.display = 'none';
+        }
+
+        async function startProofingNow() {
+            if (!confirm('Start proofing now?')) return;
+            
+            try {
+                const response = await fetch('/api/action/proof-now', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Proofing started!', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to start proofing', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to start proofing:', error);
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function scheduleProofing() {
+            const timeInput = document.getElementById('proofAtTime').value;
+            const hoursInput = document.getElementById('proofInHours').value;
+            
+            if (!timeInput && !hoursInput) {
+                showAlert('statusAlert', 'Please enter either a time or duration', 'error');
+                return;
+            }
+            
+            try {
+                let endpoint, body;
+                
+                if (timeInput) {
+                    // Schedule at specific time
+                    const [hours, minutes] = timeInput.split(':').map(Number);
+                    endpoint = '/api/action/proof-at';
+                    body = JSON.stringify({ hour: hours, minute: minutes });
+                } else {
+                    // Schedule after delay
+                    endpoint = '/api/action/proof-in';
+                    body = JSON.stringify({ hours: parseFloat(hoursInput) });
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Proofing scheduled!', 'success');
+                    hideScheduleProofing();
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to schedule proofing', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to schedule proofing:', error);
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function stopOperation() {
+            if (!confirm('Stop current operation?')) return;
+            
+            try {
+                const response = await fetch('/api/action/stop', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('statusAlert', '✓ Operation stopped', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert('statusAlert', error.error || 'Failed to stop', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to stop operation:', error);
+                showAlert('statusAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        async function saveSettings() {
+            try {
+                const formData = new FormData();
+                formData.append('heating_lower', document.getElementById('heatingLower').value);
+                formData.append('heating_upper', document.getElementById('heatingUpper').value);
+                formData.append('cooling_lower', document.getElementById('coolingLower').value);
+                formData.append('cooling_upper', document.getElementById('coolingUpper').value);
+                
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    showAlert('settingsAlert', 'Settings saved successfully!', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert('settingsAlert', error.message || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                showAlert('settingsAlert', 'Failed to communicate with device', 'error');
+            }
+        }
+
+        // Initialize WebSocket for real-time updates
+        initWebSocket();
+        
+        // Initial load
+        loadSettings();
+    </script>
+</body>
+</html>)html";
+}
+
+} // namespace services
