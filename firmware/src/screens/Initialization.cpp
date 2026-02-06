@@ -7,10 +7,8 @@
 #include "DebugUtils.h"
 #include "Initialization.h"
 #include "icons.h"
-// Need the concrete service definition to call methods like autoConnect()/configureNtp()
 #include "../services/INetworkService.h"
 #include "../services/IWebServerService.h"
-// Storage interface to retrieve timezone configuration
 #include "../services/IStorage.h"
 #include "StorageConstants.h"
 
@@ -30,6 +28,7 @@ void Initialization::beginImpl() {
         if (!_webServerService) _webServerService = ctx->webServerService;
     }
     _display->clear();
+    _buffer.clear();
 }
 
 bool Initialization::update(bool forceRedraw) {
@@ -41,8 +40,8 @@ bool Initialization::update(bool forceRedraw) {
 void Initialization::drawScreen() {
     _display->clearBuffer();
     _display->setFont(u8g2_font_t0_11_tf);
-    _display->drawStr(0, 10, "Connexion au WiFi...");
-    _display->sendBuffer();
+    _buffer.pushLine("Connexion au WiFi...");
+    renderBuffer();
 
     // Use the injected network service to connect; continue on failure after a short timeout
     bool wifiConnected = false;
@@ -51,13 +50,13 @@ void Initialization::drawScreen() {
     wifiConnected = _networkService->autoConnect(portalName, [this](const char* apName) {
         if (!_display) return;
         _display->setFont(u8g2_font_t0_11_tf);
-        _display->drawStr(0, 22, "Portail WiFi actif");
-        _display->drawStr(0, 34, apName);
-        _display->sendBuffer();
+        _buffer.pushLine("Portail WiFi actif");
+        _buffer.pushLine(String(apName));
+        renderBuffer();
     });
     if (!wifiConnected) {
-        _display->drawUTF8(0, 22, "WiFi indisponible.");
-        _display->sendBuffer();
+        _buffer.pushLine("WiFi indisponible.");
+        renderBuffer();
         return; // Do not hang the boot if WiFi is down
     }
 
@@ -66,17 +65,16 @@ void Initialization::drawScreen() {
         DEBUG_PRINTLN("Starting web server...");
         _webServerService->begin();
         DEBUG_PRINTLN("Web server started successfully");
-        _display->drawStr(0, 22, "Serveur web actif");
+        _buffer.pushLine("Serveur web actif");
         
         // Get and display IP address
         String ipAddress = WiFi.localIP().toString();
-        _display->drawStr(0, 34, ipAddress.c_str());
+        _buffer.pushLine(ipAddress);
         
         // Also show mDNS hostname
-        _display->drawStr(0, 46, "proofi.local");
-        _display->sendBuffer();
+        _buffer.pushLine("proofi.local");
+        renderBuffer();
         
-        // Wait 5 seconds to let user see the information
         DEBUG_PRINT("Web interface available at: http://");
         DEBUG_PRINTLN(ipAddress.c_str());
         DEBUG_PRINTLN("Also accessible via: http://proofi.local");
@@ -88,8 +86,8 @@ void Initialization::drawScreen() {
         }
     }
 
-    _display->drawStr(0, 58, "Connexion NTP");
-    _display->sendBuffer();
+    _buffer.pushLine("Connexion NTP");
+    renderBuffer();
 
     // Configure NTP via network service
     char timezoneBuf[64];
@@ -103,9 +101,22 @@ void Initialization::drawScreen() {
             break;
         }
         vTaskDelay(pdMS_TO_TICKS(500));
-        _display->print(".");
-        _display->sendBuffer();
+        _buffer.appendToLastLine(".");
+        renderBuffer();
         taskYIELD();
     }
     DEBUG_PRINTLN("\nTime synced with NTP");
+    _buffer.pushLine("Horloge synchronisée");
+    renderBuffer();
+}
+
+void Initialization::renderBuffer() {
+    if (!_display) return;
+    _display->clearBuffer();
+    _display->setFont(u8g2_font_t0_11_tf);
+    for (uint8_t i = 0; i < _buffer.count(); ++i) {
+        uint8_t y = (uint8_t)(_baseY + _lineSpacing * i);
+        _display->drawUTF8(0, y, _buffer.lineAt(i).c_str());
+    }
+    _display->sendBuffer();
 }

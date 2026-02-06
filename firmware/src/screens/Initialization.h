@@ -3,8 +3,8 @@
 #include "BaseController.h"
 #include "../IDisplayManager.h"
 #include "../AppContextDecl.h"
-// Storage interface for reading saved timezone
 #include "../services/IStorage.h"
+#include "../utils/LineRingBuffer.h"
 
 class Initialization : public BaseController {
 public:
@@ -19,4 +19,10 @@ private:
     services::IWebServerService* _webServerService;
     void drawScreen();
     void beginImpl() override;
+
+    LineRingBuffer<5> _buffer;
+    const uint8_t _baseY = 10;       // first line Y
+    const uint8_t _lineSpacing = 12; // distance between lines
+
+    void renderBuffer();
 };
